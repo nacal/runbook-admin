@@ -4,78 +4,119 @@ import type { ExecutionResult } from './types'
 
 export class RunnExecutor extends EventEmitter {
   private process: ChildProcess | null = null
-  private executionId: string
+  public readonly executionId: string
 
   constructor() {
     super()
     this.executionId = this.generateId()
   }
 
-  async execute(runbookPath: string, variables: Record<string, any> = {}): Promise<string> {
+  async execute(runbookPath: string, variables: Record<string, any> = {}, timeout: number = 60000): Promise<ExecutionResult> {
     return new Promise((resolve, reject) => {
       if (this.process) {
         reject(new Error('Execution already in progress'))
         return
       }
 
+      const startTime = new Date()
       const args = ['run', runbookPath]
       
-      // Add debug flag for better output
-      args.push('--debug')
-      
-      // Add variables as environment variables
-      const env = { ...process.env }
+      // Add variables using --var flag instead of environment variables
       Object.entries(variables).forEach(([key, value]) => {
-        env[key] = String(value)
+        args.push('--var', `${key}:${value}`)
       })
 
+      console.log(`[RunnExecutor] Starting execution ${this.executionId}:`, 'runn', args.join(' '))
+
       this.process = spawn('runn', args, {
-        env,
-        stdio: ['pipe', 'pipe', 'pipe']
+        cwd: process.cwd(),
+        stdio: ['ignore', 'pipe', 'pipe']  // ignore stdin to prevent hanging
       })
 
       let output = ''
       let errorOutput = ''
+      let timeoutHandle: NodeJS.Timeout | null = null
+
+      this.emit('started', { id: this.executionId, runbookPath, startTime })
+
+      // Set up timeout
+      timeoutHandle = setTimeout(() => {
+        console.log(`[RunnExecutor] Execution ${this.executionId} timed out after ${timeout}ms`)
+        if (this.process) {
+          this.process.kill('SIGTERM')
+          setTimeout(() => {
+            if (this.process) {
+              this.process.kill('SIGKILL')
+            }
+          }, 5000)
+        }
+      }, timeout)
 
       this.process.stdout?.on('data', (data) => {
         const chunk = data.toString()
         output += chunk
-        this.emit('output', chunk)
+        this.emit('output', { chunk, timestamp: new Date() })
       })
 
       this.process.stderr?.on('data', (data) => {
         const chunk = data.toString()
         errorOutput += chunk
-        this.emit('error', chunk)
+        this.emit('error', { chunk, timestamp: new Date() })
       })
 
       this.process.on('close', (code) => {
+        console.log(`[RunnExecutor] Process ${this.executionId} closed with code:`, code)
+        if (timeoutHandle) {
+          clearTimeout(timeoutHandle)
+          timeoutHandle = null
+        }
         this.process = null
+        const endTime = new Date()
         
         const result: ExecutionResult = {
           id: this.executionId,
           runbookId: this.generateRunbookId(runbookPath),
+          runbookPath,
           status: code === 0 ? 'success' : 'failed',
-          startTime: new Date(),
-          endTime: new Date(),
-          duration: 0, // TODO: Calculate actual duration
+          exitCode: code || 0,
+          startTime,
+          endTime,
+          duration: endTime.getTime() - startTime.getTime(),
           output: output.split('\n').filter(line => line.trim()),
           error: code !== 0 ? errorOutput : undefined,
           variables
         }
 
+        console.log(`[RunnExecutor] Emitting complete event for ${this.executionId}:`, result.status)
         this.emit('complete', result)
-
-        if (code === 0) {
-          resolve(output)
-        } else {
-          reject(new Error(`Runn execution failed with code ${code}: ${errorOutput}`))
-        }
+        resolve(result)
       })
 
       this.process.on('error', (error) => {
+        console.log(`[RunnExecutor] Process ${this.executionId} error:`, error.message)
+        if (timeoutHandle) {
+          clearTimeout(timeoutHandle)
+          timeoutHandle = null
+        }
         this.process = null
-        reject(new Error(`Failed to start runn: ${error.message}`))
+        const endTime = new Date()
+        
+        const result: ExecutionResult = {
+          id: this.executionId,
+          runbookId: this.generateRunbookId(runbookPath),
+          runbookPath,
+          status: 'failed',
+          exitCode: -1,
+          startTime,
+          endTime,
+          duration: endTime.getTime() - startTime.getTime(),
+          output: [],
+          error: `Failed to start runn: ${error.message}`,
+          variables
+        }
+
+        this.emit('complete', result)
+        reject(result)
       })
     })
   }

@@ -1,5 +1,6 @@
 import { createRoute } from 'honox/factory'
 import { RunnExecutor } from '../../lib/runn'
+import { ExecutionManager } from '../../lib/execution-manager'
 
 export const POST = createRoute(async (c) => {
   try {
@@ -17,26 +18,12 @@ export const POST = createRoute(async (c) => {
     if (!isRunnAvailable) {
       return c.json({
         success: false,
-        error: 'Runn CLI is not installed or not available in PATH'
+        error: 'Runn CLI is not installed or not available in PATH. Please install runn: go install github.com/k1LoW/runn/cmd/runn@latest'
       }, 400)
     }
 
-    const executor = new RunnExecutor()
-    
-    // Start execution
-    const executionPromise = executor.execute(runbookPath, variables)
-    
-    // Return immediately with execution ID
-    const executionId = Math.random().toString(36).substring(2, 10)
-    
-    // Handle execution in background
-    executionPromise
-      .then(() => {
-        console.log(`Execution ${executionId} completed successfully`)
-      })
-      .catch((error) => {
-        console.error(`Execution ${executionId} failed:`, error.message)
-      })
+    const manager = ExecutionManager.getInstance()
+    const executionId = await manager.startExecution(runbookPath, variables)
 
     return c.json({
       success: true,

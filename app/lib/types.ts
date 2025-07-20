@@ -12,10 +12,12 @@ export interface Runbook {
 export interface ExecutionResult {
   id: string
   runbookId: string
+  runbookPath: string
   status: 'running' | 'success' | 'failed'
+  exitCode: number
   startTime: Date
-  endTime?: Date
-  duration?: number
+  endTime: Date
+  duration: number
   output: string[]
   error?: string
   variables: Record<string, any>

@@ -1,0 +1,116 @@
+import { RunnExecutor } from './runn'
+import type { ExecutionResult } from './types'
+
+export class ExecutionManager {
+  private static instance: ExecutionManager
+  private executions = new Map<string, ExecutionResult>()
+  private executors = new Map<string, RunnExecutor>()
+
+  private constructor() {}
+
+  static getInstance(): ExecutionManager {
+    if (!ExecutionManager.instance) {
+      ExecutionManager.instance = new ExecutionManager()
+    }
+    return ExecutionManager.instance
+  }
+
+  async startExecution(runbookPath: string, variables: Record<string, any> = {}): Promise<string> {
+    const executor = new RunnExecutor()
+    const executionId = executor.executionId
+
+    // Store initial execution state
+    const initialResult: ExecutionResult = {
+      id: executionId,
+      runbookId: this.generateRunbookId(runbookPath),
+      runbookPath,
+      status: 'running',
+      exitCode: 0,
+      startTime: new Date(),
+      endTime: new Date(),
+      duration: 0,
+      output: [],
+      variables
+    }
+
+    this.executions.set(executionId, initialResult)
+    this.executors.set(executionId, executor)
+
+    // Set up event listeners
+    executor.on('started', (data) => {
+      console.log(`[ExecutionManager] Execution ${executionId} started:`, data)
+    })
+
+    executor.on('output', (data) => {
+      console.log(`[ExecutionManager] Output from ${executionId}:`, data.chunk.trim())
+      const execution = this.executions.get(executionId)
+      if (execution) {
+        execution.output.push(`[${data.timestamp.toISOString()}] ${data.chunk}`)
+        this.executions.set(executionId, execution)
+      }
+    })
+
+    executor.on('error', (data) => {
+      console.log(`[ExecutionManager] Error from ${executionId}:`, data.chunk.trim())
+      const execution = this.executions.get(executionId)
+      if (execution) {
+        execution.output.push(`[ERROR ${data.timestamp.toISOString()}] ${data.chunk}`)
+        this.executions.set(executionId, execution)
+      }
+    })
+
+    executor.on('complete', (result: ExecutionResult) => {
+      console.log(`[ExecutionManager] Execution ${executionId} completed:`, result.status, `(${result.duration}ms)`)
+      this.executions.set(executionId, result)
+      this.executors.delete(executionId)
+    })
+
+    // Start execution in background with 30 second timeout
+    executor.execute(runbookPath, variables, 30000).catch((error) => {
+      console.error(`Execution ${executionId} failed:`, error)
+    })
+
+    return executionId
+  }
+
+  getExecution(executionId: string): ExecutionResult | undefined {
+    return this.executions.get(executionId)
+  }
+
+  getAllExecutions(): ExecutionResult[] {
+    return Array.from(this.executions.values()).sort((a, b) => 
+      b.startTime.getTime() - a.startTime.getTime()
+    )
+  }
+
+  stopExecution(executionId: string): boolean {
+    const executor = this.executors.get(executionId)
+    if (executor) {
+      executor.stop()
+      this.executors.delete(executionId)
+      
+      const execution = this.executions.get(executionId)
+      if (execution) {
+        execution.status = 'failed'
+        execution.error = 'Execution stopped by user'
+        execution.endTime = new Date()
+        execution.duration = execution.endTime.getTime() - execution.startTime.getTime()
+        this.executions.set(executionId, execution)
+      }
+      return true
+    }
+    return false
+  }
+
+  isRunning(executionId: string): boolean {
+    return this.executors.has(executionId)
+  }
+
+  private generateRunbookId(path: string): string {
+    return Buffer.from(path).toString('base64').slice(0, 8)
+  }
+
+  private generateExecutionId(): string {
+    return Math.random().toString(36).substring(2, 10)
+  }
+}

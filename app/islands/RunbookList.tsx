@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'hono/jsx'
+import { useEffect, useState } from 'hono/jsx'
 import type { Runbook } from '../lib/types'
 
 export function RunbookList() {
@@ -16,7 +16,7 @@ export function RunbookList() {
       setLoading(true)
       const response = await fetch('/api/runbooks')
       const result = await response.json()
-      
+
       if (result.success) {
         setRunbooks(result.data)
       } else {
@@ -49,7 +49,7 @@ export function RunbookList() {
       <div class="bg-red-900/20 border border-red-500/50 rounded-lg p-6">
         <h3 class="text-red-400 font-semibold mb-2">Error Loading Runbooks</h3>
         <p class="text-red-300">{error}</p>
-        <button 
+        <button
           onClick={loadRunbooks}
           class="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-white text-sm"
         >
@@ -78,7 +78,7 @@ export function RunbookList() {
           Found <span class="text-white font-semibold">{filteredRunbooks.length}</span> runbooks
           {searchTerm && <span> matching "{searchTerm}"</span>}
         </div>
-        <button 
+        <button
           onClick={loadRunbooks}
           class="px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
         >
@@ -92,7 +92,7 @@ export function RunbookList() {
           <div class="text-6xl mb-4">📝</div>
           <h3 class="text-xl text-slate-300 mb-2">No runbooks found</h3>
           <p class="text-slate-500">
-            {searchTerm 
+            {searchTerm
               ? `No runbooks match "${searchTerm}"`
               : 'No .yml files found in common runbook locations'
             }
@@ -121,18 +121,72 @@ export function RunbookList() {
 
 function RunbookCard({ runbook }: { runbook: Runbook }) {
   const [isExecuting, setIsExecuting] = useState(false)
+  const [executionId, setExecutionId] = useState<string | null>(null)
+  const [showVariables, setShowVariables] = useState(false)
+  const [variables, setVariables] = useState<Record<string, string>>({})
 
   const handleExecute = async () => {
+    // Check if variables are needed
+    const hasVariables = Object.keys(runbook.variables).length > 0
+    if (hasVariables && !showVariables) {
+      setShowVariables(true)
+      return
+    }
+
     setIsExecuting(true)
     try {
-      // TODO: Implement execution
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      alert(`Executed ${runbook.name}`)
+      const response = await fetch('/api/execute', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          runbookPath: runbook.path,
+          variables: variables
+        }),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setExecutionId(result.executionId)
+        alert(`✅ Execution started!\nID: ${result.executionId}\n\nCheck execution status in browser console or refresh the page.`)
+
+        // Poll for execution status
+        pollExecutionStatus(result.executionId)
+      } else {
+        alert(`❌ Failed to execute: ${result.error}`)
+      }
     } catch (error) {
-      alert(`Failed to execute ${runbook.name}`)
+      alert(`❌ Failed to execute ${runbook.name}: ${error}`)
     } finally {
       setIsExecuting(false)
+      setShowVariables(false)
     }
+  }
+
+  const pollExecutionStatus = async (execId: string) => {
+    try {
+      const response = await fetch(`/api/executions/${execId}`)
+      const result = await response.json()
+
+      if (result.success) {
+        console.log(`Execution ${execId} status:`, result.data.status)
+        if (result.data.status === 'running' && result.isRunning) {
+          setTimeout(() => pollExecutionStatus(execId), 1000)
+        } else {
+          console.log(`Execution ${execId} completed:`, result.data)
+          setExecutionId(null)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to poll execution status:', error)
+      setExecutionId(null)
+    }
+  }
+
+  const handleVariableChange = (key: string, value: string) => {
+    setVariables(prev => ({ ...prev, [key]: value }))
   }
 
   return (
@@ -143,13 +197,13 @@ function RunbookCard({ runbook }: { runbook: Runbook }) {
           {runbook.steps} steps
         </span>
       </div>
-      
+
       {runbook.description && (
         <p class="text-sm text-slate-400 mb-3 line-clamp-2">
           {runbook.description}
         </p>
       )}
-      
+
       <div class="text-xs text-slate-500 mb-4">
         <div>📁 {runbook.path}</div>
         <div class="mt-1">
@@ -160,7 +214,7 @@ function RunbookCard({ runbook }: { runbook: Runbook }) {
       {runbook.labels && runbook.labels.length > 0 && (
         <div class="flex flex-wrap gap-1 mb-4">
           {runbook.labels.map((label) => (
-            <span 
+            <span
               key={label}
               class="text-xs bg-blue-900/30 text-blue-300 px-2 py-1 rounded"
             >
@@ -170,10 +224,49 @@ function RunbookCard({ runbook }: { runbook: Runbook }) {
         </div>
       )}
 
+      {/* Variable Input Form */}
+      {showVariables && (
+        <div class="mb-4 p-3 bg-slate-900/50 border border-slate-600 rounded">
+          <h4 class="text-sm font-medium text-white mb-2">Variables Required:</h4>
+          <div class="space-y-2">
+            {Object.entries(runbook.variables).map(([key, variable]) => (
+              <div key={key}>
+                <label class="block text-xs text-slate-400 mb-1">
+                  {variable.name || key}
+                  {variable.required && <span class="text-red-400">*</span>}
+                </label>
+                <input
+                  type={variable.type === 'number' ? 'number' : 'text'}
+                  placeholder={variable.defaultValue || `Enter ${key}...`}
+                  value={variables[key] || ''}
+                  onInput={(e) => handleVariableChange(key, (e.target as HTMLInputElement).value)}
+                  class="w-full px-2 py-1 text-xs bg-slate-800 border border-slate-700 rounded text-white placeholder-slate-500 focus:border-blue-500 outline-none"
+                />
+              </div>
+            ))}
+          </div>
+          <div class="flex space-x-2 mt-3">
+            <button
+              onClick={handleExecute}
+              disabled={isExecuting}
+              class="flex-1 px-2 py-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 rounded text-white text-xs"
+            >
+              {isExecuting ? 'Running...' : 'Execute'}
+            </button>
+            <button
+              onClick={() => setShowVariables(false)}
+              class="px-2 py-1 bg-slate-600 hover:bg-slate-500 rounded text-slate-300 text-xs"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       <div class="flex space-x-2">
         <button
           onClick={handleExecute}
-          disabled={isExecuting}
+          disabled={isExecuting || executionId !== null}
           class="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed rounded text-white text-sm font-medium transition-colors"
         >
           {isExecuting ? (
@@ -181,6 +274,13 @@ function RunbookCard({ runbook }: { runbook: Runbook }) {
               <span class="inline-block animate-spin mr-2">⚡</span>
               Running...
             </>
+          ) : executionId ? (
+            <>
+              <span class="inline-block animate-pulse mr-2">🔄</span>
+              Executing...
+            </>
+          ) : Object.keys(runbook.variables).length > 0 ? (
+            '⚙️ Configure & Run'
           ) : (
             '▶️ Run'
           )}
