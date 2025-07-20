@@ -22,14 +22,14 @@ export function RunbookList() {
       const result = await response.json()
 
       if (result.success) {
-        console.log('Loaded runbooks:', result.data.map(r => ({ name: r.name, id: r.id })))
+        console.log('Loaded runbooks:', result.data.map((r: Runbook) => ({ name: r.name, id: r.id })))
         
         // Check for duplicate IDs
-        const ids = result.data.map(r => r.id)
+        const ids = result.data.map((r: Runbook) => r.id)
         const uniqueIds = new Set(ids)
         if (ids.length !== uniqueIds.size) {
           console.warn('WARNING: Duplicate runbook IDs detected!')
-          const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index)
+          const duplicates = ids.filter((id: string, index: number) => ids.indexOf(id) !== index)
           console.warn('Duplicate IDs:', duplicates)
         }
         

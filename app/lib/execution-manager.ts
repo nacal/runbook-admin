@@ -152,7 +152,4 @@ export class ExecutionManager {
     console.log('[ExecutionManager] Cleared all execution history')
   }
 
-  private generateExecutionId(): string {
-    return Math.random().toString(36).substring(2, 10)
-  }
 }
