@@ -1,5 +1,6 @@
 import { RunnExecutor } from './runn'
 import { Storage } from './storage'
+import { createHash } from 'crypto'
 import type { ExecutionResult } from './types'
 
 export class ExecutionManager {
@@ -141,7 +142,8 @@ export class ExecutionManager {
   }
 
   private generateRunbookId(path: string): string {
-    return Buffer.from(path).toString('base64').slice(0, 8)
+    // Use SHA-1 like runn does for compatibility
+    return createHash('sha1').update(path).digest('hex')
   }
 
   async clearHistory(): Promise<void> {

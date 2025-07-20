@@ -8,9 +8,11 @@ export function RunbookList() {
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [showExecutionResult, setShowExecutionResult] = useState<string | null>(null)
+  const [favorites, setFavorites] = useState<string[]>([])
 
   useEffect(() => {
     loadRunbooks()
+    loadFavorites()
   }, [])
 
   const loadRunbooks = async () => {
@@ -20,6 +22,17 @@ export function RunbookList() {
       const result = await response.json()
 
       if (result.success) {
+        console.log('Loaded runbooks:', result.data.map(r => ({ name: r.name, id: r.id })))
+        
+        // Check for duplicate IDs
+        const ids = result.data.map(r => r.id)
+        const uniqueIds = new Set(ids)
+        if (ids.length !== uniqueIds.size) {
+          console.warn('WARNING: Duplicate runbook IDs detected!')
+          const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index)
+          console.warn('Duplicate IDs:', duplicates)
+        }
+        
         setRunbooks(result.data)
       } else {
         setError(result.error)
@@ -31,11 +44,66 @@ export function RunbookList() {
     }
   }
 
+  const loadFavorites = async () => {
+    try {
+      const response = await fetch('/api/favorites')
+      const result = await response.json()
+      
+      if (result.success) {
+        setFavorites(result.data)
+      }
+    } catch (err) {
+      console.error('Failed to load favorites:', err)
+    }
+  }
+
+  const toggleFavorite = async (runbookId: string) => {
+    try {
+      console.log('Toggling favorite for:', runbookId)
+      console.log('Current favorites:', favorites)
+      
+      const response = await fetch('/api/favorites', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ runbookId }),
+      })
+      
+      const result = await response.json()
+      console.log('Toggle result:', result)
+      
+      if (result.success) {
+        if (result.isFavorite) {
+          const newFavorites = [...favorites, runbookId]
+          console.log('Adding to favorites, new list:', newFavorites)
+          setFavorites(newFavorites)
+        } else {
+          const newFavorites = favorites.filter(id => id !== runbookId)
+          console.log('Removing from favorites, new list:', newFavorites)
+          setFavorites(newFavorites)
+        }
+      }
+    } catch (err) {
+      console.error('Failed to toggle favorite:', err)
+    }
+  }
+
   const filteredRunbooks = runbooks.filter(runbook =>
     runbook.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     runbook.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     runbook.path.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  // Sort runbooks: favorites first, then by name
+  const sortedRunbooks = [...filteredRunbooks].sort((a, b) => {
+    const aIsFavorite = favorites.includes(a.id)
+    const bIsFavorite = favorites.includes(b.id)
+    
+    if (aIsFavorite && !bIsFavorite) return -1
+    if (!aIsFavorite && bIsFavorite) return 1
+    return a.name.localeCompare(b.name)
+  })
 
   if (loading) {
     return (
@@ -79,13 +147,36 @@ export function RunbookList() {
         <div class="text-slate-400">
           Found <span class="text-white font-semibold">{filteredRunbooks.length}</span> runbooks
           {searchTerm && <span> matching "{searchTerm}"</span>}
+          {favorites.length > 0 && (
+            <span class="ml-3">
+              <span class="text-yellow-500">⭐</span> {favorites.length} favorites
+            </span>
+          )}
         </div>
-        <button
-          onClick={loadRunbooks}
-          class="px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
-        >
-          🔄 Refresh
-        </button>
+        <div class="flex space-x-2">
+          {favorites.length > 0 && (
+            <button
+              onClick={async () => {
+                if (confirm('Clear all favorites?')) {
+                  await fetch('/api/favorites', { method: 'DELETE' })
+                  setFavorites([])
+                }
+              }}
+              class="px-3 py-1 text-sm bg-red-700 hover:bg-red-600 rounded text-white"
+            >
+              Clear ⭐
+            </button>
+          )}
+          <button
+            onClick={() => {
+              loadRunbooks()
+              loadFavorites()
+            }}
+            class="px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
+          >
+            🔄 Refresh
+          </button>
+        </div>
       </div>
 
       {/* Runbook Grid */}
@@ -112,10 +203,12 @@ export function RunbookList() {
         </div>
       ) : (
         <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredRunbooks.map((runbook) => (
+          {sortedRunbooks.map((runbook) => (
             <RunbookCard 
               key={runbook.id} 
               runbook={runbook} 
+              isFavorite={favorites.includes(runbook.id)}
+              onToggleFavorite={() => toggleFavorite(runbook.id)}
               onShowResult={setShowExecutionResult}
             />
           ))}
@@ -133,7 +226,17 @@ export function RunbookList() {
   )
 }
 
-function RunbookCard({ runbook, onShowResult }: { runbook: Runbook, onShowResult: (id: string) => void }) {
+function RunbookCard({ 
+  runbook, 
+  isFavorite, 
+  onToggleFavorite, 
+  onShowResult 
+}: { 
+  runbook: Runbook
+  isFavorite: boolean
+  onToggleFavorite: () => void
+  onShowResult: (id: string) => void 
+}) {
   const [isExecuting, setIsExecuting] = useState(false)
   const [executionId, setExecutionId] = useState<string | null>(null)
   const [showVariables, setShowVariables] = useState(false)
@@ -205,9 +308,19 @@ function RunbookCard({ runbook, onShowResult }: { runbook: Runbook, onShowResult
   }
 
   return (
-    <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:border-slate-600 transition-colors">
+    <div class={`bg-slate-800/50 border ${isFavorite ? 'border-yellow-600/50' : 'border-slate-700'} rounded-lg p-4 hover:border-slate-600 transition-colors relative`}>
+      {/* Favorite Badge */}
+      {isFavorite && (
+        <div class="absolute -top-2 -right-2 bg-yellow-600 text-white text-xs px-2 py-1 rounded-full shadow-lg">
+          ⭐ Favorite
+        </div>
+      )}
+      
       <div class="flex items-start justify-between mb-3">
-        <h3 class="font-semibold text-white truncate">{runbook.name}</h3>
+        <h3 class="font-semibold text-white truncate flex items-center">
+          {isFavorite && <span class="text-yellow-500 mr-2">⭐</span>}
+          {runbook.name}
+        </h3>
         <span class="text-xs bg-slate-700 px-2 py-1 rounded text-slate-300">
           {runbook.steps} steps
         </span>
@@ -223,6 +336,9 @@ function RunbookCard({ runbook, onShowResult }: { runbook: Runbook, onShowResult
         <div>📁 {runbook.path}</div>
         <div class="mt-1">
           🕒 {new Date(runbook.lastModified).toLocaleDateString()}
+        </div>
+        <div class="mt-1 font-mono text-slate-600">
+          ID: {runbook.id.substring(0, 7)}
         </div>
       </div>
 
@@ -299,6 +415,13 @@ function RunbookCard({ runbook, onShowResult }: { runbook: Runbook, onShowResult
           ) : (
             '▶️ Run'
           )}
+        </button>
+        <button 
+          onClick={onToggleFavorite}
+          class={`px-3 py-2 ${isFavorite ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-slate-700 hover:bg-slate-600'} rounded text-white text-sm transition-colors`}
+          title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+        >
+          {isFavorite ? '⭐' : '☆'}
         </button>
         <button class="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-slate-300 text-sm">
           📝

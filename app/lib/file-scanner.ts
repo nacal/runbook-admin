@@ -1,5 +1,6 @@
 import { readdir, readFile, stat } from 'fs/promises'
 import { join, basename, relative } from 'path'
+import { createHash } from 'crypto'
 import type { Runbook } from './types'
 
 export class FileScanner {
@@ -72,9 +73,11 @@ export class FileScanner {
           .replace(/\.ya?ml$/, '')
           .replace(/\.(runbook|runn)$/, '')
         
+        const relativePath = relative(this.rootPath, filePath)
+        
         const runbook: Runbook = {
-          id: this.generateId(filePath),
-          path: relative(this.rootPath, filePath),
+          id: this.generateId(relativePath),
+          path: relativePath,
           name,
           description: yaml.desc || yaml.description || '',
           steps: this.countSteps(yaml),
@@ -94,8 +97,11 @@ export class FileScanner {
     }
   }
 
-  private generateId(filePath: string): string {
-    return Buffer.from(filePath).toString('base64').slice(0, 8)
+
+  private generateId(relativePath: string): string {
+    // Use SHA-1 like runn does for compatibility
+    // This allows using the same ID format as runn list command
+    return createHash('sha1').update(relativePath).digest('hex')
   }
 
   private countSteps(yaml: any): number {

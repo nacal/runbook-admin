@@ -126,6 +126,49 @@ export class Storage {
     }
   }
 
+  async saveFavorites(favorites: string[]): Promise<void> {
+    try {
+      await this.ensureStorageDir()
+      const favoritesFile = join(this.storageDir, 'favorites.json')
+      
+      const data = {
+        version: '1.0',
+        timestamp: new Date().toISOString(),
+        favorites
+      }
+
+      await writeFile(favoritesFile, JSON.stringify(data, null, 2), 'utf-8')
+      console.log(`[Storage] Saved ${favorites.length} favorites to ${favoritesFile}`)
+    } catch (error) {
+      console.error('[Storage] Failed to save favorites:', error)
+    }
+  }
+
+  async loadFavorites(): Promise<string[]> {
+    try {
+      const favoritesFile = join(this.storageDir, 'favorites.json')
+      
+      if (!existsSync(favoritesFile)) {
+        console.log('[Storage] No existing favorites file found')
+        return []
+      }
+
+      const content = await readFile(favoritesFile, 'utf-8')
+      const data = JSON.parse(content)
+
+      if (data.version !== '1.0') {
+        console.warn('[Storage] Favorites file version mismatch, starting fresh')
+        return []
+      }
+
+      console.log(`[Storage] Loaded ${data.favorites.length} favorites from ${favoritesFile}`)
+      return data.favorites || []
+    } catch (error) {
+      console.error('[Storage] Failed to load favorites:', error)
+      return []
+    }
+  }
+
   getStoragePath(): string {
     return this.storageDir
   }

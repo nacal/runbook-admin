@@ -1,5 +1,6 @@
 import { spawn, ChildProcess } from 'child_process'
 import { EventEmitter } from 'events'
+import { createHash } from 'crypto'
 import type { ExecutionResult } from './types'
 
 export class RunnExecutor extends EventEmitter {
@@ -123,7 +124,7 @@ export class RunnExecutor extends EventEmitter {
 
   async list(pattern: string = '**/*.yml'): Promise<any[]> {
     return new Promise((resolve, reject) => {
-      const process = spawn('runn', ['list', pattern, '--format', 'json'], {
+      const process = spawn('runn', ['list', pattern, '--long'], {
         stdio: ['pipe', 'pipe', 'pipe']
       })
 
@@ -141,9 +142,10 @@ export class RunnExecutor extends EventEmitter {
       process.on('close', (code) => {
         if (code === 0) {
           try {
-            const result = JSON.parse(output)
-            resolve(Array.isArray(result) ? result : [])
+            const result = this.parseListOutput(output)
+            resolve(result)
           } catch (error) {
+            console.error('Failed to parse runn list output:', error)
             resolve([])
           }
         } else {
@@ -155,6 +157,41 @@ export class RunnExecutor extends EventEmitter {
         reject(new Error(`Failed to run runn list: ${error.message}`))
       })
     })
+  }
+
+  private parseListOutput(output: string): any[] {
+    const lines = output.split('\n')
+    const results: any[] = []
+    
+    // Skip header and separator lines
+    let dataStartIndex = -1
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('---')) {
+        dataStartIndex = i + 1
+        break
+      }
+    }
+    
+    if (dataStartIndex === -1) return results
+    
+    for (let i = dataStartIndex; i < lines.length; i++) {
+      const line = lines[i].trim()
+      if (!line) continue
+      
+      // Parse the line format: id, desc, if, steps, path
+      const parts = line.split(/\s{2,}/) // Split by 2 or more spaces
+      if (parts.length >= 5) {
+        results.push({
+          id: parts[0].trim(),
+          desc: parts[1].trim(),
+          if: parts[2].trim(),
+          steps: parseInt(parts[3].trim()) || 0,
+          path: parts[4].trim()
+        })
+      }
+    }
+    
+    return results
   }
 
   stop(): void {
@@ -174,7 +211,8 @@ export class RunnExecutor extends EventEmitter {
   }
 
   private generateRunbookId(path: string): string {
-    return Buffer.from(path).toString('base64').slice(0, 8)
+    // Use SHA-1 like runn does for compatibility
+    return createHash('sha1').update(path).digest('hex')
   }
 
   static async checkRunnAvailable(): Promise<boolean> {
