@@ -4,6 +4,7 @@ import { RunbookList } from '../islands/RunbookList'
 export default createRoute((c) => {
   return c.render(
     <div>
+      <title>Dashboard - Runbook Admin</title>
       <header class="mb-8">
         <h1 class="text-4xl font-bold text-white mb-2">
           🔥 Runbook Admin
@@ -27,9 +28,6 @@ export default createRoute((c) => {
           Powered by <strong>HonoX</strong> + <strong>Runn</strong>
         </p>
       </footer>
-    </div>,
-    {
-      title: 'Dashboard'
-    }
+    </div>
   )
 })

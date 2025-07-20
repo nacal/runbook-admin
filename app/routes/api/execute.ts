@@ -31,7 +31,7 @@ export const POST = createRoute(async (c) => {
     
     // Handle execution in background
     executionPromise
-      .then((output) => {
+      .then(() => {
         console.log(`Execution ${executionId} completed successfully`)
       })
       .catch((error) => {

@@ -1,43 +1,32 @@
-import { readFile, stat } from 'fs/promises'
-import { basename, relative } from 'path'
+import { readdir, readFile, stat } from 'fs/promises'
+import { join, basename, relative } from 'path'
 import type { Runbook } from './types'
 
-export class RunbookScanner {
+export class FileScanner {
   private rootPath: string
+  private patterns = [
+    /\.runbook\.ya?ml$/,
+    /\/runbooks\/.*\.ya?ml$/,
+    /\/tests\/.*\.ya?ml$/,
+    /\.runn\.ya?ml$/
+  ]
+  
+  private ignore = [
+    'node_modules',
+    '.git',
+    'dist',
+    'build',
+    '.next',
+    'coverage'
+  ]
 
   constructor(rootPath: string = process.cwd()) {
     this.rootPath = rootPath
   }
 
   async scanRunbooks(): Promise<Runbook[]> {
-    const patterns = [
-      '**/*.runbook.yml',
-      '**/*.runbook.yaml',
-      '**/runbooks/**/*.yml',
-      '**/runbooks/**/*.yaml',
-      '**/tests/**/*.yml',
-      '**/tests/**/*.yaml',
-      '**/*.runn.yml',
-      '**/*.runn.yaml'
-    ]
-
-    const ignorePatterns = [
-      'node_modules/**',
-      '.git/**',
-      'dist/**',
-      'build/**',
-      '.next/**',
-      'coverage/**'
-    ]
-
     try {
-      const { glob } = await import('fast-glob')
-      const files = await glob(patterns, {
-        cwd: this.rootPath,
-        ignore: ignorePatterns,
-        absolute: true
-      })
-
+      const files = await this.findFiles(this.rootPath)
       const runbooks = await Promise.allSettled(
         files.map(filePath => this.parseRunbook(filePath))
       )
@@ -51,6 +40,26 @@ export class RunbookScanner {
       console.error('Error scanning runbooks:', error)
       return []
     }
+  }
+
+  private async findFiles(dir: string, files: string[] = []): Promise<string[]> {
+    const entries = await readdir(dir, { withFileTypes: true })
+
+    for (const entry of entries) {
+      const fullPath = join(dir, entry.name)
+      
+      if (entry.isDirectory()) {
+        if (!this.ignore.includes(entry.name)) {
+          await this.findFiles(fullPath, files)
+        }
+      } else if (entry.isFile()) {
+        if (this.patterns.some(pattern => pattern.test(fullPath))) {
+          files.push(fullPath)
+        }
+      }
+    }
+
+    return files
   }
 
   private async parseRunbook(filePath: string): Promise<Runbook> {
@@ -90,7 +99,6 @@ export class RunbookScanner {
   private extractVariables(yaml: any): Record<string, any> {
     const variables: Record<string, any> = {}
     
-    // Extract from vars section
     if (yaml.vars) {
       Object.entries(yaml.vars).forEach(([key, value]) => {
         variables[key] = {
@@ -102,7 +110,6 @@ export class RunbookScanner {
       })
     }
 
-    // Extract environment variables from content
     const content = JSON.stringify(yaml)
     const envVarPattern = /\$\{([A-Z_][A-Z0-9_]*)\}/g
     let match

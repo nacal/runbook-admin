@@ -16,9 +16,9 @@ async function main() {
     const app = createApp()
     
     // Start server
-    const server = serve({
+    serve({
       fetch: app.fetch,
-      port: PORT,
+      port: Number(PORT),
       hostname: HOST
     })
 
