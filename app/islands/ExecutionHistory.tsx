@@ -30,6 +30,26 @@ export function ExecutionHistory() {
     }
   }
 
+  const clearHistory = async () => {
+    if (!confirm('Are you sure you want to clear all execution history? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const response = await fetch('/api/executions', { method: 'DELETE' })
+      const result = await response.json()
+      
+      if (result.success) {
+        setExecutions([])
+        alert(`✅ ${result.message}`)
+      } else {
+        alert(`❌ Failed to clear history: ${result.error}`)
+      }
+    } catch (err) {
+      alert('❌ Failed to clear history')
+    }
+  }
+
   const formatDuration = (ms: number) => {
     if (ms < 1000) return `${ms}ms`
     if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`
@@ -106,8 +126,15 @@ export function ExecutionHistory() {
         </div>
       </div>
 
-      {/* Refresh Button */}
-      <div class="mb-6 flex justify-end">
+      {/* Action Buttons */}
+      <div class="mb-6 flex justify-end space-x-2">
+        <button 
+          onClick={clearHistory}
+          class="px-3 py-1 text-sm bg-red-700 hover:bg-red-600 rounded text-white"
+          disabled={executions.length === 0}
+        >
+          🗑️ Clear History
+        </button>
         <button 
           onClick={loadExecutions}
           class="px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 rounded text-slate-300"

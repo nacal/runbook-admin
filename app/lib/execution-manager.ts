@@ -1,18 +1,48 @@
 import { RunnExecutor } from './runn'
+import { Storage } from './storage'
 import type { ExecutionResult } from './types'
 
 export class ExecutionManager {
   private static instance: ExecutionManager
   private executions = new Map<string, ExecutionResult>()
   private executors = new Map<string, RunnExecutor>()
+  private storage = Storage.getInstance()
+  private initialized = false
 
-  private constructor() {}
+  private constructor() {
+    this.initializeFromStorage()
+  }
 
   static getInstance(): ExecutionManager {
     if (!ExecutionManager.instance) {
       ExecutionManager.instance = new ExecutionManager()
     }
     return ExecutionManager.instance
+  }
+
+  private async initializeFromStorage(): Promise<void> {
+    if (this.initialized) return
+
+    try {
+      const savedExecutions = await this.storage.loadExecutionHistory()
+      savedExecutions.forEach(execution => {
+        this.executions.set(execution.id, execution)
+      })
+      this.initialized = true
+      console.log(`[ExecutionManager] Loaded ${savedExecutions.length} executions from storage`)
+    } catch (error) {
+      console.error('[ExecutionManager] Failed to initialize from storage:', error)
+      this.initialized = true
+    }
+  }
+
+  private async persistToStorage(): Promise<void> {
+    try {
+      const allExecutions = Array.from(this.executions.values())
+      await this.storage.saveExecutionHistory(allExecutions)
+    } catch (error) {
+      console.error('[ExecutionManager] Failed to persist to storage:', error)
+    }
   }
 
   async startExecution(runbookPath: string, variables: Record<string, any> = {}): Promise<string> {
@@ -63,6 +93,9 @@ export class ExecutionManager {
       console.log(`[ExecutionManager] Execution ${executionId} completed:`, result.status, `(${result.duration}ms)`)
       this.executions.set(executionId, result)
       this.executors.delete(executionId)
+      
+      // Persist to storage
+      this.persistToStorage()
     })
 
     // Start execution in background with 30 second timeout
@@ -77,7 +110,8 @@ export class ExecutionManager {
     return this.executions.get(executionId)
   }
 
-  getAllExecutions(): ExecutionResult[] {
+  async getAllExecutions(): Promise<ExecutionResult[]> {
+    await this.initializeFromStorage()
     return Array.from(this.executions.values()).sort((a, b) => 
       b.startTime.getTime() - a.startTime.getTime()
     )
@@ -108,6 +142,12 @@ export class ExecutionManager {
 
   private generateRunbookId(path: string): string {
     return Buffer.from(path).toString('base64').slice(0, 8)
+  }
+
+  async clearHistory(): Promise<void> {
+    this.executions.clear()
+    await this.storage.clearHistory()
+    console.log('[ExecutionManager] Cleared all execution history')
   }
 
   private generateExecutionId(): string {

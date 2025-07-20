@@ -5,7 +5,7 @@ import { ExecutionManager } from '../../lib/execution-manager'
 export const GET = createRoute(async (c) => {
   try {
     const manager = ExecutionManager.getInstance()
-    const executions = manager.getAllExecutions()
+    const executions = await manager.getAllExecutions()
 
     return c.json({
       success: true,
@@ -27,17 +27,16 @@ export const GET = createRoute(async (c) => {
 export const DELETE = createRoute(async (c) => {
   try {
     const manager = ExecutionManager.getInstance()
-    // Clear all completed executions
-    const executions = manager.getAllExecutions()
+    const executions = await manager.getAllExecutions()
+    const totalCount = executions.length
     const runningCount = executions.filter(e => e.status === 'running').length
     
-    // For now, we can't actually clear from the manager without adding that method
-    // This would require adding a clearHistory method to ExecutionManager
+    await manager.clearHistory()
     
     return c.json({
       success: true,
-      message: `Kept ${runningCount} running executions`,
-      cleared: executions.length - runningCount
+      message: `Cleared ${totalCount - runningCount} completed executions. ${runningCount} running executions were preserved.`,
+      cleared: totalCount - runningCount
     })
   } catch (error) {
     console.error('Error clearing executions:', error)
