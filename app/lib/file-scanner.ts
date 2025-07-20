@@ -4,12 +4,6 @@ import type { Runbook } from './types'
 
 export class FileScanner {
   private rootPath: string
-  private patterns = [
-    /\.runbook\.ya?ml$/,
-    /\/runbooks\/.*\.ya?ml$/,
-    /\/tests\/.*\.ya?ml$/,
-    /\.runn\.ya?ml$/
-  ]
   
   private ignore = [
     'node_modules',
@@ -17,7 +11,9 @@ export class FileScanner {
     'dist',
     'build',
     '.next',
-    'coverage'
+    'coverage',
+    '.pnpm',
+    'vendor'
   ]
 
   constructor(rootPath: string = process.cwd()) {
@@ -53,7 +49,7 @@ export class FileScanner {
           await this.findFiles(fullPath, files)
         }
       } else if (entry.isFile()) {
-        if (this.patterns.some(pattern => pattern.test(fullPath))) {
+        if (entry.name.endsWith('.yml') || entry.name.endsWith('.yaml')) {
           files.push(fullPath)
         }
       }
@@ -70,20 +66,31 @@ export class FileScanner {
       const { load } = await import('js-yaml')
       const yaml = load(content) as any
       
-      const runbook: Runbook = {
-        id: this.generateId(filePath),
-        path: relative(this.rootPath, filePath),
-        name: basename(filePath, '.yml').replace(/\.(runbook|runn)$/, ''),
-        description: yaml.desc || yaml.description,
-        steps: this.countSteps(yaml),
-        lastModified: stats.mtime,
-        variables: this.extractVariables(yaml),
-        labels: yaml.labels || []
-      }
+      // Check if this is a valid runbook (has steps or is empty)
+      if (yaml && typeof yaml === 'object' && (yaml.steps !== undefined || yaml.desc !== undefined || yaml.description !== undefined)) {
+        const name = basename(filePath)
+          .replace(/\.ya?ml$/, '')
+          .replace(/\.(runbook|runn)$/, '')
+        
+        const runbook: Runbook = {
+          id: this.generateId(filePath),
+          path: relative(this.rootPath, filePath),
+          name,
+          description: yaml.desc || yaml.description || '',
+          steps: this.countSteps(yaml),
+          lastModified: stats.mtime,
+          variables: this.extractVariables(yaml),
+          labels: yaml.labels || []
+        }
 
-      return runbook
+        return runbook
+      } else {
+        throw new Error('Not a valid runbook format')
+      }
     } catch (error) {
-      throw new Error(`Failed to parse runbook ${filePath}: ${error}`)
+      // Log the error for debugging but don't stop the scan
+      console.debug(`Skipping ${relative(this.rootPath, filePath)}: ${error}`)
+      throw error
     }
   }
 
