@@ -1,0 +1,200 @@
+import { useState, useEffect } from 'hono/jsx'
+import type { ExecutionResult } from '../lib/types'
+import { ExecutionResultModal } from './ExecutionResult'
+
+export function ExecutionHistory() {
+  const [executions, setExecutions] = useState<ExecutionResult[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [showExecutionResult, setShowExecutionResult] = useState<string | null>(null)
+
+  useEffect(() => {
+    loadExecutions()
+  }, [])
+
+  const loadExecutions = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/executions')
+      const result = await response.json()
+      
+      if (result.success) {
+        setExecutions(result.data)
+      } else {
+        setError(result.error)
+      }
+    } catch (err) {
+      setError('Failed to load execution history')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formatDuration = (ms: number) => {
+    if (ms < 1000) return `${ms}ms`
+    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`
+    return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`
+  }
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'running': return '🔄'
+      case 'success': return '✅'
+      case 'failed': return '❌'
+      default: return '⏳'
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'running': return 'text-blue-400 bg-blue-900/20'
+      case 'success': return 'text-green-400 bg-green-900/20'
+      case 'failed': return 'text-red-400 bg-red-900/20'
+      default: return 'text-slate-400 bg-slate-900/20'
+    }
+  }
+
+  if (loading) {
+    return (
+      <div class="flex items-center justify-center py-12">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <span class="ml-3 text-slate-400">Loading execution history...</span>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div class="bg-red-900/20 border border-red-500/50 rounded-lg p-6">
+        <h3 class="text-red-400 font-semibold mb-2">Error Loading History</h3>
+        <p class="text-red-300">{error}</p>
+        <button 
+          onClick={loadExecutions}
+          class="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-white text-sm"
+        >
+          Retry
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      {/* Stats */}
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
+          <div class="text-slate-400 text-sm mb-1">Total Executions</div>
+          <div class="text-2xl font-bold text-white">{executions.length}</div>
+        </div>
+        <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
+          <div class="text-slate-400 text-sm mb-1">Successful</div>
+          <div class="text-2xl font-bold text-green-400">
+            {executions.filter(e => e.status === 'success').length}
+          </div>
+        </div>
+        <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
+          <div class="text-slate-400 text-sm mb-1">Failed</div>
+          <div class="text-2xl font-bold text-red-400">
+            {executions.filter(e => e.status === 'failed').length}
+          </div>
+        </div>
+        <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
+          <div class="text-slate-400 text-sm mb-1">Running</div>
+          <div class="text-2xl font-bold text-blue-400">
+            {executions.filter(e => e.status === 'running').length}
+          </div>
+        </div>
+      </div>
+
+      {/* Refresh Button */}
+      <div class="mb-6 flex justify-end">
+        <button 
+          onClick={loadExecutions}
+          class="px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
+        >
+          🔄 Refresh
+        </button>
+      </div>
+
+      {/* Execution List */}
+      {executions.length === 0 ? (
+        <div class="text-center py-12">
+          <div class="text-6xl mb-4">📋</div>
+          <h3 class="text-xl text-slate-300 mb-2">No executions yet</h3>
+          <p class="text-slate-500">
+            Execute some runbooks to see the history here
+          </p>
+          <a 
+            href="/"
+            class="inline-block mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white text-sm"
+          >
+            Go to Runbooks
+          </a>
+        </div>
+      ) : (
+        <div class="space-y-3">
+          {executions.map((execution) => (
+            <div 
+              key={execution.id}
+              class="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:border-slate-600 transition-colors cursor-pointer"
+              onClick={() => setShowExecutionResult(execution.id)}
+            >
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                  <span class={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(execution.status)}`}>
+                    {getStatusIcon(execution.status)} {execution.status.toUpperCase()}
+                  </span>
+                  <div>
+                    <div class="font-medium text-white">
+                      {execution.runbookPath}
+                    </div>
+                    <div class="text-xs text-slate-400">
+                      {new Date(execution.startTime).toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="flex items-center space-x-4 text-sm">
+                  <div class="text-slate-400">
+                    Duration: <span class="text-white">{formatDuration(execution.duration)}</span>
+                  </div>
+                  <div class="text-slate-400">
+                    Exit: <span class={execution.exitCode === 0 ? 'text-green-400' : 'text-red-400'}>
+                      {execution.exitCode}
+                    </span>
+                  </div>
+                  <div class="text-slate-500 text-xs">
+                    ID: {execution.id}
+                  </div>
+                </div>
+              </div>
+              
+              {Object.keys(execution.variables).length > 0 && (
+                <div class="mt-2 pt-2 border-t border-slate-700">
+                  <div class="flex flex-wrap gap-2">
+                    {Object.entries(execution.variables).map(([key, value]) => (
+                      <span 
+                        key={key}
+                        class="text-xs bg-slate-700 px-2 py-1 rounded text-slate-300"
+                      >
+                        {key}: {String(value)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Execution Result Modal */}
+      {showExecutionResult && (
+        <ExecutionResultModal 
+          executionId={showExecutionResult}
+          onClose={() => setShowExecutionResult(null)}
+        />
+      )}
+    </div>
+  )
+}

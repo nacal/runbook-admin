@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'hono/jsx'
 import type { Runbook } from '../lib/types'
+import { ExecutionResultModal } from './ExecutionResult'
 
 export function RunbookList() {
   const [runbooks, setRunbooks] = useState<Runbook[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [showExecutionResult, setShowExecutionResult] = useState<string | null>(null)
 
   useEffect(() => {
     loadRunbooks()
@@ -111,15 +113,27 @@ export function RunbookList() {
       ) : (
         <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredRunbooks.map((runbook) => (
-            <RunbookCard key={runbook.id} runbook={runbook} />
+            <RunbookCard 
+              key={runbook.id} 
+              runbook={runbook} 
+              onShowResult={setShowExecutionResult}
+            />
           ))}
         </div>
+      )}
+
+      {/* Execution Result Modal */}
+      {showExecutionResult && (
+        <ExecutionResultModal 
+          executionId={showExecutionResult}
+          onClose={() => setShowExecutionResult(null)}
+        />
       )}
     </div>
   )
 }
 
-function RunbookCard({ runbook }: { runbook: Runbook }) {
+function RunbookCard({ runbook, onShowResult }: { runbook: Runbook, onShowResult: (id: string) => void }) {
   const [isExecuting, setIsExecuting] = useState(false)
   const [executionId, setExecutionId] = useState<string | null>(null)
   const [showVariables, setShowVariables] = useState(false)
@@ -150,7 +164,6 @@ function RunbookCard({ runbook }: { runbook: Runbook }) {
 
       if (result.success) {
         setExecutionId(result.executionId)
-        alert(`✅ Execution started!\nID: ${result.executionId}\n\nCheck execution status in browser console or refresh the page.`)
 
         // Poll for execution status
         pollExecutionStatus(result.executionId)
@@ -177,6 +190,8 @@ function RunbookCard({ runbook }: { runbook: Runbook }) {
         } else {
           console.log(`Execution ${execId} completed:`, result.data)
           setExecutionId(null)
+          // Show result modal
+          onShowResult(execId)
         }
       }
     } catch (error) {
