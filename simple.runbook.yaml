@@ -1,0 +1,8 @@
+desc: Simple GET Request Test
+steps:
+  - desc: Make a simple request
+    req:
+      https://httpbin.org/get:
+        get:
+    test: |
+      current.res.status == 200

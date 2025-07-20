@@ -1,0 +1,22 @@
+desc: Example Runbook - API Health Check
+labels:
+  - example
+  - health-check
+vars:
+  API_URL: https://api.example.com
+  TIMEOUT: 30
+steps:
+  - desc: Check API endpoint
+    req:
+      ${API_URL}/health:
+        get:
+          headers:
+            Accept: application/json
+        timeout: ${TIMEOUT}
+    test: |
+      current.res.status == 200
+  
+  - desc: Verify response structure
+    test: |
+      current.res.body.status == "healthy" &&
+      current.res.body.timestamp != null
