@@ -2,6 +2,7 @@ import { useEffect, useState } from 'hono/jsx'
 import type { Runbook } from '../lib/types'
 import { ExecutionResultModal } from './ExecutionResult'
 import { VariableInput } from './VariableInput'
+import { RunbookViewer } from './RunbookViewer'
 
 export function RunbookList() {
   const [runbooks, setRunbooks] = useState<Runbook[]>([])
@@ -11,6 +12,7 @@ export function RunbookList() {
   const [showExecutionResult, setShowExecutionResult] = useState<string | null>(null)
   const [favorites, setFavorites] = useState<string[]>([])
   const [showVariableInput, setShowVariableInput] = useState<Runbook | null>(null)
+  const [showRunbookViewer, setShowRunbookViewer] = useState<Runbook | null>(null)
 
   useEffect(() => {
     loadRunbooks()
@@ -259,6 +261,7 @@ export function RunbookList() {
               onToggleFavorite={() => toggleFavorite(runbook.id)}
               onShowResult={setShowExecutionResult}
               onShowVariableInput={setShowVariableInput}
+              onShowRunbookViewer={setShowRunbookViewer}
             />
           ))}
         </div>
@@ -273,6 +276,15 @@ export function RunbookList() {
             await executeRunbook(showVariableInput, variables)
           }}
           onCancel={() => setShowVariableInput(null)}
+        />
+      )}
+
+      {/* Runbook Viewer Modal */}
+      {showRunbookViewer && (
+        <RunbookViewer
+          path={showRunbookViewer.path}
+          name={showRunbookViewer.name}
+          onClose={() => setShowRunbookViewer(null)}
         />
       )}
 
@@ -292,13 +304,15 @@ function RunbookCard({
   isFavorite, 
   onToggleFavorite, 
   onShowResult,
-  onShowVariableInput
+  onShowVariableInput,
+  onShowRunbookViewer
 }: { 
   runbook: Runbook
   isFavorite: boolean
   onToggleFavorite: () => void
   onShowResult: (id: string) => void
   onShowVariableInput: (runbook: Runbook) => void
+  onShowRunbookViewer: (runbook: Runbook) => void
 }) {
   const [isExecuting, setIsExecuting] = useState(false)
   const [executionId, setExecutionId] = useState<string | null>(null)
@@ -452,7 +466,11 @@ function RunbookCard({
         >
           {isFavorite ? '⭐' : '☆'}
         </button>
-        <button class="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-slate-300 text-sm">
+        <button 
+          onClick={() => onShowRunbookViewer(runbook)}
+          class="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-slate-300 text-sm"
+          title="View runbook source"
+        >
           📝
         </button>
       </div>
