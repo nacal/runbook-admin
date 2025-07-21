@@ -6,6 +6,13 @@ import { ExecutionResultModal } from './ExecutionResult'
 import { RunbookViewer } from './RunbookViewer'
 import { VariableInput } from './VariableInput'
 import { Toast, useToast } from './Toast'
+import { SearchBar } from './SearchBar'
+import { LabelFilter } from './LabelFilter'
+import { StatsBar } from './StatsBar'
+import { LoadingState } from './LoadingState'
+import { ErrorState } from './ErrorState'
+import { EmptyState } from './EmptyState'
+import { RunbookGrid } from './RunbookGrid'
 
 export function RunbookList() {
   const [runbooks, setRunbooks] = useState<Runbook[]>([])
@@ -231,158 +238,63 @@ export function RunbookList() {
     return a.name.localeCompare(b.name)
   })
 
+  const handleRefresh = () => {
+    loadRunbooks()
+    loadFavorites()
+  }
+
   if (loading) {
-    return (
-      <div class="flex items-center justify-center py-12">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-        <span class="ml-3 text-slate-400">Scanning runbooks...</span>
-      </div>
-    )
+    return <LoadingState />
   }
 
   if (error) {
-    return (
-      <div class="bg-red-900/20 border border-red-500/50 rounded-lg p-6">
-        <h3 class="text-red-400 font-semibold mb-2">Error Loading Runbooks</h3>
-        <p class="text-red-300">{error}</p>
-        <button
-          onClick={loadRunbooks}
-          class="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-white text-sm"
-        >
-          Retry
-        </button>
-      </div>
-    )
+    return <ErrorState error={error} onRetry={loadRunbooks} />
   }
 
   return (
     <div>
       {/* Search Bar */}
-      <div class="mb-6">
-        <input
-          type="text"
-          placeholder="🔍 Search runbooks..."
-          value={searchTerm}
-          onInput={(e) => setSearchTerm((e.target as HTMLInputElement).value)}
-          class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
-        />
-      </div>
+      <SearchBar 
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+      />
 
       {/* Label Filter */}
-      {availableLabels.length > 0 && (
-        <div class="mb-6">
-          <div class="flex items-center justify-between mb-3">
-            <h4 class="text-slate-400 text-sm font-medium">Filter by labels</h4>
-            {selectedLabels.length > 0 && (
-              <button
-                onClick={clearAllLabels}
-                class="text-xs text-red-400 hover:text-red-300 transition-colors"
-              >
-                Clear all
-              </button>
-            )}
-          </div>
-          <div class="flex flex-wrap gap-2">
-            {availableLabels.map((label) => (
-              <button
-                key={label}
-                onClick={() => toggleLabel(label)}
-                class={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                  selectedLabels.includes(label)
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          {selectedLabels.length > 0 && (
-            <div class="mt-2 text-xs text-slate-500">
-              Active filters: {selectedLabels.join(', ')}
-            </div>
-          )}
-        </div>
-      )}
+      <LabelFilter
+        availableLabels={availableLabels}
+        selectedLabels={selectedLabels}
+        onToggleLabel={toggleLabel}
+        onClearAll={clearAllLabels}
+      />
 
       {/* Stats */}
-      <div class="mb-6 flex items-center justify-between">
-        <div class="text-slate-400">
-          Found{' '}
-          <span class="text-white font-semibold">
-            {filteredRunbooks.length}
-          </span>{' '}
-          runbooks
-          {searchTerm && <span> matching "{searchTerm}"</span>}
-          {selectedLabels.length > 0 && <span> with labels [{selectedLabels.join(', ')}]</span>}
-          {favorites.length > 0 && (
-            <span class="ml-3">
-              <span class="text-yellow-500">⭐</span> {favorites.length}{' '}
-              favorites
-            </span>
-          )}
-        </div>
-        <div class="flex space-x-2">
-          <button
-            onClick={() => setShowEnvironmentSettings(true)}
-            class="px-3 py-1 text-sm bg-green-700 hover:bg-green-600 rounded text-white"
-            title="Manage Environment Variables"
-          >
-            🌍 Environment
-          </button>
-          <button
-            onClick={() => {
-              loadRunbooks()
-              loadFavorites()
-            }}
-            class="px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
-          >
-            🔄 Refresh
-          </button>
-        </div>
-      </div>
+      <StatsBar
+        filteredCount={filteredRunbooks.length}
+        searchTerm={searchTerm}
+        selectedLabels={selectedLabels}
+        favoritesCount={favorites.length}
+        onShowEnvironmentSettings={() => setShowEnvironmentSettings(true)}
+        onRefresh={handleRefresh}
+      />
 
       {/* Runbook Grid */}
       {filteredRunbooks.length === 0 ? (
-        <div class="text-center py-12">
-          <div class="text-6xl mb-4">📝</div>
-          <h3 class="text-xl text-slate-300 mb-2">No runbooks found</h3>
-          <p class="text-slate-500">
-            {searchTerm
-              ? `No runbooks match "${searchTerm}"`
-              : 'No .yml files found in common runbook locations'}
-          </p>
-          {!searchTerm && (
-            <div class="mt-4 text-sm text-slate-600">
-              <p>Looking for files in:</p>
-              <ul class="mt-2 space-y-1">
-                <li>**/*.runbook.yml</li>
-                <li>**/runbooks/**/*.yml</li>
-                <li>**/tests/**/*.yml</li>
-              </ul>
-            </div>
-          )}
-        </div>
+        <EmptyState searchTerm={searchTerm} />
       ) : (
-        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
-          {sortedRunbooks.map((runbook) => (
-            <RunbookCard
-              key={runbook.id}
-              runbook={runbook}
-              isFavorite={favorites.includes(runbook.id)}
-              onToggleFavorite={() => toggleFavorite(runbook.id)}
-              onShowResult={setShowExecutionResult}
-              onShowVariableInput={setShowVariableInput}
-              onShowRunbookViewer={setShowRunbookViewer}
-              openDropdown={openDropdown}
-              setOpenDropdown={setOpenDropdown}
-              isExecutingGlobally={executingRunbooks.has(runbook.id)}
-              onShowError={showError}
-              selectedLabels={selectedLabels}
-              setSelectedLabels={setSelectedLabels}
-            />
-          ))}
-        </div>
+        <RunbookGrid
+          runbooks={sortedRunbooks}
+          favorites={favorites}
+          onToggleFavorite={toggleFavorite}
+          onShowResult={setShowExecutionResult}
+          onShowVariableInput={setShowVariableInput}
+          onShowRunbookViewer={setShowRunbookViewer}
+          openDropdown={openDropdown}
+          setOpenDropdown={setOpenDropdown}
+          executingRunbooks={executingRunbooks}
+          onShowError={showError}
+          selectedLabels={selectedLabels}
+          setSelectedLabels={setSelectedLabels}
+        />
       )}
 
       {/* Variable Input Modal */}
@@ -423,290 +335,6 @@ export function RunbookList() {
 
       {/* Toast Notifications */}
       <Toast messages={toasts} onRemove={removeToast} />
-    </div>
-  )
-}
-
-function RunbookCard({
-  runbook,
-  isFavorite,
-  onToggleFavorite,
-  onShowResult,
-  onShowVariableInput,
-  onShowRunbookViewer,
-  openDropdown,
-  setOpenDropdown,
-  isExecutingGlobally,
-  onShowError,
-  selectedLabels,
-  setSelectedLabels,
-}: {
-  runbook: Runbook
-  isFavorite: boolean
-  onToggleFavorite: () => void
-  onShowResult: (id: string) => void
-  onShowVariableInput: (runbook: Runbook) => void
-  onShowRunbookViewer: (runbook: Runbook) => void
-  openDropdown: string | null
-  setOpenDropdown: (id: string | null) => void
-  isExecutingGlobally: boolean
-  onShowError: (message: string) => void
-  selectedLabels: string[]
-  setSelectedLabels: (labels: string[] | ((prev: string[]) => string[])) => void
-}) {
-  const [isExecuting, setIsExecuting] = useState(false)
-  const [executionId, setExecutionId] = useState<string | null>(null)
-
-  // Check if runbook has required variables or file type variables
-  const hasRequiredVariables = Object.values(runbook.variables).some(
-    (variable) => variable.required || variable.type === 'file' || variable.type === 'json'
-  )
-
-  const [executionMode, setExecutionMode] = useState<'quick' | 'configure'>(
-    hasRequiredVariables ? 'configure' : 'quick'
-  )
-  const showDropdown = openDropdown === runbook.id
-
-  useEffect(() => {
-    if (!showDropdown) return
-
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Element
-      // Check if click is outside the dropdown container
-      if (!target?.closest('.dropdown-container')) {
-        setOpenDropdown(null)
-      }
-    }
-
-    // Add a small delay to prevent immediate closing
-    const timer = setTimeout(() => {
-      document.addEventListener('click', handleClickOutside, { capture: true })
-    }, 10)
-
-    return () => {
-      clearTimeout(timer)
-      document.removeEventListener('click', handleClickOutside, {
-        capture: true,
-      })
-    }
-  }, [showDropdown, setOpenDropdown])
-
-  const handleExecute = async () => {
-    if (executionMode === 'configure') {
-      // Open configuration modal
-      onShowVariableInput(runbook)
-      return
-    }
-
-    // Quick execute without configuration
-    setIsExecuting(true)
-    try {
-      const response = await fetch('/api/execute', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          runbookPath: runbook.path,
-          variables: {},
-          executionOptions: { args: [] },
-        }),
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        setExecutionId(result.executionId)
-        // Poll for execution status
-        pollExecutionStatus(result.executionId)
-      } else {
-        onShowError(`Failed to execute: ${result.error}`)
-      }
-    } catch (error) {
-      onShowError(`Failed to execute ${runbook.name}: ${error}`)
-    } finally {
-      setIsExecuting(false)
-    }
-  }
-
-  const handleModeSelect = (mode: 'quick' | 'configure') => {
-    setExecutionMode(mode)
-    setOpenDropdown(null)
-  }
-
-  const pollExecutionStatus = async (execId: string) => {
-    try {
-      const response = await fetch(`/api/executions/${execId}`)
-      const result = await response.json()
-
-      if (result.success) {
-        if (result.data.status === 'running' && result.isRunning) {
-          setTimeout(() => pollExecutionStatus(execId), 1000)
-        } else {
-          setExecutionId(null)
-          // Show result modal
-          onShowResult(execId)
-        }
-      }
-    } catch (error) {
-      console.error('Failed to poll execution status:', error)
-      setExecutionId(null)
-    }
-  }
-
-  return (
-    <div
-      class={`bg-slate-800/50 border ${
-        isFavorite
-          ? 'border-yellow-600/50 hover:border-yellow-600'
-          : 'border-slate-700 hover:border-slate-600'
-      } rounded-lg p-4 transition-colors relative flex flex-col h-full min-h-[280px]`}
-    >
-      {/* Content area - grows to fill space */}
-      <div class="flex flex-col flex-grow">
-        <div class="flex items-start justify-between mb-3 gap-2">
-          <div class="min-w-0 flex-1">
-            <h3 class="font-semibold text-white truncate">
-              {runbook.name}
-            </h3>
-          </div>
-          <span class="text-xs bg-slate-700 px-2 py-1 rounded text-slate-300 flex-shrink-0">
-            {runbook.steps} steps
-          </span>
-        </div>
-
-        {runbook.description && (
-          <p class="text-sm text-slate-400 mb-3 line-clamp-2">
-            {runbook.description}
-          </p>
-        )}
-
-        <div class="text-xs text-slate-500">
-          <div>📁 {runbook.path}</div>
-          <div class="mt-1">
-            🕒 {new Date(runbook.lastModified).toLocaleDateString()}
-          </div>
-          <div class="mt-1 font-mono text-slate-600">
-            ID: {runbook.id.substring(0, 7)}
-          </div>
-        </div>
-
-        {/* Spacer to push labels to bottom of content area */}
-        <div class="flex-grow"></div>
-
-        {/* Labels section - always takes same space */}
-        <div class="h-8 mt-4 mb-4">
-          {runbook.labels && runbook.labels.length > 0 && (
-            <div class="flex flex-wrap gap-1">
-              {runbook.labels.map((label) => (
-                <button
-                  key={label}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    if (!selectedLabels.includes(label)) {
-                      setSelectedLabels(prev => [...prev, label])
-                    }
-                  }}
-                  class={`text-xs px-2 py-1 rounded transition-colors ${
-                    selectedLabels.includes(label)
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-blue-900/30 text-blue-300 hover:bg-blue-900/50'
-                  }`}
-                  title={`Filter by ${label}`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Button area - stays at bottom */}
-      <div class="flex space-x-2 mt-auto">
-        <div class="flex-1 relative dropdown-container">
-          {/* Main execute button */}
-          <button
-            onClick={handleExecute}
-            disabled={
-              isExecuting || executionId !== null || isExecutingGlobally
-            }
-            class="w-full pr-8 pl-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed rounded text-white text-sm font-medium transition-colors"
-          >
-            {isExecuting || isExecutingGlobally || executionId ? (
-              <>
-                <span class="inline-block animate-pulse mr-2">🔄</span>
-                Executing...
-              </>
-            ) : executionMode === 'configure' ? (
-              '⚙️ Configure & Run'
-            ) : (
-              '▶️ Quick Run'
-            )}
-          </button>
-
-          {/* Dropdown button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setOpenDropdown(showDropdown ? null : runbook.id)
-            }}
-            disabled={
-              isExecuting || executionId !== null || isExecutingGlobally
-            }
-            class="absolute right-0 top-0 h-full w-8 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed rounded-r text-white text-xs transition-colors border-l border-blue-500 flex items-center justify-center"
-          >
-            ▼
-          </button>
-
-          {/* Dropdown menu */}
-          {showDropdown && (
-            <div
-              class="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-600 rounded shadow-lg z-10"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleModeSelect('configure')
-                }}
-                class={`w-full px-3 py-2 text-left text-white text-sm rounded-t hover:bg-blue-700 text-white'
-                }`}
-              >
-                ⚙️ Configure & Run
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleModeSelect('quick')
-                }}
-                class={`w-full px-3 py-2 text-left text-white text-sm rounded-b hover:bg-blue-700 text-white'
-                }`}
-              >
-                ▶️ Quick Run
-              </button>
-            </div>
-          )}
-        </div>
-        <button
-          onClick={() => onShowRunbookViewer(runbook)}
-          class="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-slate-300 text-sm"
-          title="View runbook source"
-        >
-          📝
-        </button>
-        <button
-          onClick={onToggleFavorite}
-          class={`px-3 py-2 ${
-            isFavorite
-              ? 'bg-yellow-600 hover:bg-yellow-700'
-              : 'bg-slate-700 hover:bg-slate-600'
-          } rounded text-white text-sm transition-colors`}
-          title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-        >
-          {isFavorite ? '⭐' : '☆'}
-        </button>
-      </div>
     </div>
   )
 }
