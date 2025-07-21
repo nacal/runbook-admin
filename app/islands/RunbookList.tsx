@@ -23,6 +23,9 @@ export function RunbookList() {
   )
   const [showEnvironmentSettings, setShowEnvironmentSettings] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const [executingRunbooks, setExecutingRunbooks] = useState<Set<string>>(
+    new Set()
+  )
 
   useEffect(() => {
     loadRunbooks()
@@ -81,6 +84,9 @@ export function RunbookList() {
     variables: Record<string, string>,
     executionOptions?: ExecutionOptions
   ) => {
+    // Mark runbook as executing
+    setExecutingRunbooks((prev) => new Set([...prev, runbook.id]))
+
     try {
       const response = await fetch('/api/execute', {
         method: 'POST',
@@ -98,16 +104,28 @@ export function RunbookList() {
 
       if (result.success) {
         // Poll for execution status and show result when complete
-        pollExecutionStatus(result.executionId)
+        pollExecutionStatus(result.executionId, runbook.id)
       } else {
+        // Remove from executing set on error
+        setExecutingRunbooks((prev) => {
+          const newSet = new Set(prev)
+          newSet.delete(runbook.id)
+          return newSet
+        })
         alert(`❌ Failed to execute: ${result.error}`)
       }
     } catch (error) {
+      // Remove from executing set on error
+      setExecutingRunbooks((prev) => {
+        const newSet = new Set(prev)
+        newSet.delete(runbook.id)
+        return newSet
+      })
       alert(`❌ Failed to execute ${runbook.name}: ${error}`)
     }
   }
 
-  const pollExecutionStatus = async (execId: string) => {
+  const pollExecutionStatus = async (execId: string, runbookId?: string) => {
     try {
       const response = await fetch(`/api/executions/${execId}`)
       const result = await response.json()
@@ -115,15 +133,31 @@ export function RunbookList() {
       if (result.success) {
         console.log(`Execution ${execId} status:`, result.data.status)
         if (result.data.status === 'running' && result.isRunning) {
-          setTimeout(() => pollExecutionStatus(execId), 1000)
+          setTimeout(() => pollExecutionStatus(execId, runbookId), 1000)
         } else {
           console.log(`Execution ${execId} completed:`, result.data)
+          // Remove from executing set when complete
+          if (runbookId) {
+            setExecutingRunbooks((prev) => {
+              const newSet = new Set(prev)
+              newSet.delete(runbookId)
+              return newSet
+            })
+          }
           // Show result modal
           setShowExecutionResult(execId)
         }
       }
     } catch (error) {
       console.error('Failed to poll execution status:', error)
+      // Remove from executing set on error
+      if (runbookId) {
+        setExecutingRunbooks((prev) => {
+          const newSet = new Set(prev)
+          newSet.delete(runbookId)
+          return newSet
+        })
+      }
     }
   }
 
@@ -296,6 +330,7 @@ export function RunbookList() {
               onShowRunbookViewer={setShowRunbookViewer}
               openDropdown={openDropdown}
               setOpenDropdown={setOpenDropdown}
+              isExecutingGlobally={executingRunbooks.has(runbook.id)}
             />
           ))}
         </div>
@@ -349,6 +384,7 @@ function RunbookCard({
   onShowRunbookViewer,
   openDropdown,
   setOpenDropdown,
+  isExecutingGlobally,
 }: {
   runbook: Runbook
   isFavorite: boolean
@@ -358,11 +394,18 @@ function RunbookCard({
   onShowRunbookViewer: (runbook: Runbook) => void
   openDropdown: string | null
   setOpenDropdown: (id: string | null) => void
+  isExecutingGlobally: boolean
 }) {
   const [isExecuting, setIsExecuting] = useState(false)
   const [executionId, setExecutionId] = useState<string | null>(null)
+
+  // Check if runbook has required variables
+  const hasRequiredVariables = Object.values(runbook.variables).some(
+    (variable) => variable.required
+  )
+
   const [executionMode, setExecutionMode] = useState<'quick' | 'configure'>(
-    'quick'
+    hasRequiredVariables ? 'configure' : 'quick'
   )
   const showDropdown = openDropdown === runbook.id
 
@@ -458,8 +501,10 @@ function RunbookCard({
   return (
     <div
       class={`bg-slate-800/50 border ${
-        isFavorite ? 'border-yellow-600/50' : 'border-slate-700'
-      } rounded-lg p-4 hover:border-slate-600 transition-colors relative flex flex-col h-full min-h-[280px]`}
+        isFavorite
+          ? 'border-yellow-600/50 hover:border-yellow-600'
+          : 'border-slate-700 hover:border-slate-600'
+      } rounded-lg p-4 transition-colors relative flex flex-col h-full min-h-[280px]`}
     >
       {/* Content area - grows to fill space */}
       <div class="flex flex-col flex-grow">
@@ -515,15 +560,12 @@ function RunbookCard({
           {/* Main execute button */}
           <button
             onClick={handleExecute}
-            disabled={isExecuting || executionId !== null}
+            disabled={
+              isExecuting || executionId !== null || isExecutingGlobally
+            }
             class="w-full pr-8 pl-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed rounded text-white text-sm font-medium transition-colors"
           >
-            {isExecuting ? (
-              <>
-                <span class="inline-block animate-spin mr-2">⚡</span>
-                Running...
-              </>
-            ) : executionId ? (
+            {isExecuting || isExecutingGlobally || executionId ? (
               <>
                 <span class="inline-block animate-pulse mr-2">🔄</span>
                 Executing...
@@ -541,7 +583,9 @@ function RunbookCard({
               e.stopPropagation()
               setOpenDropdown(showDropdown ? null : runbook.id)
             }}
-            disabled={isExecuting || executionId !== null}
+            disabled={
+              isExecuting || executionId !== null || isExecutingGlobally
+            }
             class="absolute right-0 top-0 h-full w-8 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed rounded-r text-white text-xs transition-colors border-l border-blue-500 flex items-center justify-center"
           >
             ▼
@@ -558,8 +602,7 @@ function RunbookCard({
                   e.stopPropagation()
                   handleModeSelect('configure')
                 }}
-                class={`w-full px-3 py-2 text-left text-white text-sm hover:bg-slate-700 rounded-t ${
-                  executionMode === 'configure' ? 'bg-slate-700' : ''
+                class={`w-full px-3 py-2 text-left text-white text-sm rounded-t hover:bg-blue-700 text-white'
                 }`}
               >
                 ⚙️ Configure & Run
@@ -569,8 +612,7 @@ function RunbookCard({
                   e.stopPropagation()
                   handleModeSelect('quick')
                 }}
-                class={`w-full px-3 py-2 text-left text-white text-sm hover:bg-slate-700 rounded-b ${
-                  executionMode === 'quick' ? 'bg-slate-700' : ''
+                class={`w-full px-3 py-2 text-left text-white text-sm rounded-b hover:bg-blue-700 text-white'
                 }`}
               >
                 ▶️ Quick Run
