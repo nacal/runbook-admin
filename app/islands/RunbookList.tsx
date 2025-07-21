@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'hono/jsx'
 import type { Runbook } from '../lib/types'
 import { ExecutionResultModal } from './ExecutionResult'
+import { VariableInput } from './VariableInput'
 
 export function RunbookList() {
   const [runbooks, setRunbooks] = useState<Runbook[]>([])
@@ -9,6 +10,7 @@ export function RunbookList() {
   const [searchTerm, setSearchTerm] = useState('')
   const [showExecutionResult, setShowExecutionResult] = useState<string | null>(null)
   const [favorites, setFavorites] = useState<string[]>([])
+  const [showVariableInput, setShowVariableInput] = useState<Runbook | null>(null)
 
   useEffect(() => {
     loadRunbooks()
@@ -54,6 +56,52 @@ export function RunbookList() {
       }
     } catch (err) {
       console.error('Failed to load favorites:', err)
+    }
+  }
+
+  const executeRunbook = async (runbook: Runbook, variables: Record<string, string>) => {
+    try {
+      const response = await fetch('/api/execute', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          runbookPath: runbook.path,
+          variables: variables
+        }),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        // Poll for execution status and show result when complete
+        pollExecutionStatus(result.executionId)
+      } else {
+        alert(`❌ Failed to execute: ${result.error}`)
+      }
+    } catch (error) {
+      alert(`❌ Failed to execute ${runbook.name}: ${error}`)
+    }
+  }
+
+  const pollExecutionStatus = async (execId: string) => {
+    try {
+      const response = await fetch(`/api/executions/${execId}`)
+      const result = await response.json()
+
+      if (result.success) {
+        console.log(`Execution ${execId} status:`, result.data.status)
+        if (result.data.status === 'running' && result.isRunning) {
+          setTimeout(() => pollExecutionStatus(execId), 1000)
+        } else {
+          console.log(`Execution ${execId} completed:`, result.data)
+          // Show result modal
+          setShowExecutionResult(execId)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to poll execution status:', error)
     }
   }
 
@@ -210,9 +258,22 @@ export function RunbookList() {
               isFavorite={favorites.includes(runbook.id)}
               onToggleFavorite={() => toggleFavorite(runbook.id)}
               onShowResult={setShowExecutionResult}
+              onShowVariableInput={setShowVariableInput}
             />
           ))}
         </div>
+      )}
+
+      {/* Variable Input Modal */}
+      {showVariableInput && (
+        <VariableInput
+          runbook={showVariableInput}
+          onSubmit={async (variables) => {
+            setShowVariableInput(null)
+            await executeRunbook(showVariableInput, variables)
+          }}
+          onCancel={() => setShowVariableInput(null)}
+        />
       )}
 
       {/* Execution Result Modal */}
@@ -230,26 +291,28 @@ function RunbookCard({
   runbook, 
   isFavorite, 
   onToggleFavorite, 
-  onShowResult 
+  onShowResult,
+  onShowVariableInput
 }: { 
   runbook: Runbook
   isFavorite: boolean
   onToggleFavorite: () => void
-  onShowResult: (id: string) => void 
+  onShowResult: (id: string) => void
+  onShowVariableInput: (runbook: Runbook) => void
 }) {
   const [isExecuting, setIsExecuting] = useState(false)
   const [executionId, setExecutionId] = useState<string | null>(null)
-  const [showVariables, setShowVariables] = useState(false)
-  const [variables, setVariables] = useState<Record<string, string>>({})
 
   const handleExecute = async () => {
     // Check if variables are needed
     const hasVariables = Object.keys(runbook.variables).length > 0
-    if (hasVariables && !showVariables) {
-      setShowVariables(true)
+    if (hasVariables) {
+      // Use the new VariableInput component
+      onShowVariableInput(runbook)
       return
     }
 
+    // For runbooks without variables, execute directly
     setIsExecuting(true)
     try {
       const response = await fetch('/api/execute', {
@@ -259,7 +322,7 @@ function RunbookCard({
         },
         body: JSON.stringify({
           runbookPath: runbook.path,
-          variables: variables
+          variables: {}
         }),
       })
 
@@ -267,7 +330,6 @@ function RunbookCard({
 
       if (result.success) {
         setExecutionId(result.executionId)
-
         // Poll for execution status
         pollExecutionStatus(result.executionId)
       } else {
@@ -277,7 +339,6 @@ function RunbookCard({
       alert(`❌ Failed to execute ${runbook.name}: ${error}`)
     } finally {
       setIsExecuting(false)
-      setShowVariables(false)
     }
   }
 
@@ -303,9 +364,6 @@ function RunbookCard({
     }
   }
 
-  const handleVariableChange = (key: string, value: string) => {
-    setVariables(prev => ({ ...prev, [key]: value }))
-  }
 
   return (
     <div class={`bg-slate-800/50 border ${isFavorite ? 'border-yellow-600/50' : 'border-slate-700'} rounded-lg p-4 hover:border-slate-600 transition-colors relative`}>
@@ -355,44 +413,6 @@ function RunbookCard({
         </div>
       )}
 
-      {/* Variable Input Form */}
-      {showVariables && (
-        <div class="mb-4 p-3 bg-slate-900/50 border border-slate-600 rounded">
-          <h4 class="text-sm font-medium text-white mb-2">Variables Required:</h4>
-          <div class="space-y-2">
-            {Object.entries(runbook.variables).map(([key, variable]) => (
-              <div key={key}>
-                <label class="block text-xs text-slate-400 mb-1">
-                  {variable.name || key}
-                  {variable.required && <span class="text-red-400">*</span>}
-                </label>
-                <input
-                  type={variable.type === 'number' ? 'number' : 'text'}
-                  placeholder={variable.defaultValue || `Enter ${key}...`}
-                  value={variables[key] || ''}
-                  onInput={(e) => handleVariableChange(key, (e.target as HTMLInputElement).value)}
-                  class="w-full px-2 py-1 text-xs bg-slate-800 border border-slate-700 rounded text-white placeholder-slate-500 focus:border-blue-500 outline-none"
-                />
-              </div>
-            ))}
-          </div>
-          <div class="flex space-x-2 mt-3">
-            <button
-              onClick={handleExecute}
-              disabled={isExecuting}
-              class="flex-1 px-2 py-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 rounded text-white text-xs"
-            >
-              {isExecuting ? 'Running...' : 'Execute'}
-            </button>
-            <button
-              onClick={() => setShowVariables(false)}
-              class="px-2 py-1 bg-slate-600 hover:bg-slate-500 rounded text-slate-300 text-xs"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
 
       <div class="flex space-x-2">
         <button

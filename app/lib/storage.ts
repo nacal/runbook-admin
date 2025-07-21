@@ -169,6 +169,92 @@ export class Storage {
     }
   }
 
+  async saveVariablePresets(presets: Record<string, any>): Promise<void> {
+    try {
+      await this.ensureStorageDir()
+      const presetsFile = join(this.storageDir, 'variable-presets.json')
+      
+      const data = {
+        version: '1.0',
+        timestamp: new Date().toISOString(),
+        presets
+      }
+
+      await writeFile(presetsFile, JSON.stringify(data, null, 2), 'utf-8')
+      console.log(`[Storage] Saved variable presets to ${presetsFile}`)
+    } catch (error) {
+      console.error('[Storage] Failed to save variable presets:', error)
+    }
+  }
+
+  async loadVariablePresets(): Promise<Record<string, any>> {
+    try {
+      const presetsFile = join(this.storageDir, 'variable-presets.json')
+      
+      if (!existsSync(presetsFile)) {
+        console.log('[Storage] No existing variable presets file found')
+        return {}
+      }
+
+      const content = await readFile(presetsFile, 'utf-8')
+      const data = JSON.parse(content)
+
+      if (data.version !== '1.0') {
+        console.warn('[Storage] Variable presets file version mismatch, starting fresh')
+        return {}
+      }
+
+      console.log(`[Storage] Loaded variable presets from ${presetsFile}`)
+      return data.presets || {}
+    } catch (error) {
+      console.error('[Storage] Failed to load variable presets:', error)
+      return {}
+    }
+  }
+
+  async saveGlobalVariables(variables: Record<string, string>): Promise<void> {
+    try {
+      await this.ensureStorageDir()
+      const globalVarsFile = join(this.storageDir, 'global-variables.json')
+      
+      const data = {
+        version: '1.0',
+        timestamp: new Date().toISOString(),
+        variables
+      }
+
+      await writeFile(globalVarsFile, JSON.stringify(data, null, 2), 'utf-8')
+      console.log(`[Storage] Saved global variables to ${globalVarsFile}`)
+    } catch (error) {
+      console.error('[Storage] Failed to save global variables:', error)
+    }
+  }
+
+  async loadGlobalVariables(): Promise<Record<string, string>> {
+    try {
+      const globalVarsFile = join(this.storageDir, 'global-variables.json')
+      
+      if (!existsSync(globalVarsFile)) {
+        console.log('[Storage] No existing global variables file found')
+        return {}
+      }
+
+      const content = await readFile(globalVarsFile, 'utf-8')
+      const data = JSON.parse(content)
+
+      if (data.version !== '1.0') {
+        console.warn('[Storage] Global variables file version mismatch, starting fresh')
+        return {}
+      }
+
+      console.log(`[Storage] Loaded global variables from ${globalVarsFile}`)
+      return data.variables || {}
+    } catch (error) {
+      console.error('[Storage] Failed to load global variables:', error)
+      return {}
+    }
+  }
+
   getStoragePath(): string {
     return this.storageDir
   }

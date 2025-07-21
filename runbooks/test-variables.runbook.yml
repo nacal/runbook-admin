@@ -1,0 +1,49 @@
+desc: Variable Management Test - Different types of variables for testing presets and global variables
+
+vars:
+  API_BASE_URL: "http://localhost:3000"
+  DEBUG_MODE: true
+  RETRY_COUNT: 3
+  USER_NAME: "testuser"
+
+steps:
+  - desc: Display environment info
+    exec:
+      command: echo
+      args:
+        - "Starting test with API_BASE_URL=${API_BASE_URL}"
+  
+  - desc: Check debug mode
+    exec:
+      command: echo
+      args:
+        - "Debug mode is ${DEBUG_MODE}"
+  
+  - desc: Show retry configuration
+    exec:
+      command: echo
+      args:
+        - "Will retry ${RETRY_COUNT} times"
+  
+  - desc: Greet user
+    exec:
+      command: echo
+      args:
+        - "Hello ${USER_NAME}!"
+  
+  - desc: Test environment variable
+    exec:
+      command: echo
+      args:
+        - "Current PATH: ${PATH}"
+  
+  - desc: Success message
+    exec:
+      command: echo
+      args:
+        - "✅ Variable test completed successfully"
+
+labels:
+  - test
+  - variables
+  - demo
