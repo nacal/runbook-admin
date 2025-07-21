@@ -1,5 +1,9 @@
 desc: ファイルアップロードテスト
 description: file://スキームを使用したファイルアップロード機能のテスト
+labels:
+  - file-upload
+  - test
+  - sql
 
 vars:
   sql_query: file://queries/test.sql

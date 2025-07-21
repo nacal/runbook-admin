@@ -12,6 +12,8 @@ export function RunbookList() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedLabels, setSelectedLabels] = useState<string[]>([])
+  const [availableLabels, setAvailableLabels] = useState<string[]>([])
   const [showExecutionResult, setShowExecutionResult] = useState<string | null>(
     null
   )
@@ -53,6 +55,17 @@ export function RunbookList() {
         }
 
         setRunbooks(result.data)
+        
+        // Extract all unique labels from runbooks
+        const allLabels = new Set<string>()
+        result.data.forEach((runbook: Runbook) => {
+          if (runbook.labels) {
+            runbook.labels.forEach((label: string) => {
+              allLabels.add(label)
+            })
+          }
+        })
+        setAvailableLabels(Array.from(allLabels).sort())
       } else {
         setError(result.error)
       }
@@ -182,12 +195,31 @@ export function RunbookList() {
     }
   }
 
-  const filteredRunbooks = runbooks.filter(
-    (runbook) =>
+  const toggleLabel = (label: string) => {
+    setSelectedLabels(prev => 
+      prev.includes(label) 
+        ? prev.filter(l => l !== label)
+        : [...prev, label]
+    )
+  }
+
+  const clearAllLabels = () => {
+    setSelectedLabels([])
+  }
+
+  const filteredRunbooks = runbooks.filter((runbook) => {
+    // Text search filter
+    const matchesSearch = !searchTerm || 
       runbook.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       runbook.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       runbook.path.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+    
+    // Label filter
+    const matchesLabels = selectedLabels.length === 0 || 
+      (runbook.labels && selectedLabels.every(label => runbook.labels!.includes(label)))
+    
+    return matchesSearch && matchesLabels
+  })
 
   // Sort runbooks: favorites first, then by name
   const sortedRunbooks = [...filteredRunbooks].sort((a, b) => {
@@ -236,6 +268,43 @@ export function RunbookList() {
         />
       </div>
 
+      {/* Label Filter */}
+      {availableLabels.length > 0 && (
+        <div class="mb-6">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-slate-400 text-sm font-medium">Filter by labels</h4>
+            {selectedLabels.length > 0 && (
+              <button
+                onClick={clearAllLabels}
+                class="text-xs text-red-400 hover:text-red-300 transition-colors"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
+          <div class="flex flex-wrap gap-2">
+            {availableLabels.map((label) => (
+              <button
+                key={label}
+                onClick={() => toggleLabel(label)}
+                class={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                  selectedLabels.includes(label)
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {selectedLabels.length > 0 && (
+            <div class="mt-2 text-xs text-slate-500">
+              Active filters: {selectedLabels.join(', ')}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Stats */}
       <div class="mb-6 flex items-center justify-between">
         <div class="text-slate-400">
@@ -245,6 +314,7 @@ export function RunbookList() {
           </span>{' '}
           runbooks
           {searchTerm && <span> matching "{searchTerm}"</span>}
+          {selectedLabels.length > 0 && <span> with labels [{selectedLabels.join(', ')}]</span>}
           {favorites.length > 0 && (
             <span class="ml-3">
               <span class="text-yellow-500">⭐</span> {favorites.length}{' '}
@@ -308,6 +378,8 @@ export function RunbookList() {
               setOpenDropdown={setOpenDropdown}
               isExecutingGlobally={executingRunbooks.has(runbook.id)}
               onShowError={showError}
+              selectedLabels={selectedLabels}
+              setSelectedLabels={setSelectedLabels}
             />
           ))}
         </div>
@@ -366,6 +438,8 @@ function RunbookCard({
   setOpenDropdown,
   isExecutingGlobally,
   onShowError,
+  selectedLabels,
+  setSelectedLabels,
 }: {
   runbook: Runbook
   isFavorite: boolean
@@ -377,6 +451,8 @@ function RunbookCard({
   setOpenDropdown: (id: string | null) => void
   isExecutingGlobally: boolean
   onShowError: (message: string) => void
+  selectedLabels: string[]
+  setSelectedLabels: (labels: string[] | ((prev: string[]) => string[])) => void
 }) {
   const [isExecuting, setIsExecuting] = useState(false)
   const [executionId, setExecutionId] = useState<string | null>(null)
@@ -523,12 +599,23 @@ function RunbookCard({
           {runbook.labels && runbook.labels.length > 0 && (
             <div class="flex flex-wrap gap-1">
               {runbook.labels.map((label) => (
-                <span
+                <button
                   key={label}
-                  class="text-xs bg-blue-900/30 text-blue-300 px-2 py-1 rounded"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (!selectedLabels.includes(label)) {
+                      setSelectedLabels(prev => [...prev, label])
+                    }
+                  }}
+                  class={`text-xs px-2 py-1 rounded transition-colors ${
+                    selectedLabels.includes(label)
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-blue-900/30 text-blue-300 hover:bg-blue-900/50'
+                  }`}
+                  title={`Filter by ${label}`}
                 >
                   {label}
-                </span>
+                </button>
               ))}
             </div>
           )}
