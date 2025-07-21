@@ -508,12 +508,13 @@ function RunbookCard({
     >
       {/* Content area - grows to fill space */}
       <div class="flex flex-col flex-grow">
-        <div class="flex items-start justify-between mb-3">
-          <h3 class="font-semibold text-white truncate flex items-center">
-            {isFavorite && <span class="text-yellow-500 mr-2">⭐</span>}
-            {runbook.name}
-          </h3>
-          <span class="text-xs bg-slate-700 px-2 py-1 rounded text-slate-300">
+        <div class="flex items-start justify-between mb-3 gap-2">
+          <div class="min-w-0 flex-1">
+            <h3 class="font-semibold text-white truncate">
+              {runbook.name}
+            </h3>
+          </div>
+          <span class="text-xs bg-slate-700 px-2 py-1 rounded text-slate-300 flex-shrink-0">
             {runbook.steps} steps
           </span>
         </div>
@@ -621,6 +622,13 @@ function RunbookCard({
           )}
         </div>
         <button
+          onClick={() => onShowRunbookViewer(runbook)}
+          class="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-slate-300 text-sm"
+          title="View runbook source"
+        >
+          📝
+        </button>
+        <button
           onClick={onToggleFavorite}
           class={`px-3 py-2 ${
             isFavorite
@@ -630,13 +638,6 @@ function RunbookCard({
           title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
         >
           {isFavorite ? '⭐' : '☆'}
-        </button>
-        <button
-          onClick={() => onShowRunbookViewer(runbook)}
-          class="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-slate-300 text-sm"
-          title="View runbook source"
-        >
-          📝
         </button>
       </div>
     </div>
