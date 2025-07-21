@@ -2,6 +2,7 @@ import { RunnExecutor } from './runn'
 import { Storage } from '../utils/storage'
 import { createHash } from 'crypto'
 import type { ExecutionResult } from '../types/types'
+import type { ExecutionOptions } from './execution-options-manager'
 
 export class ExecutionManager {
   private static instance: ExecutionManager
@@ -46,7 +47,7 @@ export class ExecutionManager {
     }
   }
 
-  async startExecution(runbookPath: string, variables: Record<string, any> = {}): Promise<string> {
+  async startExecution(runbookPath: string, variables: Record<string, any> = {}, executionOptions?: ExecutionOptions): Promise<string> {
     const executor = new RunnExecutor()
     const executionId = executor.executionId
 
@@ -100,7 +101,7 @@ export class ExecutionManager {
     })
 
     // Start execution in background with 30 second timeout
-    executor.execute(runbookPath, variables, 30000).catch((error) => {
+    executor.execute(runbookPath, variables, 30000, executionOptions).catch((error) => {
       console.error(`Execution ${executionId} failed:`, error)
     })
 

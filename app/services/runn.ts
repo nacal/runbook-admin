@@ -3,6 +3,7 @@ import { EventEmitter } from 'events'
 import { createHash } from 'crypto'
 import type { ExecutionResult } from '../types/types'
 import { EnvironmentManager } from './environment-manager'
+import { ExecutionOptionsManager, type ExecutionOptions } from './execution-options-manager'
 
 export class RunnExecutor extends EventEmitter {
   private process: ChildProcess | null = null
@@ -13,7 +14,7 @@ export class RunnExecutor extends EventEmitter {
     this.executionId = this.generateId()
   }
 
-  async execute(runbookPath: string, variables: Record<string, any> = {}, timeout: number = 60000): Promise<ExecutionResult> {
+  async execute(runbookPath: string, variables: Record<string, any> = {}, timeout: number = 60000, executionOptions?: ExecutionOptions): Promise<ExecutionResult> {
     return new Promise(async (resolve, reject) => {
       if (this.process) {
         reject(new Error('Execution already in progress'))
@@ -28,6 +29,13 @@ export class RunnExecutor extends EventEmitter {
         args.push('--var', `${key}:${value}`)
       })
 
+      // Add execution options
+      if (executionOptions) {
+        const optionsManager = ExecutionOptionsManager.getInstance()
+        const optionArgs = optionsManager.buildCommandArgs(executionOptions)
+        args.push(...optionArgs)
+      }
+
       console.log(`[RunnExecutor] Starting execution ${this.executionId}:`, 'runn', args.join(' '))
 
       // Get environment variables for execution
@@ -37,7 +45,10 @@ export class RunnExecutor extends EventEmitter {
       this.process = spawn('runn', args, {
         cwd: process.cwd(),
         stdio: ['ignore', 'pipe', 'pipe'],  // ignore stdin to prevent hanging
-        env: execEnv  // Include managed environment variables
+        env: {
+          ...process.env,  // Preserve current environment (including PATH)
+          ...execEnv       // Add managed environment variables
+        }
       })
 
       let output = ''
@@ -130,22 +141,23 @@ export class RunnExecutor extends EventEmitter {
 
   async list(pattern: string = '**/*.yml'): Promise<any[]> {
     return new Promise((resolve, reject) => {
-      const process = spawn('runn', ['list', pattern, '--long'], {
-        stdio: ['pipe', 'pipe', 'pipe']
+      const childProcess = spawn('runn', ['list', pattern, '--long'], {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        env: process.env
       })
 
       let output = ''
       let errorOutput = ''
 
-      process.stdout?.on('data', (data) => {
+      childProcess.stdout?.on('data', (data) => {
         output += data.toString()
       })
 
-      process.stderr?.on('data', (data) => {
+      childProcess.stderr?.on('data', (data) => {
         errorOutput += data.toString()
       })
 
-      process.on('close', (code) => {
+      childProcess.on('close', (code) => {
         if (code === 0) {
           try {
             const result = this.parseListOutput(output)
@@ -159,7 +171,7 @@ export class RunnExecutor extends EventEmitter {
         }
       })
 
-      process.on('error', (error) => {
+      childProcess.on('error', (error) => {
         reject(new Error(`Failed to run runn list: ${error.message}`))
       })
     })
@@ -223,13 +235,16 @@ export class RunnExecutor extends EventEmitter {
 
   static async checkRunnAvailable(): Promise<boolean> {
     return new Promise((resolve) => {
-      const process = spawn('runn', ['--version'], { stdio: 'pipe' })
+      const childProcess = spawn('runn', ['--version'], { 
+        stdio: 'pipe',
+        env: process.env
+      })
       
-      process.on('close', (code) => {
+      childProcess.on('close', (code) => {
         resolve(code === 0)
       })
       
-      process.on('error', () => {
+      childProcess.on('error', () => {
         resolve(false)
       })
     })

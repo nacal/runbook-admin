@@ -1,9 +1,11 @@
 import { Storage } from '../utils/storage'
+import type { ExecutionOptions } from './execution-options-manager'
 
 export interface VariablePreset {
   name: string
   description?: string
   variables: Record<string, string>
+  executionOptions?: ExecutionOptions
   createdAt: Date
   lastUsed?: Date
 }
@@ -38,6 +40,7 @@ export class VariableManager {
             name: preset.name,
             description: preset.description,
             variables: preset.variables,
+            executionOptions: preset.executionOptions,
             createdAt: new Date(preset.createdAt || Date.now()),
             lastUsed: preset.lastUsed ? new Date(preset.lastUsed) : undefined
           }
@@ -55,13 +58,14 @@ export class VariableManager {
     }
   }
 
-  async savePreset(name: string, variables: Record<string, string>, description?: string): Promise<void> {
+  async savePreset(name: string, variables: Record<string, string>, description?: string, executionOptions?: ExecutionOptions): Promise<void> {
     await this.initialize()
 
     const preset: VariablePreset = {
       name,
       description,
       variables,
+      executionOptions,
       createdAt: new Date(),
       lastUsed: new Date()
     }
@@ -165,6 +169,7 @@ export class VariableManager {
             name: preset.name,
             description: preset.description,
             variables: preset.variables,
+            executionOptions: preset.executionOptions,
             createdAt: preset.createdAt.toISOString(),
             lastUsed: preset.lastUsed?.toISOString()
           }

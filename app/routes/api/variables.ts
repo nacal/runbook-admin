@@ -25,7 +25,7 @@ app.get('/presets', async (c) => {
 // Save preset
 app.post('/presets', async (c) => {
   try {
-    const { name, variables, description } = await c.req.json()
+    const { name, variables, description, executionOptions } = await c.req.json()
     
     if (!name || !variables) {
       return c.json({
@@ -35,7 +35,7 @@ app.post('/presets', async (c) => {
     }
 
     const manager = VariableManager.getInstance()
-    await manager.savePreset(name, variables, description)
+    await manager.savePreset(name, variables, description, executionOptions)
     
     return c.json({
       success: true,
@@ -159,9 +159,21 @@ app.post('/merge', async (c) => {
     const manager = VariableManager.getInstance()
     const merged = await manager.mergeVariables(runbookVariables, presetName, overrides)
     
+    // Get execution options from preset if available
+    let executionOptions = { args: [] }
+    if (presetName) {
+      const preset = await manager.getPreset(presetName)
+      if (preset && preset.executionOptions) {
+        executionOptions = preset.executionOptions
+      }
+    }
+    
     return c.json({
       success: true,
-      data: merged
+      data: {
+        variables: merged,
+        executionOptions
+      }
     })
   } catch (error) {
     console.error('Failed to merge variables:', error)

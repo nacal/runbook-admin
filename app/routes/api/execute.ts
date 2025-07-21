@@ -4,7 +4,7 @@ import { ExecutionManager } from '../../services/execution-manager'
 
 export const POST = createRoute(async (c) => {
   try {
-    const { runbookPath, variables = {} } = await c.req.json()
+    const { runbookPath, variables = {}, executionOptions } = await c.req.json()
 
     if (!runbookPath) {
       return c.json({
@@ -23,7 +23,7 @@ export const POST = createRoute(async (c) => {
     }
 
     const manager = ExecutionManager.getInstance()
-    const executionId = await manager.startExecution(runbookPath, variables)
+    const executionId = await manager.startExecution(runbookPath, variables, executionOptions)
 
     return c.json({
       success: true,

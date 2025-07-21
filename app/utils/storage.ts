@@ -298,6 +298,92 @@ export class Storage {
     }
   }
 
+  async saveExecutionPresets(presets: Record<string, any>): Promise<void> {
+    try {
+      await this.ensureStorageDir()
+      const presetsFile = join(this.storageDir, 'execution-presets.json')
+      
+      const data = {
+        version: '1.0',
+        timestamp: new Date().toISOString(),
+        presets
+      }
+
+      await writeFile(presetsFile, JSON.stringify(data, null, 2), 'utf-8')
+      console.log(`[Storage] Saved execution presets to ${presetsFile}`)
+    } catch (error) {
+      console.error('[Storage] Failed to save execution presets:', error)
+    }
+  }
+
+  async loadExecutionPresets(): Promise<Record<string, any>> {
+    try {
+      const presetsFile = join(this.storageDir, 'execution-presets.json')
+      
+      if (!existsSync(presetsFile)) {
+        console.log('[Storage] No existing execution presets file found')
+        return {}
+      }
+
+      const content = await readFile(presetsFile, 'utf-8')
+      const data = JSON.parse(content)
+
+      if (data.version !== '1.0') {
+        console.warn('[Storage] Execution presets file version mismatch, starting fresh')
+        return {}
+      }
+
+      console.log(`[Storage] Loaded execution presets from ${presetsFile}`)
+      return data.presets || {}
+    } catch (error) {
+      console.error('[Storage] Failed to load execution presets:', error)
+      return {}
+    }
+  }
+
+  async saveDefaultExecutionOptions(options: any): Promise<void> {
+    try {
+      await this.ensureStorageDir()
+      const optionsFile = join(this.storageDir, 'default-execution-options.json')
+      
+      const data = {
+        version: '1.0',
+        timestamp: new Date().toISOString(),
+        options
+      }
+
+      await writeFile(optionsFile, JSON.stringify(data, null, 2), 'utf-8')
+      console.log(`[Storage] Saved default execution options to ${optionsFile}`)
+    } catch (error) {
+      console.error('[Storage] Failed to save default execution options:', error)
+    }
+  }
+
+  async loadDefaultExecutionOptions(): Promise<any> {
+    try {
+      const optionsFile = join(this.storageDir, 'default-execution-options.json')
+      
+      if (!existsSync(optionsFile)) {
+        console.log('[Storage] No existing default execution options file found')
+        return {}
+      }
+
+      const content = await readFile(optionsFile, 'utf-8')
+      const data = JSON.parse(content)
+
+      if (data.version !== '1.0') {
+        console.warn('[Storage] Default execution options file version mismatch, starting fresh')
+        return {}
+      }
+
+      console.log(`[Storage] Loaded default execution options from ${optionsFile}`)
+      return data.options || {}
+    } catch (error) {
+      console.error('[Storage] Failed to load default execution options:', error)
+      return {}
+    }
+  }
+
   getStoragePath(): string {
     return this.storageDir
   }

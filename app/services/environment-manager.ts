@@ -112,6 +112,7 @@ export class EnvironmentManager {
     })).sort((a, b) => a.key.localeCompare(b.key))
   }
 
+
   private async persist(): Promise<void> {
     try {
       const serializable: Record<string, any> = {}

@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'hono/jsx'
 import type { Runbook } from '../types/types'
+import type { ExecutionOptions as ExecutionOptionsType } from '../services/execution-options-manager'
 
 export interface VariablePreset {
   name: string
   description?: string
   variables: Record<string, string>
+  executionOptions?: ExecutionOptionsType
   createdAt: Date
   lastUsed?: Date
 }
 
 interface VariableInputProps {
   runbook: Runbook
-  onSubmit: (variables: Record<string, string>) => void
+  onSubmit: (variables: Record<string, string>, executionOptions?: ExecutionOptionsType) => void
   onCancel: () => void
 }
 
@@ -23,6 +25,7 @@ export function VariableInput({ runbook, onSubmit, onCancel }: VariableInputProp
   const [showSavePreset, setShowSavePreset] = useState(false)
   const [globalVariables, setGlobalVariables] = useState<Record<string, string>>({})
   const [environmentVariables, setEnvironmentVariables] = useState<Record<string, string>>({})
+  const [executionOptions, setExecutionOptions] = useState<ExecutionOptionsType>({ args: [] })
 
   useEffect(() => {
     initializeData()
@@ -119,7 +122,10 @@ export function VariableInput({ runbook, onSubmit, onCancel }: VariableInputProp
         
         const result = await response.json()
         if (result.success) {
-          setVariables(result.data)
+          setVariables(result.data.variables)
+          if (result.data.executionOptions) {
+            setExecutionOptions(result.data.executionOptions)
+          }
         }
       } catch (error) {
         console.error('Failed to apply preset:', error)
@@ -127,6 +133,7 @@ export function VariableInput({ runbook, onSubmit, onCancel }: VariableInputProp
     } else {
       // Reset to defaults
       initializeData()
+      setExecutionOptions({ args: [] })
     }
   }
 
@@ -144,6 +151,7 @@ export function VariableInput({ runbook, onSubmit, onCancel }: VariableInputProp
         body: JSON.stringify({
           name: newPresetName,
           variables,
+          executionOptions,
           description: `Preset for ${runbook.name}`
         })
       })
@@ -164,7 +172,7 @@ export function VariableInput({ runbook, onSubmit, onCancel }: VariableInputProp
   }
 
   const handleSubmit = () => {
-    onSubmit(variables)
+    onSubmit(variables, executionOptions)
   }
 
   const isValidForm = () => {
@@ -295,6 +303,30 @@ export function VariableInput({ runbook, onSubmit, onCancel }: VariableInputProp
           )}
         </div>
 
+        {/* Execution Options */}
+        <div class="mb-6">
+          <h4 class="text-white font-medium mb-3">⚙️ Execution Options</h4>
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">
+              Command Line Arguments
+            </label>
+            <textarea
+              placeholder="Enter runn command line arguments (e.g., --debug --verbose --concurrent on)"
+              value={executionOptions.args.join(' ')}
+              onInput={(e) => {
+                const text = (e.target as HTMLTextAreaElement)?.value || ''
+                const args = text.trim() ? text.trim().split(/\s+/) : []
+                setExecutionOptions({ args })
+              }}
+              rows={3}
+              class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500 focus:border-blue-500 outline-none font-mono text-sm"
+            />
+            <div class="mt-1 text-xs text-slate-400">
+              Example: --debug --verbose --concurrent on --format json
+            </div>
+          </div>
+        </div>
+
         {/* Action Buttons */}
         <div class="flex space-x-3">
           <button
@@ -318,6 +350,7 @@ export function VariableInput({ runbook, onSubmit, onCancel }: VariableInputProp
             ⚠️ Please fill in all required variables
           </div>
         )}
+
       </div>
     </div>
   )
