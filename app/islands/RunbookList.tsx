@@ -39,11 +39,6 @@ export function RunbookList() {
       const result = await response.json()
 
       if (result.success) {
-        console.log(
-          'Loaded runbooks:',
-          result.data.map((r: Runbook) => ({ name: r.name, id: r.id }))
-        )
-
         // Check for duplicate IDs
         const ids = result.data.map((r: Runbook) => r.id)
         const uniqueIds = new Set(ids)
@@ -131,11 +126,9 @@ export function RunbookList() {
       const result = await response.json()
 
       if (result.success) {
-        console.log(`Execution ${execId} status:`, result.data.status)
         if (result.data.status === 'running' && result.isRunning) {
           setTimeout(() => pollExecutionStatus(execId, runbookId), 1000)
         } else {
-          console.log(`Execution ${execId} completed:`, result.data)
           // Remove from executing set when complete
           if (runbookId) {
             setExecutingRunbooks((prev) => {
@@ -163,9 +156,6 @@ export function RunbookList() {
 
   const toggleFavorite = async (runbookId: string) => {
     try {
-      console.log('Toggling favorite for:', runbookId)
-      console.log('Current favorites:', favorites)
-
       const response = await fetch('/api/favorites', {
         method: 'POST',
         headers: {
@@ -175,16 +165,13 @@ export function RunbookList() {
       })
 
       const result = await response.json()
-      console.log('Toggle result:', result)
 
       if (result.success) {
         if (result.isFavorite) {
           const newFavorites = [...favorites, runbookId]
-          console.log('Adding to favorites, new list:', newFavorites)
           setFavorites(newFavorites)
         } else {
           const newFavorites = favorites.filter((id) => id !== runbookId)
-          console.log('Removing from favorites, new list:', newFavorites)
           setFavorites(newFavorites)
         }
       }
@@ -482,11 +469,9 @@ function RunbookCard({
       const result = await response.json()
 
       if (result.success) {
-        console.log(`Execution ${execId} status:`, result.data.status)
         if (result.data.status === 'running' && result.isRunning) {
           setTimeout(() => pollExecutionStatus(execId), 1000)
         } else {
-          console.log(`Execution ${execId} completed:`, result.data)
           setExecutionId(null)
           // Show result modal
           onShowResult(execId)
