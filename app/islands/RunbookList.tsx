@@ -250,7 +250,7 @@ export function RunbookList() {
           )}
         </div>
       ) : (
-        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
           {sortedRunbooks.map((runbook) => (
             <RunbookCard 
               key={runbook.id} 
@@ -366,7 +366,7 @@ function RunbookCard({
 
 
   return (
-    <div class={`bg-slate-800/50 border ${isFavorite ? 'border-yellow-600/50' : 'border-slate-700'} rounded-lg p-4 hover:border-slate-600 transition-colors relative`}>
+    <div class={`bg-slate-800/50 border ${isFavorite ? 'border-yellow-600/50' : 'border-slate-700'} rounded-lg p-4 hover:border-slate-600 transition-colors relative flex flex-col h-full min-h-[280px]`}>
       {/* Favorite Badge */}
       {isFavorite && (
         <div class="absolute -top-2 -right-2 bg-yellow-600 text-white text-xs px-2 py-1 rounded-full shadow-lg">
@@ -374,6 +374,8 @@ function RunbookCard({
         </div>
       )}
       
+      {/* Content area - grows to fill space */}
+      <div class="flex flex-col flex-grow">
       <div class="flex items-start justify-between mb-3">
         <h3 class="font-semibold text-white truncate flex items-center">
           {isFavorite && <span class="text-yellow-500 mr-2">⭐</span>}
@@ -390,7 +392,7 @@ function RunbookCard({
         </p>
       )}
 
-      <div class="text-xs text-slate-500 mb-4">
+      <div class="text-xs text-slate-500">
         <div>📁 {runbook.path}</div>
         <div class="mt-1">
           🕒 {new Date(runbook.lastModified).toLocaleDateString()}
@@ -400,21 +402,28 @@ function RunbookCard({
         </div>
       </div>
 
-      {runbook.labels && runbook.labels.length > 0 && (
-        <div class="flex flex-wrap gap-1 mb-4">
-          {runbook.labels.map((label) => (
-            <span
-              key={label}
-              class="text-xs bg-blue-900/30 text-blue-300 px-2 py-1 rounded"
-            >
-              {label}
-            </span>
-          ))}
-        </div>
-      )}
+      {/* Spacer to push labels to bottom of content area */}
+      <div class="flex-grow"></div>
+      
+      {/* Labels section - always takes same space */}
+      <div class="h-8 mt-4 mb-4">
+        {runbook.labels && runbook.labels.length > 0 && (
+          <div class="flex flex-wrap gap-1">
+            {runbook.labels.map((label) => (
+              <span
+                key={label}
+                class="text-xs bg-blue-900/30 text-blue-300 px-2 py-1 rounded"
+              >
+                {label}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      </div>
 
-
-      <div class="flex space-x-2">
+      {/* Button area - stays at bottom */}
+      <div class="flex space-x-2 mt-auto">
         <button
           onClick={handleExecute}
           disabled={isExecuting || executionId !== null}
