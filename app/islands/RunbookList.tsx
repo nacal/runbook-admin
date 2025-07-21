@@ -258,19 +258,6 @@ export function RunbookList() {
           >
             🌍 Environment
           </button>
-          {favorites.length > 0 && (
-            <button
-              onClick={async () => {
-                if (confirm('Clear all favorites?')) {
-                  await fetch('/api/favorites', { method: 'DELETE' })
-                  setFavorites([])
-                }
-              }}
-              class="px-3 py-1 text-sm bg-red-700 hover:bg-red-600 rounded text-white"
-            >
-              Clear ⭐
-            </button>
-          )}
           <button
             onClick={() => {
               loadRunbooks()
