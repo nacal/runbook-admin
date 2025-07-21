@@ -116,9 +116,9 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
   return (
     <div class="fixed inset-0 bg-black/50 z-50 overflow-y-auto">
       <div class="flex items-center justify-center min-h-full p-4">
-        <div class="bg-slate-800 rounded-lg shadow-xl max-w-4xl w-full" style="max-height: calc(100vh - 2rem);">
+        <div class="bg-slate-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[calc(100vh-2rem)] flex flex-col">
           {/* Header */}
-          <div class="flex items-center justify-between p-6 border-b border-slate-700">
+          <div class="flex items-center justify-between p-6 border-b border-slate-700 flex-shrink-0">
             <div>
               <h2 class="text-xl font-semibold text-white">🌍 Environment Variables</h2>
               <p class="text-sm text-slate-400 mt-1">
@@ -134,7 +134,7 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
           </div>
 
           {/* Content */}
-          <div class="flex-1 overflow-auto p-6">
+          <div class="flex-1 overflow-y-auto p-6">
             {/* Add/Edit Form */}
             <div class="mb-6 p-4 bg-slate-900/50 border border-slate-700 rounded-lg">
               <h3 class="text-lg font-medium text-white mb-4">
@@ -272,7 +272,7 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
           </div>
 
           {/* Footer */}
-          <div class="p-6 border-t border-slate-700 flex items-center justify-between text-sm text-slate-400">
+          <div class="p-6 border-t border-slate-700 flex items-center justify-between text-sm text-slate-400 flex-shrink-0">
             <div>
               Press <kbd class="px-2 py-1 bg-slate-700 rounded text-xs">ESC</kbd> to close
             </div>
