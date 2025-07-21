@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'hono/jsx'
 import type { Runbook } from '../types/types'
 import type { ExecutionOptions as ExecutionOptionsType } from '../services/execution-options-manager'
+import { Toast, useToast } from './Toast'
 
 export interface VariablePreset {
   name: string
@@ -26,6 +27,7 @@ export function VariableInput({ runbook, onSubmit, onCancel }: VariableInputProp
   const [globalVariables, setGlobalVariables] = useState<Record<string, string>>({})
   const [environmentVariables, setEnvironmentVariables] = useState<Record<string, string>>({})
   const [executionOptions, setExecutionOptions] = useState<ExecutionOptionsType>({ args: [] })
+  const { toasts, showSuccess, showError, removeToast } = useToast()
 
   useEffect(() => {
     initializeData()
@@ -161,13 +163,13 @@ export function VariableInput({ runbook, onSubmit, onCancel }: VariableInputProp
         setNewPresetName('')
         setShowSavePreset(false)
         loadPresets() // Reload presets
-        alert(`✅ Preset '${newPresetName}' saved successfully`)
+        showSuccess(`Preset '${newPresetName}' saved successfully`)
       } else {
-        alert(`❌ Failed to save preset: ${result.error}`)
+        showError(`Failed to save preset: ${result.error}`)
       }
     } catch (error) {
       console.error('Failed to save preset:', error)
-      alert('❌ Failed to save preset')
+      showError('Failed to save preset')
     }
   }
 
@@ -352,6 +354,9 @@ export function VariableInput({ runbook, onSubmit, onCancel }: VariableInputProp
         )}
 
       </div>
+
+      {/* Toast Notifications */}
+      <Toast messages={toasts} onRemove={removeToast} />
     </div>
   )
 }

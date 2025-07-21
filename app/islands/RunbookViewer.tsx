@@ -2,6 +2,7 @@ import { useEffect, useState } from 'hono/jsx'
 import Prism from 'prismjs'
 import 'prismjs/components/prism-yaml'
 import { PrismStyles } from '../components/PrismStyles'
+import { Toast, useToast } from './Toast'
 
 interface RunbookViewerProps {
   path: string
@@ -15,6 +16,7 @@ export function RunbookViewer({ path, name, onClose }: RunbookViewerProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [lines, setLines] = useState(0)
+  const { toasts, showSuccess, showError, removeToast } = useToast()
 
   useEffect(() => {
     loadContent()
@@ -61,9 +63,9 @@ export function RunbookViewer({ path, name, onClose }: RunbookViewerProps) {
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(content)
-      alert('✅ Copied to clipboard!')
+      showSuccess('Copied to clipboard!')
     } catch (err) {
-      alert('❌ Failed to copy to clipboard')
+      showError('Failed to copy to clipboard')
     }
   }
 
@@ -139,6 +141,9 @@ export function RunbookViewer({ path, name, onClose }: RunbookViewerProps) {
         </div>
       </div>
     </div>
+
+    {/* Toast Notifications */}
+    <Toast messages={toasts} onRemove={removeToast} />
     </>
   )
 }

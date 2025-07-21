@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'hono/jsx'
 import type { ExecutionResult } from '../types/types'
 import { ExecutionResultModal } from './ExecutionResult'
+import { Toast, useToast } from './Toast'
+import { useConfirmDialog } from './ConfirmDialog'
 
 export function ExecutionHistory() {
   const [executions, setExecutions] = useState<ExecutionResult[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showExecutionResult, setShowExecutionResult] = useState<string | null>(null)
+  const { toasts, showSuccess, showError, removeToast } = useToast()
+  const { showConfirm, ConfirmDialogComponent } = useConfirmDialog()
 
   useEffect(() => {
     loadExecutions()
@@ -31,9 +35,17 @@ export function ExecutionHistory() {
   }
 
   const clearHistory = async () => {
-    if (!confirm('Are you sure you want to clear all execution history? This action cannot be undone.')) {
-      return
-    }
+    const confirmed = await showConfirm(
+      'Clear Execution History',
+      'Are you sure you want to clear all execution history? This action cannot be undone.',
+      {
+        confirmText: 'Clear All',
+        cancelText: 'Cancel', 
+        variant: 'danger'
+      }
+    )
+
+    if (!confirmed) return
 
     try {
       const response = await fetch('/api/executions', { method: 'DELETE' })
@@ -41,12 +53,12 @@ export function ExecutionHistory() {
       
       if (result.success) {
         setExecutions([])
-        alert(`✅ ${result.message}`)
+        showSuccess(result.message)
       } else {
-        alert(`❌ Failed to clear history: ${result.error}`)
+        showError(`Failed to clear history: ${result.error}`)
       }
     } catch (err) {
-      alert('❌ Failed to clear history')
+      showError('Failed to clear history')
     }
   }
 
@@ -222,6 +234,12 @@ export function ExecutionHistory() {
           onClose={() => setShowExecutionResult(null)}
         />
       )}
+
+      {/* Toast Notifications */}
+      <Toast messages={toasts} onRemove={removeToast} />
+
+      {/* Confirm Dialog */}
+      <ConfirmDialogComponent />
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { EnvironmentSettings } from './EnvironmentSettings'
 import { ExecutionResultModal } from './ExecutionResult'
 import { RunbookViewer } from './RunbookViewer'
 import { VariableInput } from './VariableInput'
+import { Toast, useToast } from './Toast'
 
 export function RunbookList() {
   const [runbooks, setRunbooks] = useState<Runbook[]>([])
@@ -26,6 +27,7 @@ export function RunbookList() {
   const [executingRunbooks, setExecutingRunbooks] = useState<Set<string>>(
     new Set()
   )
+  const { toasts, showError, removeToast } = useToast()
 
   useEffect(() => {
     loadRunbooks()
@@ -107,7 +109,7 @@ export function RunbookList() {
           newSet.delete(runbook.id)
           return newSet
         })
-        alert(`❌ Failed to execute: ${result.error}`)
+        showError(`Failed to execute: ${result.error}`)
       }
     } catch (error) {
       // Remove from executing set on error
@@ -116,7 +118,7 @@ export function RunbookList() {
         newSet.delete(runbook.id)
         return newSet
       })
-      alert(`❌ Failed to execute ${runbook.name}: ${error}`)
+      showError(`Failed to execute ${runbook.name}: ${error}`)
     }
   }
 
@@ -305,6 +307,7 @@ export function RunbookList() {
               openDropdown={openDropdown}
               setOpenDropdown={setOpenDropdown}
               isExecutingGlobally={executingRunbooks.has(runbook.id)}
+              onShowError={showError}
             />
           ))}
         </div>
@@ -345,6 +348,9 @@ export function RunbookList() {
           onClose={() => setShowExecutionResult(null)}
         />
       )}
+
+      {/* Toast Notifications */}
+      <Toast messages={toasts} onRemove={removeToast} />
     </div>
   )
 }
@@ -359,6 +365,7 @@ function RunbookCard({
   openDropdown,
   setOpenDropdown,
   isExecutingGlobally,
+  onShowError,
 }: {
   runbook: Runbook
   isFavorite: boolean
@@ -369,6 +376,7 @@ function RunbookCard({
   openDropdown: string | null
   setOpenDropdown: (id: string | null) => void
   isExecutingGlobally: boolean
+  onShowError: (message: string) => void
 }) {
   const [isExecuting, setIsExecuting] = useState(false)
   const [executionId, setExecutionId] = useState<string | null>(null)
@@ -436,10 +444,10 @@ function RunbookCard({
         // Poll for execution status
         pollExecutionStatus(result.executionId)
       } else {
-        alert(`❌ Failed to execute: ${result.error}`)
+        onShowError(`Failed to execute: ${result.error}`)
       }
     } catch (error) {
-      alert(`❌ Failed to execute ${runbook.name}: ${error}`)
+      onShowError(`Failed to execute ${runbook.name}: ${error}`)
     } finally {
       setIsExecuting(false)
     }

@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'hono/jsx'
+import { Toast, useToast } from './Toast'
+import { ConfirmDialog, useConfirmDialog } from './ConfirmDialog'
 
 interface EnvironmentVariable {
   key: string
@@ -22,6 +24,8 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
     description: '',
     isSecret: false
   })
+  const { toasts, showError, removeToast } = useToast()
+  const { showConfirm, ConfirmDialogComponent } = useConfirmDialog()
   const [editingVar, setEditingVar] = useState<string | null>(null)
 
   useEffect(() => {
@@ -69,16 +73,26 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
         setNewVar({ key: '', value: '', description: '', isSecret: false })
         loadVariables()
       } else {
-        alert(`❌ Failed to save: ${result.error}`)
+        showError(`Failed to save: ${result.error}`)
       }
     } catch (error) {
       console.error('Failed to save environment variable:', error)
-      alert('❌ Failed to save environment variable')
+      showError('Failed to save environment variable')
     }
   }
 
   const handleDelete = async (key: string) => {
-    if (!confirm(`Delete environment variable "${key}"?`)) return
+    const confirmed = await showConfirm(
+      'Delete Environment Variable',
+      `Are you sure you want to delete the environment variable "${key}"? This action cannot be undone.`,
+      {
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        variant: 'danger'
+      }
+    )
+
+    if (!confirmed) return
 
     try {
       const response = await fetch('/api/environment', {
@@ -91,11 +105,11 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
       if (result.success) {
         loadVariables()
       } else {
-        alert(`❌ Failed to delete: ${result.error}`)
+        showError(`Failed to delete: ${result.error}`)
       }
     } catch (error) {
       console.error('Failed to delete environment variable:', error)
-      alert('❌ Failed to delete environment variable')
+      showError('Failed to delete environment variable')
     }
   }
 
@@ -282,6 +296,12 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
           </div>
         </div>
       </div>
+
+      {/* Toast Notifications */}
+      <Toast messages={toasts} onRemove={removeToast} />
+
+      {/* Confirm Dialog */}
+      <ConfirmDialogComponent />
     </div>
   )
 }
