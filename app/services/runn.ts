@@ -2,6 +2,7 @@ import { spawn, ChildProcess } from 'child_process'
 import { EventEmitter } from 'events'
 import { createHash } from 'crypto'
 import type { ExecutionResult } from '../types/types'
+import { EnvironmentManager } from './environment-manager'
 
 export class RunnExecutor extends EventEmitter {
   private process: ChildProcess | null = null
@@ -13,7 +14,7 @@ export class RunnExecutor extends EventEmitter {
   }
 
   async execute(runbookPath: string, variables: Record<string, any> = {}, timeout: number = 60000): Promise<ExecutionResult> {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       if (this.process) {
         reject(new Error('Execution already in progress'))
         return
@@ -22,16 +23,21 @@ export class RunnExecutor extends EventEmitter {
       const startTime = new Date()
       const args = ['run', runbookPath]
       
-      // Add variables using --var flag instead of environment variables
+      // Add variables using --var flag
       Object.entries(variables).forEach(([key, value]) => {
         args.push('--var', `${key}:${value}`)
       })
 
       console.log(`[RunnExecutor] Starting execution ${this.executionId}:`, 'runn', args.join(' '))
 
+      // Get environment variables for execution
+      const envManager = EnvironmentManager.getInstance()
+      const execEnv = await envManager.getEnvironmentForExecution()
+
       this.process = spawn('runn', args, {
         cwd: process.cwd(),
-        stdio: ['ignore', 'pipe', 'pipe']  // ignore stdin to prevent hanging
+        stdio: ['ignore', 'pipe', 'pipe'],  // ignore stdin to prevent hanging
+        env: execEnv  // Include managed environment variables
       })
 
       let output = ''

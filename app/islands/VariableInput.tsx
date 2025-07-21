@@ -22,19 +22,34 @@ export function VariableInput({ runbook, onSubmit, onCancel }: VariableInputProp
   const [newPresetName, setNewPresetName] = useState('')
   const [showSavePreset, setShowSavePreset] = useState(false)
   const [globalVariables, setGlobalVariables] = useState<Record<string, string>>({})
+  const [environmentVariables, setEnvironmentVariables] = useState<Record<string, string>>({})
 
   useEffect(() => {
-    loadPresets()
-    loadGlobalVariables()
-    initializeVariables()
+    initializeData()
   }, [])
 
-  const initializeVariables = async () => {
+  const initializeData = async () => {
+    const [, globalVars, envVars] = await Promise.all([
+      loadPresets(),
+      loadGlobalVariables(),
+      loadEnvironmentVariables()
+    ])
+    
+    // Initialize variables with the loaded data
     const initialVars: Record<string, string> = {}
     
-    // Set default values from runbook
+    // Priority order: Environment Variables > Global Variables > Runbook Defaults
     Object.entries(runbook.variables).forEach(([key, variable]) => {
-      if (variable.defaultValue) {
+      // First check environment variables
+      if (envVars && envVars[key]) {
+        initialVars[key] = envVars[key]
+      }
+      // Then check global variables
+      else if (globalVars && globalVars[key]) {
+        initialVars[key] = globalVars[key]
+      }
+      // Finally use runbook defaults
+      else if (variable.defaultValue) {
         initialVars[key] = String(variable.defaultValue)
       }
     })
@@ -60,10 +75,31 @@ export function VariableInput({ runbook, onSubmit, onCancel }: VariableInputProp
       const result = await response.json()
       if (result.success) {
         setGlobalVariables(result.data)
+        return result.data
       }
     } catch (error) {
       console.error('Failed to load global variables:', error)
     }
+    return {}
+  }
+
+  const loadEnvironmentVariables = async () => {
+    try {
+      const response = await fetch('/api/environment')
+      const result = await response.json()
+      if (result.success) {
+        const envVars: Record<string, string> = {}
+        result.data.forEach((variable: any) => {
+          // Include all environment variables, mask secrets with asterisks
+          envVars[variable.key] = variable.isSecret ? '••••••••' : variable.value
+        })
+        setEnvironmentVariables(envVars)
+        return envVars
+      }
+    } catch (error) {
+      console.error('Failed to load environment variables:', error)
+    }
+    return {}
   }
 
   const handlePresetChange = async (presetName: string) => {
@@ -90,7 +126,7 @@ export function VariableInput({ runbook, onSubmit, onCancel }: VariableInputProp
       }
     } else {
       // Reset to defaults
-      initializeVariables()
+      initializeData()
     }
   }
 
@@ -184,21 +220,28 @@ export function VariableInput({ runbook, onSubmit, onCancel }: VariableInputProp
           <h4 class="text-white font-medium">⚙️ Variables</h4>
           {Object.entries(runbook.variables).map(([key, variable]) => {
             const globalValue = globalVariables[key]
+            const envValue = environmentVariables[key]
             const hasGlobalDefault = globalValue !== undefined
+            const hasEnvDefault = envValue !== undefined
             
             return (
               <div key={key} class="space-y-2">
                 <label class="block text-sm text-slate-300">
                   {variable.name || key}
                   {variable.required && <span class="text-red-400 ml-1">*</span>}
-                  {hasGlobalDefault && (
+                  {hasEnvDefault && (
+                    <span class="text-green-400 ml-2 text-xs">
+                      🌍 From Environment
+                    </span>
+                  )}
+                  {!hasEnvDefault && hasGlobalDefault && (
                     <span class="text-blue-400 ml-2 text-xs">
-                      (Global: {globalValue})
+                      Global: {globalValue}
                     </span>
                   )}
                 </label>
                 <input
-                  type={variable.type === 'number' ? 'number' : 'text'}
+                  type={variable.type === 'number' ? 'number' : (hasEnvDefault && envValue === '••••••••' ? 'password' : 'text')}
                   placeholder={variable.defaultValue || `Enter ${key}...`}
                   value={variables[key] || ''}
                   onInput={(e) => handleVariableChange(key, (e.target as HTMLInputElement)?.value || '')}

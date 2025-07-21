@@ -255,6 +255,49 @@ export class Storage {
     }
   }
 
+  async saveEnvironmentVariables(variables: Record<string, any>): Promise<void> {
+    try {
+      await this.ensureStorageDir()
+      const envFile = join(this.storageDir, 'environment.json')
+      
+      const data = {
+        version: '1.0',
+        timestamp: new Date().toISOString(),
+        variables
+      }
+
+      await writeFile(envFile, JSON.stringify(data, null, 2), 'utf-8')
+      console.log(`[Storage] Saved environment variables to ${envFile}`)
+    } catch (error) {
+      console.error('[Storage] Failed to save environment variables:', error)
+    }
+  }
+
+  async loadEnvironmentVariables(): Promise<Record<string, any>> {
+    try {
+      const envFile = join(this.storageDir, 'environment.json')
+      
+      if (!existsSync(envFile)) {
+        console.log('[Storage] No existing environment file found')
+        return {}
+      }
+
+      const content = await readFile(envFile, 'utf-8')
+      const data = JSON.parse(content)
+
+      if (data.version !== '1.0') {
+        console.warn('[Storage] Environment file version mismatch, starting fresh')
+        return {}
+      }
+
+      console.log(`[Storage] Loaded environment variables from ${envFile}`)
+      return data.variables || {}
+    } catch (error) {
+      console.error('[Storage] Failed to load environment variables:', error)
+      return {}
+    }
+  }
+
   getStoragePath(): string {
     return this.storageDir
   }

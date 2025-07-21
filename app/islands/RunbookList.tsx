@@ -3,6 +3,7 @@ import type { Runbook } from '../types/types'
 import { ExecutionResultModal } from './ExecutionResult'
 import { VariableInput } from './VariableInput'
 import { RunbookViewer } from './RunbookViewer'
+import { EnvironmentSettings } from './EnvironmentSettings'
 
 export function RunbookList() {
   const [runbooks, setRunbooks] = useState<Runbook[]>([])
@@ -13,6 +14,7 @@ export function RunbookList() {
   const [favorites, setFavorites] = useState<string[]>([])
   const [showVariableInput, setShowVariableInput] = useState<Runbook | null>(null)
   const [showRunbookViewer, setShowRunbookViewer] = useState<Runbook | null>(null)
+  const [showEnvironmentSettings, setShowEnvironmentSettings] = useState(false)
 
   useEffect(() => {
     loadRunbooks()
@@ -204,6 +206,13 @@ export function RunbookList() {
           )}
         </div>
         <div class="flex space-x-2">
+          <button
+            onClick={() => setShowEnvironmentSettings(true)}
+            class="px-3 py-1 text-sm bg-green-700 hover:bg-green-600 rounded text-white"
+            title="Manage Environment Variables"
+          >
+            🌍 Environment
+          </button>
           {favorites.length > 0 && (
             <button
               onClick={async () => {
@@ -285,6 +294,13 @@ export function RunbookList() {
           path={showRunbookViewer.path}
           name={showRunbookViewer.name}
           onClose={() => setShowRunbookViewer(null)}
+        />
+      )}
+
+      {/* Environment Settings Modal */}
+      {showEnvironmentSettings && (
+        <EnvironmentSettings
+          onClose={() => setShowEnvironmentSettings(false)}
         />
       )}
 
