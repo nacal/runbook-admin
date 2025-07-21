@@ -1,12 +1,12 @@
 import { defineConfig } from 'vite'
 import honox from 'honox/vite'
+import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  plugins: [honox({
-    client: {
-      input: ['/app/client.ts']
-    }
-  })],
+  plugins: [
+    honox(),
+    tailwindcss()
+  ],
   server: {
     host: true,
     port: 3000
@@ -15,8 +15,12 @@ export default defineConfig({
     noExternal: /^(?!.*fsevents)/
   },
   build: {
+    emptyOutDir: false,
     rollupOptions: {
-      external: ['fsevents']
+      external: ['fsevents'],
+      input: {
+        client: './app/client.ts'
+      }
     }
   }
 })
