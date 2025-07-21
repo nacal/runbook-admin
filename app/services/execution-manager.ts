@@ -1,7 +1,7 @@
 import { RunnExecutor } from './runn'
-import { Storage } from './storage'
+import { Storage } from '../utils/storage'
 import { createHash } from 'crypto'
-import type { ExecutionResult } from './types'
+import type { ExecutionResult } from '../types/types'
 
 export class ExecutionManager {
   private static instance: ExecutionManager

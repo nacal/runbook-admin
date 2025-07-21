@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { VariableManager } from '../../lib/variable-manager'
+import { VariableManager } from '../../services/variable-manager'
 
 const app = new Hono()
 

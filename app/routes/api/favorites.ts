@@ -1,5 +1,5 @@
 import { createRoute } from 'honox/factory'
-import { FavoritesManager } from '../../lib/favorites-manager'
+import { FavoritesManager } from '../../services/favorites-manager'
 
 // Get all favorites
 export const GET = createRoute(async (c) => {

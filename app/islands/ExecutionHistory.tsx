@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'hono/jsx'
-import type { ExecutionResult } from '../lib/types'
+import type { ExecutionResult } from '../types/types'
 import { ExecutionResultModal } from './ExecutionResult'
 
 export function ExecutionHistory() {

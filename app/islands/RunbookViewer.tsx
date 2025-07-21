@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'hono/jsx'
 import Prism from 'prismjs'
 import 'prismjs/components/prism-yaml'
-import { PrismStyles } from './PrismStyles'
+import { PrismStyles } from '../components/PrismStyles'
 
 interface RunbookViewerProps {
   path: string

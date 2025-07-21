@@ -2,7 +2,7 @@ import { writeFile, readFile, mkdir } from 'fs/promises'
 import { existsSync } from 'fs'
 import { join } from 'path'
 import { homedir } from 'os'
-import type { ExecutionResult } from './types'
+import type { ExecutionResult } from '../types/types'
 
 export class Storage {
   private static instance: Storage

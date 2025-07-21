@@ -1,7 +1,7 @@
 import { spawn, ChildProcess } from 'child_process'
 import { EventEmitter } from 'events'
 import { createHash } from 'crypto'
-import type { ExecutionResult } from './types'
+import type { ExecutionResult } from '../types/types'
 
 export class RunnExecutor extends EventEmitter {
   private process: ChildProcess | null = null

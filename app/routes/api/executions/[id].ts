@@ -1,5 +1,5 @@
 import { createRoute } from 'honox/factory'
-import { ExecutionManager } from '../../../lib/execution-manager'
+import { ExecutionManager } from '../../../services/execution-manager'
 
 // Get specific execution status
 export const GET = createRoute(async (c) => {

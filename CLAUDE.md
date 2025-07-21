@@ -29,15 +29,22 @@ npx runbook-admin    # Execute directly via NPX
 - **TypeScript**: Full type safety across the codebase
 - **Vite**: Build tooling and HMR
 
-### Core Structure
+### Core Structure (HonoX Best Practices)
 
 ```
 app/
 ├── routes/          # File-based routing (API and pages)
 ├── islands/         # Interactive client components
-├── lib/             # Core business logic
-│   ├── runn.ts     # Runn CLI integration via child_process
-│   ├── scanner.ts  # Runbook file discovery
+├── components/      # Reusable UI components
+├── services/        # Business logic layer
+│   ├── runn.ts     # Runn CLI integration
+│   ├── file-scanner.ts  # Runbook discovery
+│   ├── execution-manager.ts # Execution state management
+│   ├── favorites-manager.ts # Favorites handling
+│   └── variable-manager.ts  # Variable presets
+├── utils/           # Utility functions
+│   └── storage.ts  # Local storage management
+├── types/           # Type definitions
 │   └── types.ts    # Shared type definitions
 └── server.ts       # Server entry point
 ```
@@ -70,5 +77,14 @@ app/
 ### Type Safety
 
 - All new code must have proper TypeScript types
-- Shared types go in `app/lib/types.ts`
-- Use type imports: `import type { Runbook } from '../lib/types'`
+- Shared types go in `app/types/types.ts`
+- Use type imports: `import type { Runbook } from '../types/types'`
+
+### Directory Organization (HonoX Best Practices)
+
+- **routes/**: File-based routing for pages and APIs
+- **islands/**: Interactive client-side components (Islands Architecture)
+- **components/**: Reusable UI components (non-interactive)
+- **services/**: Business logic and external service integrations
+- **utils/**: Utility functions and helpers
+- **types/**: TypeScript type definitions

@@ -1,5 +1,5 @@
 import { createRoute } from 'honox/factory'
-import { FileScanner } from '../../lib/file-scanner'
+import { FileScanner } from '../../services/file-scanner'
 
 export const GET = createRoute(async (c) => {
   try {

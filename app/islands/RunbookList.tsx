@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'hono/jsx'
-import type { Runbook } from '../lib/types'
+import type { Runbook } from '../types/types'
 import { ExecutionResultModal } from './ExecutionResult'
 import { VariableInput } from './VariableInput'
 import { RunbookViewer } from './RunbookViewer'

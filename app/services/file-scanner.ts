@@ -1,7 +1,7 @@
 import { readdir, readFile, stat } from 'fs/promises'
 import { join, basename, relative } from 'path'
 import { createHash } from 'crypto'
-import type { Runbook } from './types'
+import type { Runbook } from '../types/types'
 
 export class FileScanner {
   private rootPath: string
