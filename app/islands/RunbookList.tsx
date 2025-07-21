@@ -381,9 +381,9 @@ function RunbookCard({
   const [isExecuting, setIsExecuting] = useState(false)
   const [executionId, setExecutionId] = useState<string | null>(null)
 
-  // Check if runbook has required variables
+  // Check if runbook has required variables or file type variables
   const hasRequiredVariables = Object.values(runbook.variables).some(
-    (variable) => variable.required
+    (variable) => variable.required || variable.type === 'file' || variable.type === 'json'
   )
 
   const [executionMode, setExecutionMode] = useState<'quick' | 'configure'>(

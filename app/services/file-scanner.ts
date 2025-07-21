@@ -114,11 +114,23 @@ export class FileScanner {
     
     if (yaml.vars) {
       Object.entries(yaml.vars).forEach(([key, value]) => {
+        const type = this.inferType(value)
+        let filePath: string | undefined
+        
+        if (typeof value === 'string') {
+          if (value.startsWith('file://')) {
+            filePath = value.substring(7)
+          } else if (value.startsWith('json://')) {
+            filePath = value.substring(7)
+          }
+        }
+        
         variables[key] = {
           name: key,
           defaultValue: value,
-          type: this.inferType(value),
-          required: false
+          type: type,
+          required: false,
+          filePath: filePath
         }
       })
     }
@@ -140,9 +152,17 @@ export class FileScanner {
     return variables
   }
 
-  private inferType(value: any): 'string' | 'number' | 'boolean' | 'env' {
-    if (typeof value === 'string' && value.startsWith('${')) {
-      return 'env'
+  private inferType(value: any): 'string' | 'number' | 'boolean' | 'env' | 'file' | 'json' {
+    if (typeof value === 'string') {
+      if (value.startsWith('${')) {
+        return 'env'
+      }
+      if (value.startsWith('file://')) {
+        return 'file'
+      }
+      if (value.startsWith('json://')) {
+        return 'json'
+      }
     }
     if (typeof value === 'number') return 'number'
     if (typeof value === 'boolean') return 'boolean'
