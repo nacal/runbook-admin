@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'hono/jsx'
+import Prism from 'prismjs'
+import 'prismjs/components/prism-yaml'
+import { PrismStyles } from './PrismStyles'
 
 interface RunbookViewerProps {
   path: string
@@ -8,6 +11,7 @@ interface RunbookViewerProps {
 
 export function RunbookViewer({ path, name, onClose }: RunbookViewerProps) {
   const [content, setContent] = useState<string>('')
+  const [highlightedContent, setHighlightedContent] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [lines, setLines] = useState(0)
@@ -37,6 +41,10 @@ export function RunbookViewer({ path, name, onClose }: RunbookViewerProps) {
       if (result.success) {
         setContent(result.data.content)
         setLines(result.data.lines)
+        
+        // Apply syntax highlighting
+        const highlighted = Prism.highlight(result.data.content, Prism.languages.yaml, 'yaml')
+        setHighlightedContent(highlighted)
       } else {
         setError(result.error || 'Failed to load runbook')
         console.error('API error:', result)
@@ -60,9 +68,11 @@ export function RunbookViewer({ path, name, onClose }: RunbookViewerProps) {
   }
 
   return (
-    <div class="fixed inset-0 bg-black/50 z-50 overflow-y-auto">
-      <div class="flex items-center justify-center min-h-full p-4">
-        <div class="bg-slate-800 rounded-lg shadow-xl max-w-4xl w-full flex flex-col" style="max-height: calc(100vh - 2rem);">
+    <>
+      <PrismStyles />
+      <div class="fixed inset-0 bg-black/50 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-full p-4">
+          <div class="bg-slate-800 rounded-lg shadow-xl max-w-4xl w-full flex flex-col" style="max-height: calc(100vh - 2rem);">
         {/* Header */}
         <div class="flex items-center justify-between p-4 border-b border-slate-700">
           <div>
@@ -109,7 +119,10 @@ export function RunbookViewer({ path, name, onClose }: RunbookViewerProps) {
             </div>
           ) : (
             <pre class="p-4 text-sm font-mono overflow-x-auto">
-              <code class="language-yaml text-slate-300 whitespace-pre">{content}</code>
+              <code 
+                class="language-yaml text-slate-300 whitespace-pre"
+                dangerouslySetInnerHTML={{ __html: highlightedContent }}
+              />
             </pre>
           )}
         </div>
@@ -126,5 +139,6 @@ export function RunbookViewer({ path, name, onClose }: RunbookViewerProps) {
         </div>
       </div>
     </div>
+    </>
   )
 }
