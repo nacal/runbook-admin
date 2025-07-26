@@ -1,49 +1,9 @@
+import { Suspense } from 'hono/jsx'
 import { createRoute } from 'honox/factory'
-import { ExecutionHistory } from '../islands/ExecutionHistory'
-import { ExecutionManager } from '../services/execution-manager'
-import type { ExecutionResult } from '../types/types'
+import { HistoryContent } from '../components/HistoryContent'
+import { LoadingState } from '../components/LoadingState'
 
-interface HistoryData {
-  executions: ExecutionResult[]
-  error: string | null
-}
-
-async function loadHistoryData(): Promise<HistoryData> {
-  try {
-    const manager = ExecutionManager.getInstance()
-    const executions = await manager.getAllExecutions()
-    
-    return {
-      executions,
-      error: null
-    }
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
-    return {
-      executions: [],
-      error: errorMessage
-    }
-  }
-}
-
-export default createRoute(async (c) => {
-  console.log('📄 Loading execution history...')
-  
-  // データ取得の実行
-  const historyData = await loadHistoryData()
-  
-  if (historyData.error) {
-    console.error('❌ History data loading failed:', {
-      error: historyData.error,
-      timestamp: new Date().toISOString()
-    })
-  } else {
-    console.log(`✅ History data loaded successfully`, {
-      executionsCount: historyData.executions.length,
-      timestamp: new Date().toISOString()
-    })
-  }
-
+export default createRoute((c) => {
   return c.render(
     <>
       <title>Execution History - Runbook Admin</title>
@@ -63,10 +23,9 @@ export default createRoute(async (c) => {
       </header>
 
       <main>
-        <ExecutionHistory 
-          initialExecutions={historyData.executions}
-          initialError={historyData.error}
-        />
+        <Suspense fallback={<LoadingState />}>
+          <HistoryContent />
+        </Suspense>
       </main>
     </>
   )
