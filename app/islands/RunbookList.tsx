@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'hono/jsx'
+import { useState } from 'hono/jsx'
 import type { ExecutionOptions } from '../services/execution-options-manager'
 import type { Runbook } from '../types/types'
 import { EnvironmentSettings } from './EnvironmentSettings'
@@ -14,17 +14,24 @@ import { ErrorState } from '../components/ErrorState'
 import { EmptyState } from '../components/EmptyState'
 import { RunbookGrid } from '../components/RunbookGrid'
 
-export function RunbookList() {
-  const [runbooks, setRunbooks] = useState<Runbook[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+interface RunbookListProps {
+  initialRunbooks: Runbook[]
+  initialFavorites: string[]
+  initialLabels: string[]
+  initialError: string | null
+}
+
+export function RunbookList({ initialRunbooks, initialFavorites, initialLabels, initialError }: RunbookListProps) {
+  const [runbooks, setRunbooks] = useState<Runbook[]>(initialRunbooks)
+  const [loading, setLoading] = useState(false) // 初期データがあるのでfalse
+  const [error, setError] = useState<string | null>(initialError)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedLabels, setSelectedLabels] = useState<string[]>([])
-  const [availableLabels, setAvailableLabels] = useState<string[]>([])
+  const [availableLabels, setAvailableLabels] = useState<string[]>(initialLabels)
   const [showExecutionResult, setShowExecutionResult] = useState<string | null>(
     null
   )
-  const [favorites, setFavorites] = useState<string[]>([])
+  const [favorites, setFavorites] = useState<string[]>(initialFavorites)
   const [showVariableInput, setShowVariableInput] = useState<Runbook | null>(
     null
   )
@@ -37,11 +44,6 @@ export function RunbookList() {
     new Set()
   )
   const { toasts, showError, removeToast } = useToast()
-
-  useEffect(() => {
-    loadRunbooks()
-    loadFavorites()
-  }, [])
 
   const loadRunbooks = async () => {
     try {
