@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'hono/jsx'
 import type { ExecutionOptions as ExecutionOptionsType } from '../services/execution-options-manager'
 import type { Runbook } from '../types/types'
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
 import { FileUpload } from './FileUpload'
 import { Toast, useToast } from './Toast'
 
@@ -32,6 +33,9 @@ export function VariableInput({
   const [selectedPreset, setSelectedPreset] = useState<string>('')
   const [newPresetName, setNewPresetName] = useState('')
   const [showSavePreset, setShowSavePreset] = useState(false)
+  
+  // モーダル表示時にスクロールを無効化
+  useBodyScrollLock(true)
   const [globalVariables, setGlobalVariables] = useState<
     Record<string, string>
   >({})

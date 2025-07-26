@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'hono/jsx'
 import Prism from 'prismjs'
 import 'prismjs/components/prism-yaml'
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
 import { PrismStyles } from '../components/PrismStyles'
 import { Toast, useToast } from '../islands/Toast'
 
@@ -13,6 +14,9 @@ interface RunbookViewerProps {
 export function RunbookViewer({ path, name, onClose }: RunbookViewerProps) {
   const [content, setContent] = useState<string>('')
   const [highlightedContent, setHighlightedContent] = useState<string>('')
+  
+  // モーダル表示時にスクロールを無効化
+  useBodyScrollLock(true)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [lines, setLines] = useState(0)

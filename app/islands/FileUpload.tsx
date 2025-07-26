@@ -7,6 +7,7 @@ import 'prismjs/components/prism-python'
 import 'prismjs/components/prism-bash'
 import 'prismjs/components/prism-typescript'
 import 'prismjs/components/prism-markdown'
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
 import { PrismStyles } from '../components/PrismStyles'
 
 interface FilePreviewModalProps {
@@ -18,6 +19,9 @@ interface FilePreviewModalProps {
 
 function FilePreviewModal({ isOpen, fileName, content, onClose }: FilePreviewModalProps) {
   const preRef = useRef<HTMLPreElement>(null)
+  
+  // モーダル表示時にスクロールを無効化
+  useBodyScrollLock(isOpen)
 
   // Detect language from file extension for Prism
   const getLanguageFromFileName = (filename: string): string => {

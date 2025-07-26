@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'hono/jsx'
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
 
 export interface ConfirmDialogProps {
   isOpen: boolean
@@ -21,6 +22,9 @@ export function ConfirmDialog({
   onConfirm,
   onCancel
 }: ConfirmDialogProps) {
+  // モーダル表示時にスクロールを無効化
+  useBodyScrollLock(isOpen)
+  
   useEffect(() => {
     if (!isOpen) return
 

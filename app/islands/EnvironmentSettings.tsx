@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'hono/jsx'
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
 import { Toast, useToast } from './Toast'
 import { ConfirmDialog, useConfirmDialog } from '../components/ConfirmDialog'
 
@@ -24,6 +25,10 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
     description: '',
     isSecret: false
   })
+  
+  // モーダル表示時にスクロールを無効化
+  useBodyScrollLock(true)
+  
   const { toasts, showError, removeToast } = useToast()
   const { showConfirm, ConfirmDialogComponent } = useConfirmDialog()
   const [editingVar, setEditingVar] = useState<string | null>(null)
