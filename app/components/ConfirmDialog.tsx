@@ -90,12 +90,14 @@ export function ConfirmDialog({
           {/* Actions */}
           <div class="flex space-x-3 justify-end">
             <button
+              type="button"
               onClick={onCancel}
               class="px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded text-slate-300 transition-colors focus:ring-2 focus:ring-slate-500 focus:outline-none"
             >
               {cancelText}
             </button>
             <button
+              type="button"
               onClick={onConfirm}
               class={`px-4 py-2 rounded text-white font-medium transition-colors focus:ring-2 focus:outline-none ${styles.confirmButton}`}
             >

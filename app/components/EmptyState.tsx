@@ -17,8 +17,8 @@ export function EmptyState({ searchTerm }: EmptyStateProps) {
           <p>Looking for files in:</p>
           <ul class="mt-2 space-y-1">
             <li>**/*.runbook.yml</li>
-            <li>**/runbooks/**/*.yml</li>
-            <li>**/tests/**/*.yml</li>
+            <li>**/runbooks/{/**/}*.yml</li>
+            <li>**/tests/{/**/}*.yml</li>
           </ul>
         </div>
       )}

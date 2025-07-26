@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-import { spawn } from 'child_process'
+import { spawn } from 'node:child_process'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import open from 'open'
-import { dirname, join } from 'path'
-import { fileURLToPath } from 'url'
 
 const PORT = process.env.PORT || 3444
 const HOST = '127.0.0.1'
@@ -83,7 +83,7 @@ async function main() {
       try {
         await open(url)
         console.log(`🌐 Opened browser at ${url}`)
-      } catch (error) {
+      } catch (_error) {
         console.log(`💡 Manually open: ${url}`)
       }
     }, 1500)
@@ -106,7 +106,7 @@ async function main() {
 // Check if runn is available
 async function checkRunn() {
   try {
-    const { spawn } = await import('child_process')
+    const { spawn } = await import('node:child_process')
     return new Promise<boolean>((resolve) => {
       const child = spawn('runn', ['--version'], { stdio: 'pipe' })
       child.on('close', (code) => resolve(code === 0))

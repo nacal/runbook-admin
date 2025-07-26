@@ -1,6 +1,6 @@
-import { type ChildProcess, spawn } from 'child_process'
-import { createHash } from 'crypto'
-import { EventEmitter } from 'events'
+import { type ChildProcess, spawn } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { EventEmitter } from 'node:events'
 import type { ExecutionResult } from '../types/types'
 import { EnvironmentManager } from './environment-manager'
 import {

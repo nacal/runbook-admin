@@ -78,11 +78,11 @@ export function VariableInput({
         // Priority order: Environment Variables > Global Variables > Runbook Defaults
         Object.entries(runbook.variables).forEach(([key, variable]) => {
           // First check environment variables
-          if (processedEnvVars && processedEnvVars[key]) {
+          if (processedEnvVars?.[key]) {
             initialVars[key] = processedEnvVars[key]
           }
           // Then check global variables
-          else if (globalVariables && globalVariables[key]) {
+          else if (globalVariables?.[key]) {
             initialVars[key] = globalVariables[key]
           }
           // Finally use runbook defaults
@@ -199,7 +199,11 @@ export function VariableInput({
       <div class="bg-slate-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-semibold text-white">Configure Variables</h3>
-          <button onClick={onCancel} class="text-slate-400 hover:text-white">
+          <button
+            type="button"
+            onClick={onCancel}
+            class="text-slate-400 hover:text-white"
+          >
             ✕
           </button>
         </div>
@@ -350,6 +354,7 @@ export function VariableInput({
         <div class="mb-6">
           {!showSavePreset ? (
             <button
+              type="button"
               onClick={() => setShowSavePreset(true)}
               class="text-sm text-blue-400 hover:text-blue-300"
             >
@@ -367,6 +372,7 @@ export function VariableInput({
                 class="flex-1 px-3 py-2 text-sm bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500 focus:border-blue-500 outline-none"
               />
               <button
+                type="button"
                 onClick={handleSavePreset}
                 disabled={!newPresetName.trim()}
                 class="px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed rounded text-white"
@@ -374,6 +380,7 @@ export function VariableInput({
                 Save
               </button>
               <button
+                type="button"
                 onClick={() => {
                   setShowSavePreset(false)
                   setNewPresetName('')
@@ -389,6 +396,7 @@ export function VariableInput({
         {/* Action Buttons */}
         <div class="flex space-x-3">
           <button
+            type="button"
             onClick={handleSubmit}
             disabled={!isValidForm()}
             class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed rounded text-white font-medium"
@@ -396,6 +404,7 @@ export function VariableInput({
             ▶️ Execute Runbook
           </button>
           <button
+            type="button"
             onClick={onCancel}
             class="px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded text-slate-300"
           >

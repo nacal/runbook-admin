@@ -74,6 +74,7 @@ function ToastItem({
           <p class="text-sm font-medium flex-1">{toast.message}</p>
         </div>
         <button
+          type="button"
           onClick={() => onRemove(toast.id)}
           class="text-current opacity-70 hover:opacity-100 ml-2"
         >

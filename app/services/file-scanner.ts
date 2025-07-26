@@ -1,6 +1,6 @@
-import { createHash } from 'crypto'
-import { readdir, readFile, stat } from 'fs/promises'
-import { basename, join, relative } from 'path'
+import { createHash } from 'node:crypto'
+import { readdir, readFile, stat } from 'node:fs/promises'
+import { basename, join, relative } from 'node:path'
 import type { Runbook } from '../types/types'
 
 export class FileScanner {

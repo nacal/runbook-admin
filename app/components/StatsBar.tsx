@@ -30,6 +30,7 @@ export function StatsBar({
       </div>
       <div class="flex space-x-2">
         <button
+          type="button"
           onClick={onShowEnvironmentSettings}
           class="px-3 py-1 text-sm bg-green-700 hover:bg-green-600 rounded text-white"
           title="Manage Environment Variables"

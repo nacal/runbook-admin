@@ -41,7 +41,7 @@ export function ExecutionResultModal({
         setError(result.error)
         setLoading(false)
       }
-    } catch (err) {
+    } catch (_err) {
       setError('Failed to fetch execution result')
       setLoading(false)
     }
@@ -82,7 +82,14 @@ export function ExecutionResultModal({
   return (
     <div
       class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      role="button"
+      tabIndex={0}
       onClick={onClose}
+      onKeyDown={(e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          onClose()
+        }
+      }}
     >
       <div
         class="bg-slate-800 border border-slate-700 rounded-lg max-w-4xl w-full max-h-[80vh] flex flex-col mx-4"
@@ -96,7 +103,11 @@ export function ExecutionResultModal({
               {executionId}
             </span>
           </div>
-          <button onClick={onClose} class="text-slate-400 hover:text-white p-1">
+          <button
+            type="button"
+            onClick={onClose}
+            class="text-slate-400 hover:text-white p-1"
+          >
             ✕
           </button>
         </div>
@@ -114,6 +125,7 @@ export function ExecutionResultModal({
             <div class="text-red-400 text-center py-8">
               <p>{error}</p>
               <button
+                type="button"
                 onClick={pollExecution}
                 class="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-white text-sm"
               >
@@ -223,6 +235,7 @@ export function ExecutionResultModal({
         {/* Footer */}
         <div class="border-t border-slate-700 p-4 flex justify-end">
           <button
+            type="button"
             onClick={onClose}
             class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-white text-sm"
           >

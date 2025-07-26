@@ -198,7 +198,7 @@ app.post('/merge', async (c) => {
     let executionOptions = { args: [] }
     if (presetName) {
       const preset = await manager.getPreset(presetName)
-      if (preset && preset.executionOptions) {
+      if (preset?.executionOptions) {
         executionOptions = preset.executionOptions
       }
     }

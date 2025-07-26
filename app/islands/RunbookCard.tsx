@@ -178,6 +178,7 @@ export function RunbookCard({
             <div class="flex flex-wrap gap-1">
               {runbook.labels.map((label) => (
                 <button
+                  type="button"
                   key={label}
                   onClick={(e) => {
                     e.stopPropagation()
@@ -205,6 +206,7 @@ export function RunbookCard({
         <div class="flex-1 relative dropdown-container">
           {/* Main execute button */}
           <button
+            type="button"
             onClick={handleExecute}
             disabled={
               isExecuting || executionId !== null || isExecutingGlobally
@@ -225,6 +227,7 @@ export function RunbookCard({
 
           {/* Dropdown button */}
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation()
               setOpenDropdown(showDropdown ? null : runbook.id)
@@ -244,6 +247,7 @@ export function RunbookCard({
               onClick={(e) => e.stopPropagation()}
             >
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation()
                   handleModeSelect('configure')
@@ -254,6 +258,7 @@ export function RunbookCard({
                 ⚙️ Configure & Run
               </button>
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation()
                   handleModeSelect('quick')
@@ -267,6 +272,7 @@ export function RunbookCard({
           )}
         </div>
         <button
+          type="button"
           onClick={() => onShowRunbookViewer(runbook)}
           class="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-slate-300 text-sm"
           title="View runbook source"
@@ -274,6 +280,7 @@ export function RunbookCard({
           📝
         </button>
         <button
+          type="button"
           onClick={onToggleFavorite}
           class={`px-3 py-2 ${
             isFavorite

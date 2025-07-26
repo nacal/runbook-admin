@@ -21,6 +21,7 @@ export function LabelFilter({
         <h4 class="text-slate-400 text-sm font-medium">Filter by labels</h4>
         {selectedLabels.length > 0 && (
           <button
+            type="button"
             onClick={onClearAll}
             class="text-xs text-red-400 hover:text-red-300 transition-colors"
           >
@@ -31,6 +32,7 @@ export function LabelFilter({
       <div class="flex flex-wrap gap-2">
         {availableLabels.map((label) => (
           <button
+            type="button"
             key={label}
             onClick={() => onToggleLabel(label)}
             class={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${

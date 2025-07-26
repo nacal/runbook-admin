@@ -18,8 +18,8 @@ async function loadDashboardData(): Promise<DashboardData> {
     // Favorites読み込み
     let favorites: string[] = []
     try {
-      const { readFile } = await import('fs/promises')
-      const { join } = await import('path')
+      const { readFile } = await import('node:fs/promises')
+      const { join } = await import('node:path')
       const favoritesPath = join(projectPath, '.runbook-favorites.json')
       const favoritesData = await readFile(favoritesPath, 'utf-8')
       favorites = JSON.parse(favoritesData)

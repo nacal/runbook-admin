@@ -74,7 +74,7 @@ export function RunbookViewer({ path, name, onClose }: RunbookViewerProps) {
     try {
       await navigator.clipboard.writeText(content)
       showSuccess('Copied to clipboard!')
-    } catch (err) {
+    } catch (_err) {
       showError('Failed to copy to clipboard')
     }
   }
@@ -98,12 +98,14 @@ export function RunbookViewer({ path, name, onClose }: RunbookViewerProps) {
               </div>
               <div class="flex items-center space-x-2">
                 <button
+                  type="button"
                   onClick={handleCopy}
                   class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-sm text-white"
                 >
                   📋 Copy
                 </button>
                 <button
+                  type="button"
                   onClick={onClose}
                   class="text-slate-400 hover:text-white text-xl"
                 >
@@ -125,6 +127,7 @@ export function RunbookViewer({ path, name, onClose }: RunbookViewerProps) {
                     <div class="text-red-400 text-xl mb-2">❌</div>
                     <p class="text-red-400">{error}</p>
                     <button
+                      type="button"
                       onClick={loadContent}
                       class="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-white text-sm"
                     >
@@ -136,6 +139,7 @@ export function RunbookViewer({ path, name, onClose }: RunbookViewerProps) {
                 <pre class="p-4 text-sm font-mono overflow-x-auto">
                   <code
                     class="language-yaml text-slate-300 whitespace-pre"
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: Prism syntax highlighting requires raw HTML injection
                     dangerouslySetInnerHTML={{ __html: highlightedContent }}
                   />
                 </pre>

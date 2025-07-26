@@ -1,7 +1,7 @@
-import { existsSync } from 'fs'
-import { readFile } from 'fs/promises'
+import { existsSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { Hono } from 'hono'
-import { join } from 'path'
 
 const app = new Hono()
 

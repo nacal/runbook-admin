@@ -86,6 +86,7 @@ function FilePreviewModal({
             📄 {fileName}
           </h3>
           <button
+            type="button"
             onClick={onClose}
             class="text-slate-400 hover:text-slate-200 transition-colors"
           >
@@ -170,7 +171,7 @@ export function FileUpload({
           setFileName('')
         }
         reader.readAsText(file)
-      } catch (error) {
+      } catch (_error) {
         setIsLoading(false)
         setFileName('')
       }

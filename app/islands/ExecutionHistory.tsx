@@ -46,7 +46,7 @@ export function ExecutionHistory({
       } else {
         showError(`Failed to clear history: ${result.error}`)
       }
-    } catch (err) {
+    } catch (_err) {
       showError('Failed to clear history')
     }
   }
@@ -135,6 +135,7 @@ export function ExecutionHistory({
       {/* Action Buttons */}
       <div class="mb-6 flex justify-end space-x-2">
         <button
+          type="button"
           onClick={clearHistory}
           class="px-3 py-1 text-sm bg-red-700 hover:bg-red-600 rounded text-white"
           disabled={executions.length === 0}
@@ -163,8 +164,15 @@ export function ExecutionHistory({
           {executions.map((execution) => (
             <div
               key={execution.id}
+              role="button"
+              tabIndex={0}
               class="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:border-slate-600 transition-colors cursor-pointer"
               onClick={() => setShowExecutionResult(execution.id)}
+              onKeyDown={(e: KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  setShowExecutionResult(execution.id)
+                }
+              }}
             >
               <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">

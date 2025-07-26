@@ -1,4 +1,4 @@
-import { createHash } from 'crypto'
+import { createHash } from 'node:crypto'
 import type { ExecutionResult } from '../types/types'
 import { Storage } from '../utils/storage'
 import type { ExecutionOptions } from './execution-options-manager'

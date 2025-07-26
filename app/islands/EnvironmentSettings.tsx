@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'hono/jsx'
-import { ConfirmDialog, useConfirmDialog } from '../components/ConfirmDialog'
+import { useConfirmDialog } from '../components/ConfirmDialog'
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
 import { Toast, useToast } from './Toast'
 
@@ -147,6 +147,7 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
               </p>
             </div>
             <button
+              type="button"
               onClick={onClose}
               class="text-slate-400 hover:text-white text-xl"
             >
@@ -164,10 +165,14 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
               <div class="grid gap-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">
+                    <label
+                      for="env-var-name"
+                      class="block text-sm font-medium text-slate-300 mb-2"
+                    >
                       Variable Name *
                     </label>
                     <input
+                      id="env-var-name"
                       type="text"
                       placeholder="e.g., API_TOKEN, DATABASE_URL"
                       value={newVar.key}
@@ -182,10 +187,14 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
                     />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">
+                    <label
+                      for="env-var-value"
+                      class="block text-sm font-medium text-slate-300 mb-2"
+                    >
                       Value *
                     </label>
                     <input
+                      id="env-var-value"
                       type={newVar.isSecret ? 'password' : 'text'}
                       placeholder="Variable value"
                       value={newVar.value}
@@ -200,10 +209,14 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
                   </div>
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-slate-300 mb-2">
+                  <label
+                    for="env-var-desc"
+                    class="block text-sm font-medium text-slate-300 mb-2"
+                  >
                     Description
                   </label>
                   <input
+                    id="env-var-desc"
                     type="text"
                     placeholder="Optional description"
                     value={newVar.description}
@@ -237,6 +250,7 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
                 </div>
                 <div class="flex space-x-3">
                   <button
+                    type="button"
                     onClick={handleSave}
                     disabled={!newVar.key.trim() || !newVar.value.trim()}
                     class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed rounded text-white font-medium"
@@ -245,6 +259,7 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
                   </button>
                   {editingVar && (
                     <button
+                      type="button"
                       onClick={() => {
                         setEditingVar(null)
                         setNewVar({
@@ -308,12 +323,14 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
                         </div>
                         <div class="flex space-x-2 ml-4">
                           <button
+                            type="button"
                             onClick={() => handleEdit(variable)}
                             class="px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
                           >
                             ✏️ Edit
                           </button>
                           <button
+                            type="button"
                             onClick={() => handleDelete(variable.key)}
                             class="px-3 py-1 text-sm bg-red-700 hover:bg-red-600 rounded text-white"
                           >

@@ -1,6 +1,7 @@
 export function PrismStyles() {
   return (
     <style
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: Prism syntax highlighting requires raw HTML injection
       dangerouslySetInnerHTML={{
         __html: `
       /* PrismJS 1.30.0 - YAML Syntax Highlighting */

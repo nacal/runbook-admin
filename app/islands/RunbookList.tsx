@@ -173,7 +173,7 @@ export function RunbookList({
     const matchesLabels =
       selectedLabels.length === 0 ||
       (runbook.labels &&
-        selectedLabels.every((label) => runbook.labels!.includes(label)))
+        selectedLabels.every((label) => runbook.labels?.includes(label)))
 
     return matchesSearch && matchesLabels
   })
