@@ -2,7 +2,7 @@ import { useState, useEffect } from 'hono/jsx'
 import type { ExecutionResult } from '../types/types'
 import { ExecutionResultModal } from './ExecutionResult'
 import { Toast, useToast } from './Toast'
-import { useConfirmDialog } from './ConfirmDialog'
+import { useConfirmDialog } from '../components/ConfirmDialog'
 
 export function ExecutionHistory() {
   const [executions, setExecutions] = useState<ExecutionResult[]>([])

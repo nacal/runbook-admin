@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'hono/jsx'
 import { Toast, useToast } from './Toast'
-import { ConfirmDialog, useConfirmDialog } from './ConfirmDialog'
+import { ConfirmDialog, useConfirmDialog } from '../components/ConfirmDialog'
 
 interface EnvironmentVariable {
   key: string

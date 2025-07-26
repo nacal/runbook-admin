@@ -1,5 +1,5 @@
 import type { Runbook } from '../types/types'
-import { RunbookCard } from './RunbookCard'
+import { RunbookCard } from '../islands/RunbookCard'
 
 interface RunbookGridProps {
   runbooks: Runbook[]
