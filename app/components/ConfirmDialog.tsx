@@ -20,11 +20,11 @@ export function ConfirmDialog({
   cancelText = 'Cancel',
   variant = 'warning',
   onConfirm,
-  onCancel
+  onCancel,
 }: ConfirmDialogProps) {
   // モーダル表示時にスクロールを無効化
   useBodyScrollLock(isOpen)
-  
+
   useEffect(() => {
     if (!isOpen) return
 
@@ -48,25 +48,26 @@ export function ConfirmDialog({
         return {
           icon: '⚠️',
           confirmButton: 'bg-red-600 hover:bg-red-700 focus:ring-red-500',
-          iconColor: 'text-red-400'
+          iconColor: 'text-red-400',
         }
       case 'warning':
         return {
           icon: '⚠️',
-          confirmButton: 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500',
-          iconColor: 'text-yellow-400'
+          confirmButton:
+            'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500',
+          iconColor: 'text-yellow-400',
         }
       case 'info':
         return {
           icon: 'ℹ️',
           confirmButton: 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500',
-          iconColor: 'text-blue-400'
+          iconColor: 'text-blue-400',
         }
       default:
         return {
           icon: '❓',
           confirmButton: 'bg-slate-600 hover:bg-slate-700 focus:ring-slate-500',
-          iconColor: 'text-slate-400'
+          iconColor: 'text-slate-400',
         }
     }
   }
@@ -78,9 +79,7 @@ export function ConfirmDialog({
       <div class="bg-slate-800 rounded-lg shadow-xl max-w-md w-full mx-4">
         {/* Header */}
         <div class="flex items-center p-6 border-b border-slate-700">
-          <div class={`text-2xl mr-3 ${styles.iconColor}`}>
-            {styles.icon}
-          </div>
+          <div class={`text-2xl mr-3 ${styles.iconColor}`}>{styles.icon}</div>
           <h3 class="text-lg font-semibold text-white">{title}</h3>
         </div>
 
@@ -107,7 +106,8 @@ export function ConfirmDialog({
 
         {/* Keyboard shortcuts hint */}
         <div class="px-6 pb-4 text-xs text-slate-500">
-          Press <kbd class="px-1 bg-slate-700 rounded">ESC</kbd> to cancel, <kbd class="px-1 bg-slate-700 rounded">Enter</kbd> to confirm
+          Press <kbd class="px-1 bg-slate-700 rounded">ESC</kbd> to cancel,{' '}
+          <kbd class="px-1 bg-slate-700 rounded">Enter</kbd> to confirm
         </div>
       </div>
     </div>
@@ -116,11 +116,15 @@ export function ConfirmDialog({
 
 export function useConfirmDialog() {
   const [isOpen, setIsOpen] = useState(false)
-  const [config, setConfig] = useState<Omit<ConfirmDialogProps, 'isOpen' | 'onConfirm' | 'onCancel'>>({
+  const [config, setConfig] = useState<
+    Omit<ConfirmDialogProps, 'isOpen' | 'onConfirm' | 'onCancel'>
+  >({
     title: '',
-    message: ''
+    message: '',
   })
-  const [resolvePromise, setResolvePromise] = useState<((value: boolean) => void) | null>(null)
+  const [resolvePromise, setResolvePromise] = useState<
+    ((value: boolean) => void) | null
+  >(null)
 
   const showConfirm = (
     title: string,
@@ -129,7 +133,7 @@ export function useConfirmDialog() {
       confirmText?: string
       cancelText?: string
       variant?: 'danger' | 'warning' | 'info'
-    }
+    },
   ): Promise<boolean> => {
     return new Promise((resolve) => {
       setConfig({
@@ -137,7 +141,7 @@ export function useConfirmDialog() {
         message,
         confirmText: options?.confirmText,
         cancelText: options?.cancelText,
-        variant: options?.variant
+        variant: options?.variant,
       })
       setResolvePromise(() => resolve)
       setIsOpen(true)
@@ -171,6 +175,6 @@ export function useConfirmDialog() {
 
   return {
     showConfirm,
-    ConfirmDialogComponent
+    ConfirmDialogComponent,
   }
 }

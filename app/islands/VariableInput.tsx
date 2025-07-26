@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'hono/jsx'
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
 import type { ExecutionOptions as ExecutionOptionsType } from '../services/execution-options-manager'
 import type { Runbook } from '../types/types'
-import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
 import { FileUpload } from './FileUpload'
 import { Toast, useToast } from './Toast'
 
@@ -18,7 +18,7 @@ interface VariableInputProps {
   runbook: Runbook
   onSubmit: (
     variables: Record<string, string>,
-    executionOptions?: ExecutionOptionsType
+    executionOptions?: ExecutionOptionsType,
   ) => void
   onCancel: () => void
 }
@@ -33,7 +33,7 @@ export function VariableInput({
   const [selectedPreset, setSelectedPreset] = useState<string>('')
   const [newPresetName, setNewPresetName] = useState('')
   const [showSavePreset, setShowSavePreset] = useState(false)
-  
+
   // モーダル表示時にスクロールを無効化
   useBodyScrollLock(true)
   const [globalVariables, setGlobalVariables] = useState<
@@ -52,16 +52,18 @@ export function VariableInput({
 
   const initializeData = async () => {
     try {
-      const response = await fetch(`/api/variables/initialize?runbookId=${runbook.id}`)
+      const response = await fetch(
+        `/api/variables/initialize?runbookId=${runbook.id}`,
+      )
       const result = await response.json()
-      
+
       if (result.success) {
         const { presets, globalVariables, environmentVariables } = result.data
-        
+
         // Set all data from the unified API
         setPresets(presets)
         setGlobalVariables(globalVariables)
-        
+
         // Process environment variables with masking
         const processedEnvVars: Record<string, string> = {}
         Object.entries(environmentVariables).forEach(([key, value]) => {
@@ -295,15 +297,15 @@ export function VariableInput({
                       variable.type === 'number'
                         ? 'number'
                         : hasEnvDefault && envValue === '••••••••'
-                        ? 'password'
-                        : 'text'
+                          ? 'password'
+                          : 'text'
                     }
                     placeholder={variable.defaultValue || `Enter ${key}...`}
                     value={variables[key] || ''}
                     onInput={(e) =>
                       handleVariableChange(
                         key,
-                        (e.target as HTMLInputElement)?.value || ''
+                        (e.target as HTMLInputElement)?.value || '',
                       )
                     }
                     class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500 focus:border-blue-500 outline-none"

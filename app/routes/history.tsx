@@ -10,10 +10,12 @@ export default createRoute((c) => {
       <header class="mb-8">
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="text-3xl font-bold text-white mb-2">Execution History</h1>
+            <h1 class="text-3xl font-bold text-white mb-2">
+              Execution History
+            </h1>
             <p class="text-slate-400">View all runbook execution results</p>
           </div>
-          <a 
+          <a
             href="/"
             class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white text-sm"
           >
@@ -27,6 +29,6 @@ export default createRoute((c) => {
           <HistoryContent />
         </Suspense>
       </main>
-    </>
+    </>,
   )
 })

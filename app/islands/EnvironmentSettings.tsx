@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'hono/jsx'
+import { ConfirmDialog, useConfirmDialog } from '../components/ConfirmDialog'
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
 import { Toast, useToast } from './Toast'
-import { ConfirmDialog, useConfirmDialog } from '../components/ConfirmDialog'
 
 interface EnvironmentVariable {
   key: string
@@ -23,26 +23,26 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
     key: '',
     value: '',
     description: '',
-    isSecret: false
+    isSecret: false,
   })
-  
+
   // モーダル表示時にスクロールを無効化
   useBodyScrollLock(true)
-  
+
   const { toasts, showError, removeToast } = useToast()
   const { showConfirm, ConfirmDialogComponent } = useConfirmDialog()
   const [editingVar, setEditingVar] = useState<string | null>(null)
 
   useEffect(() => {
     loadVariables()
-    
+
     // Add ESC key listener
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onClose()
       }
     }
-    
+
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [])
@@ -52,7 +52,7 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
       setLoading(true)
       const response = await fetch('/api/environment')
       const result = await response.json()
-      
+
       if (result.success) {
         setVariables(result.data)
       }
@@ -70,7 +70,7 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
       const response = await fetch('/api/environment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newVar)
+        body: JSON.stringify(newVar),
       })
 
       const result = await response.json()
@@ -93,8 +93,8 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
       {
         confirmText: 'Delete',
         cancelText: 'Cancel',
-        variant: 'danger'
-      }
+        variant: 'danger',
+      },
     )
 
     if (!confirmed) return
@@ -103,7 +103,7 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
       const response = await fetch('/api/environment', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key })
+        body: JSON.stringify({ key }),
       })
 
       const result = await response.json()
@@ -124,7 +124,7 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
       key: variable.key,
       value: variable.isSecret ? '' : variable.value,
       description: variable.description || '',
-      isSecret: variable.isSecret || false
+      isSecret: variable.isSecret || false,
     })
   }
 
@@ -139,7 +139,9 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
           {/* Header */}
           <div class="flex items-center justify-between p-6 border-b border-slate-700 flex-shrink-0">
             <div>
-              <h2 class="text-xl font-semibold text-white">🌍 Environment Variables</h2>
+              <h2 class="text-xl font-semibold text-white">
+                🌍 Environment Variables
+              </h2>
               <p class="text-sm text-slate-400 mt-1">
                 Manage persistent environment variables for runbook execution
               </p>
@@ -169,7 +171,12 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
                       type="text"
                       placeholder="e.g., API_TOKEN, DATABASE_URL"
                       value={newVar.key}
-                      onInput={(e) => setNewVar(prev => ({ ...prev, key: (e.target as HTMLInputElement)?.value || '' }))}
+                      onInput={(e) =>
+                        setNewVar((prev) => ({
+                          ...prev,
+                          key: (e.target as HTMLInputElement)?.value || '',
+                        }))
+                      }
                       disabled={!!editingVar}
                       class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500 focus:border-blue-500 outline-none disabled:opacity-50"
                     />
@@ -182,7 +189,12 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
                       type={newVar.isSecret ? 'password' : 'text'}
                       placeholder="Variable value"
                       value={newVar.value}
-                      onInput={(e) => setNewVar(prev => ({ ...prev, value: (e.target as HTMLInputElement)?.value || '' }))}
+                      onInput={(e) =>
+                        setNewVar((prev) => ({
+                          ...prev,
+                          value: (e.target as HTMLInputElement)?.value || '',
+                        }))
+                      }
                       class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500 focus:border-blue-500 outline-none"
                     />
                   </div>
@@ -195,7 +207,13 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
                     type="text"
                     placeholder="Optional description"
                     value={newVar.description}
-                    onInput={(e) => setNewVar(prev => ({ ...prev, description: (e.target as HTMLInputElement)?.value || '' }))}
+                    onInput={(e) =>
+                      setNewVar((prev) => ({
+                        ...prev,
+                        description:
+                          (e.target as HTMLInputElement)?.value || '',
+                      }))
+                    }
                     class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500 focus:border-blue-500 outline-none"
                   />
                 </div>
@@ -204,7 +222,13 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
                     type="checkbox"
                     id="isSecret"
                     checked={newVar.isSecret}
-                    onChange={(e) => setNewVar(prev => ({ ...prev, isSecret: (e.target as HTMLInputElement)?.checked || false }))}
+                    onChange={(e) =>
+                      setNewVar((prev) => ({
+                        ...prev,
+                        isSecret:
+                          (e.target as HTMLInputElement)?.checked || false,
+                      }))
+                    }
                     class="mr-2"
                   />
                   <label for="isSecret" class="text-sm text-slate-300">
@@ -223,7 +247,12 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
                     <button
                       onClick={() => {
                         setEditingVar(null)
-                        setNewVar({ key: '', value: '', description: '', isSecret: false })
+                        setNewVar({
+                          key: '',
+                          value: '',
+                          description: '',
+                          isSecret: false,
+                        })
                       }}
                       class="px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded text-slate-300"
                     >
@@ -236,7 +265,9 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
 
             {/* Variables List */}
             <div>
-              <h3 class="text-lg font-medium text-white mb-4">Current Variables ({variables.length})</h3>
+              <h3 class="text-lg font-medium text-white mb-4">
+                Current Variables ({variables.length})
+              </h3>
               {loading ? (
                 <div class="flex items-center justify-center py-8">
                   <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
@@ -249,12 +280,19 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
               ) : (
                 <div class="space-y-3">
                   {variables.map((variable) => (
-                    <div key={variable.key} class="p-4 bg-slate-900/30 border border-slate-700 rounded-lg">
+                    <div
+                      key={variable.key}
+                      class="p-4 bg-slate-900/30 border border-slate-700 rounded-lg"
+                    >
                       <div class="flex items-start justify-between">
                         <div class="flex-1">
                           <div class="flex items-center space-x-2">
-                            <span class="font-mono text-blue-400 font-medium">{variable.key}</span>
-                            {variable.isSecret && <span class="text-yellow-500 text-sm">🔒</span>}
+                            <span class="font-mono text-blue-400 font-medium">
+                              {variable.key}
+                            </span>
+                            {variable.isSecret && (
+                              <span class="text-yellow-500 text-sm">🔒</span>
+                            )}
                           </div>
                           <div class="mt-1 font-mono text-sm text-slate-300 break-all">
                             {variable.value}
@@ -293,11 +331,11 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
           {/* Footer */}
           <div class="p-6 border-t border-slate-700 flex items-center justify-between text-sm text-slate-400 flex-shrink-0">
             <div>
-              Press <kbd class="px-2 py-1 bg-slate-700 rounded text-xs">ESC</kbd> to close
+              Press{' '}
+              <kbd class="px-2 py-1 bg-slate-700 rounded text-xs">ESC</kbd> to
+              close
             </div>
-            <div>
-              Variables are stored in ~/.runbook-admin/environment.json
-            </div>
+            <div>Variables are stored in ~/.runbook-admin/environment.json</div>
           </div>
         </div>
       </div>

@@ -7,18 +7,17 @@
     "runbook-admin": "./dist/bin/runbook-admin.js"
   },
   "files": [
-    "dist/",
-    "app/",
-    "vite.config.ts",
-    "tsconfig.json"
+    "dist",
+    "README.md"
   ],
   "scripts": {
     "dev": "vite dev",
     "build": "vite build && pnpm run build:cli",
     "build:cli": "tsc src/bin/runbook-admin.ts --outDir dist/bin --target es2022 --module node16 --moduleResolution node16",
-    "preview": "vite preview",
     "start": "node dist/bin/runbook-admin.js",
-    "start:vite": "vite dev --host"
+    "lint": "biome lint --write",
+    "format": "biome format --write",
+    "check": "biome check --write"
   },
   "dependencies": {
     "@hono/node-server": "^1.12.0",
@@ -30,6 +29,7 @@
     "prismjs": "^1.30.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.1.2",
     "@tailwindcss/vite": "^4.1.11",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.5.0",

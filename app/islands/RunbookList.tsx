@@ -29,26 +29,26 @@ export function RunbookList({
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedLabels, setSelectedLabels] = useState<string[]>([])
   const [showExecutionResult, setShowExecutionResult] = useState<string | null>(
-    null
+    null,
   )
   const [favorites, setFavorites] = useState<string[]>(initialFavorites)
   const [showVariableInput, setShowVariableInput] = useState<Runbook | null>(
-    null
+    null,
   )
   const [showRunbookViewer, setShowRunbookViewer] = useState<Runbook | null>(
-    null
+    null,
   )
   const [showEnvironmentSettings, setShowEnvironmentSettings] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   const [executingRunbooks, setExecutingRunbooks] = useState<Set<string>>(
-    new Set()
+    new Set(),
   )
   const { toasts, showError, removeToast } = useToast()
 
   const executeRunbook = async (
     runbook: Runbook,
     variables: Record<string, string>,
-    executionOptions?: ExecutionOptions
+    executionOptions?: ExecutionOptions,
   ) => {
     // Mark runbook as executing
     setExecutingRunbooks((prev) => new Set([...prev, runbook.id]))
@@ -153,7 +153,7 @@ export function RunbookList({
 
   const toggleLabel = (label: string) => {
     setSelectedLabels((prev) =>
-      prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label]
+      prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label],
     )
   }
 

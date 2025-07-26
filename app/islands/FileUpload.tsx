@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'hono/jsx'
+import { useEffect, useRef, useState } from 'hono/jsx'
 import Prism from 'prismjs'
 import 'prismjs/components/prism-yaml'
 import 'prismjs/components/prism-sql'
@@ -7,8 +7,8 @@ import 'prismjs/components/prism-python'
 import 'prismjs/components/prism-bash'
 import 'prismjs/components/prism-typescript'
 import 'prismjs/components/prism-markdown'
-import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
 import { PrismStyles } from '../components/PrismStyles'
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
 
 interface FilePreviewModalProps {
   isOpen: boolean
@@ -17,9 +17,14 @@ interface FilePreviewModalProps {
   onClose: () => void
 }
 
-function FilePreviewModal({ isOpen, fileName, content, onClose }: FilePreviewModalProps) {
+function FilePreviewModal({
+  isOpen,
+  fileName,
+  content,
+  onClose,
+}: FilePreviewModalProps) {
   const preRef = useRef<HTMLPreElement>(null)
-  
+
   // モーダル表示時にスクロールを無効化
   useBodyScrollLock(isOpen)
 
@@ -27,25 +32,38 @@ function FilePreviewModal({ isOpen, fileName, content, onClose }: FilePreviewMod
   const getLanguageFromFileName = (filename: string): string => {
     const ext = filename.split('.').pop()?.toLowerCase()
     switch (ext) {
-      case 'sql': return 'sql'
-      case 'json': return 'json'
+      case 'sql':
+        return 'sql'
+      case 'json':
+        return 'json'
       case 'yaml':
-      case 'yml': return 'yaml'
-      case 'py': return 'python'
-      case 'js': return 'javascript'
-      case 'ts': return 'typescript'
-      case 'sh': return 'bash'
-      case 'md': return 'markdown'
-      default: return 'plaintext'
+      case 'yml':
+        return 'yaml'
+      case 'py':
+        return 'python'
+      case 'js':
+        return 'javascript'
+      case 'ts':
+        return 'typescript'
+      case 'sh':
+        return 'bash'
+      case 'md':
+        return 'markdown'
+      default:
+        return 'plaintext'
     }
   }
 
   useEffect(() => {
     if (isOpen && preRef.current) {
       const language = getLanguageFromFileName(fileName)
-      
+
       try {
-        const highlighted = Prism.highlight(content, Prism.languages[language] || Prism.languages.plaintext, language)
+        const highlighted = Prism.highlight(
+          content,
+          Prism.languages[language] || Prism.languages.plaintext,
+          language,
+        )
         preRef.current.innerHTML = highlighted
         preRef.current.className = `language-${language}`
       } catch (error) {
@@ -78,7 +96,7 @@ function FilePreviewModal({ isOpen, fileName, content, onClose }: FilePreviewMod
         {/* Content */}
         <div class="flex-1 overflow-auto p-4">
           <div class="bg-slate-900 border border-slate-600 rounded p-4 overflow-auto">
-            <pre 
+            <pre
               ref={preRef}
               class="text-sm whitespace-pre-wrap font-mono overflow-x-auto"
               style="word-break: break-all; white-space: pre-wrap;"
@@ -108,36 +126,38 @@ export interface FileUploadProps {
   defaultFilePath?: string
 }
 
-export function FileUpload({ 
-  value, 
-  onChange, 
-  placeholder, 
+export function FileUpload({
+  value,
+  onChange,
+  placeholder,
   className = '',
   accept = '.txt,.sql,.json,.yaml,.yml,.md,.js,.ts,.py,.sh,.xml,.csv',
-  defaultFilePath
+  defaultFilePath,
 }: FileUploadProps) {
   const [fileName, setFileName] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
-  
+
   // Check if value is the default file:// or json:// scheme value
-  const isDefaultValue = value && defaultFilePath && (
-    (value.startsWith('file://') && value === `file://${defaultFilePath}`) ||
-    (value.startsWith('json://') && value === `json://${defaultFilePath}`)
+  const isDefaultValue =
+    value &&
+    defaultFilePath &&
+    ((value.startsWith('file://') && value === `file://${defaultFilePath}`) ||
+      (value.startsWith('json://') && value === `json://${defaultFilePath}`))
+
+  const [showUpload, setShowUpload] = useState(
+    !defaultFilePath || (!!value && !isDefaultValue),
   )
-  
-  const [showUpload, setShowUpload] = useState(!defaultFilePath || (!!value && !isDefaultValue))
   const inputId = `file-upload-${Math.random().toString(36).substring(2, 9)}`
-  
 
   const handleFileUpload = async (e: Event) => {
     const target = e.target as HTMLInputElement
     const file = target.files?.[0]
-    
+
     if (file) {
       setIsLoading(true)
       setFileName(file.name)
-      
+
       try {
         const reader = new FileReader()
         reader.onload = (event) => {
@@ -159,7 +179,6 @@ export function FileUpload({
 
   return (
     <div class={`space-y-3 ${className}`}>
-      
       {/* Default file path display */}
       {defaultFilePath && !showUpload && (isDefaultValue || !value) && (
         <div class="bg-slate-800 border border-slate-600 rounded-lg p-4">
@@ -200,7 +219,9 @@ export function FileUpload({
           <label
             for={inputId}
             class={`cursor-pointer inline-flex flex-col items-center space-y-2 ${
-              isLoading ? 'opacity-50 cursor-not-allowed' : 'text-slate-400 hover:text-slate-200'
+              isLoading
+                ? 'opacity-50 cursor-not-allowed'
+                : 'text-slate-400 hover:text-slate-200'
             } transition-colors`}
           >
             {isLoading ? (
@@ -211,9 +232,7 @@ export function FileUpload({
             ) : (
               <>
                 <div class="text-2xl">📁</div>
-                <div class="text-sm font-medium">
-                  Click to select file
-                </div>
+                <div class="text-sm font-medium">Click to select file</div>
                 <div class="text-xs text-slate-500">
                   {placeholder || 'Choose a text file'}
                 </div>
@@ -222,18 +241,16 @@ export function FileUpload({
           </label>
         </div>
       )}
-      
+
       {value && fileName && (
         <div class="space-y-2">
           <div class="flex items-center justify-between text-sm">
-            <span class="text-green-400">
-              ✅ {fileName}
-            </span>
+            <span class="text-green-400">✅ {fileName}</span>
             <span class="text-slate-500">
               {value.length.toLocaleString()} chars
             </span>
           </div>
-          
+
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-3">
               <button
@@ -279,7 +296,7 @@ export function FileUpload({
         content={value}
         onClose={() => setShowPreview(false)}
       />
-      
+
       {/* Prism Styles */}
       <PrismStyles />
     </div>

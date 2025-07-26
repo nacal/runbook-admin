@@ -11,39 +11,40 @@ async function loadHistoryData(): Promise<HistoryData> {
   try {
     const manager = ExecutionManager.getInstance()
     const executions = await manager.getAllExecutions()
-    
+
     return {
       executions,
-      error: null
+      error: null,
     }
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
+    const errorMessage =
+      err instanceof Error ? err.message : 'Unknown error occurred'
     return {
       executions: [],
-      error: errorMessage
+      error: errorMessage,
     }
   }
 }
 
 export async function HistoryContent() {
   console.log('📄 Loading execution history...')
-  
+
   const historyData = await loadHistoryData()
-  
+
   if (historyData.error) {
     console.error('❌ History data loading failed:', {
       error: historyData.error,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     })
   } else {
     console.log(`✅ History data loaded successfully`, {
       executionsCount: historyData.executions.length,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     })
   }
 
   return (
-    <ExecutionHistory 
+    <ExecutionHistory
       initialExecutions={historyData.executions}
       initialError={historyData.error}
     />

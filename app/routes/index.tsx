@@ -32,6 +32,6 @@ export default createRoute((c) => {
           <DashboardContent />
         </Suspense>
       </main>
-    </>
+    </>,
   )
 })

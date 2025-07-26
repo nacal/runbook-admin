@@ -16,17 +16,15 @@ export function StatsBar({
   return (
     <div class="mb-6 flex items-center justify-between">
       <div class="text-slate-400">
-        Found{' '}
-        <span class="text-white font-semibold">
-          {filteredCount}
-        </span>{' '}
+        Found <span class="text-white font-semibold">{filteredCount}</span>{' '}
         runbooks
         {searchTerm && <span> matching "{searchTerm}"</span>}
-        {selectedLabels.length > 0 && <span> with labels [{selectedLabels.join(', ')}]</span>}
+        {selectedLabels.length > 0 && (
+          <span> with labels [{selectedLabels.join(', ')}]</span>
+        )}
         {favoritesCount > 0 && (
           <span class="ml-3">
-            <span class="text-yellow-500">⭐</span> {favoritesCount}{' '}
-            favorites
+            <span class="text-yellow-500">⭐</span> {favoritesCount} favorites
           </span>
         )}
       </div>

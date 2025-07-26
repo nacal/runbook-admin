@@ -44,7 +44,7 @@ export class ExecutionOptionsManager {
             description: preset.description,
             options: preset.options,
             createdAt: new Date(preset.createdAt || Date.now()),
-            lastUsed: preset.lastUsed ? new Date(preset.lastUsed) : undefined
+            lastUsed: preset.lastUsed ? new Date(preset.lastUsed) : undefined,
           }
         }
       })
@@ -54,14 +54,20 @@ export class ExecutionOptionsManager {
       this.defaultOptions = loadedOptions.args ? loadedOptions : { args: [] }
 
       this.initialized = true
-      console.log(`[ExecutionOptionsManager] Loaded ${Object.keys(this.presets).length} presets`)
+      console.log(
+        `[ExecutionOptionsManager] Loaded ${Object.keys(this.presets).length} presets`,
+      )
     } catch (error) {
       console.error('[ExecutionOptionsManager] Failed to initialize:', error)
       this.initialized = true
     }
   }
 
-  async savePreset(name: string, options: ExecutionOptions, description?: string): Promise<void> {
+  async savePreset(
+    name: string,
+    options: ExecutionOptions,
+    description?: string,
+  ): Promise<void> {
     await this.initialize()
 
     const preset: ExecutionPreset = {
@@ -69,7 +75,7 @@ export class ExecutionOptionsManager {
       description,
       options,
       createdAt: new Date(),
-      lastUsed: new Date()
+      lastUsed: new Date(),
     }
 
     this.presets[name] = preset
@@ -89,8 +95,8 @@ export class ExecutionOptionsManager {
 
   async getAllPresets(): Promise<ExecutionPreset[]> {
     await this.initialize()
-    return Object.values(this.presets).sort((a, b) => 
-      (b.lastUsed?.getTime() || 0) - (a.lastUsed?.getTime() || 0)
+    return Object.values(this.presets).sort(
+      (a, b) => (b.lastUsed?.getTime() || 0) - (a.lastUsed?.getTime() || 0),
     )
   }
 
@@ -131,13 +137,16 @@ export class ExecutionOptionsManager {
             description: preset.description,
             options: preset.options,
             createdAt: preset.createdAt.toISOString(),
-            lastUsed: preset.lastUsed?.toISOString()
-          }
-        ])
+            lastUsed: preset.lastUsed?.toISOString(),
+          },
+        ]),
       )
       await this.storage.saveExecutionPresets(serializable)
     } catch (error) {
-      console.error('[ExecutionOptionsManager] Failed to persist presets:', error)
+      console.error(
+        '[ExecutionOptionsManager] Failed to persist presets:',
+        error,
+      )
     }
   }
 }

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 import { spawn } from 'child_process'
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
 import open from 'open'
+import { dirname, join } from 'path'
+import { fileURLToPath } from 'url'
 
 const PORT = process.env.PORT || 3444
 const HOST = '127.0.0.1'
@@ -16,18 +16,22 @@ const appRoot = join(__dirname, '..', '..')
 async function main() {
   console.log('🔥 Starting Runbook Admin...')
   console.log(`📁 Project: ${process.cwd()}`)
-  
+
   try {
     // Use npx to run vite dev for development mode
     const viteCommand = process.platform === 'win32' ? 'npx.cmd' : 'npx'
-    const viteProcess = spawn(viteCommand, ['vite', 'dev', '--host', HOST, '--port', String(PORT)], {
-      cwd: appRoot,
-      stdio: ['inherit', 'pipe', 'pipe'],
-      env: {
-        ...process.env,
-        NODE_ENV: 'development'
-      }
-    })
+    const viteProcess = spawn(
+      viteCommand,
+      ['vite', 'dev', '--host', HOST, '--port', String(PORT)],
+      {
+        cwd: appRoot,
+        stdio: ['inherit', 'pipe', 'pipe'],
+        env: {
+          ...process.env,
+          NODE_ENV: 'development',
+        },
+      },
+    )
 
     let serverStarted = false
     const url = `http://${HOST}:${PORT}`
@@ -36,13 +40,16 @@ async function main() {
     if (viteProcess.stdout) {
       viteProcess.stdout.on('data', (data) => {
         const output = data.toString()
-        
+
         // Log vite output for debugging
         if (output.includes('➜')) {
           console.log(output.trim())
         }
-        
-        if (!serverStarted && (output.includes('ready in') || output.includes('Local:'))) {
+
+        if (
+          !serverStarted &&
+          (output.includes('ready in') || output.includes('Local:'))
+        ) {
           serverStarted = true
         }
       })
@@ -65,12 +72,12 @@ async function main() {
         process.exit(code)
       }
     })
-    
+
     console.log(`✨ Server running at ${url}`)
     console.log(`🔍 Scanning for runbooks...`)
     console.log(``)
     console.log(`Press Ctrl+C to stop`)
-    
+
     // Auto-open browser after server starts
     setTimeout(async () => {
       try {
@@ -90,7 +97,6 @@ async function main() {
 
     process.on('SIGINT', shutdown)
     process.on('SIGTERM', shutdown)
-
   } catch (error) {
     console.error('❌ Failed to start server:', error)
     process.exit(1)
@@ -115,16 +121,18 @@ async function checkRunn() {
 async function init() {
   console.log('🔥 Runbook Admin')
   console.log('================')
-  
+
   // Check if runn is installed
   const hasRunn = await checkRunn()
   if (!hasRunn) {
     console.log('⚠️  Warning: Runn CLI not found in PATH')
-    console.log('   Install with: go install github.com/k1LoW/runn/cmd/runn@latest')
+    console.log(
+      '   Install with: go install github.com/k1LoW/runn/cmd/runn@latest',
+    )
     console.log('   Or visit: https://github.com/k1LoW/runn')
     console.log('')
   }
-  
+
   await main()
 }
 

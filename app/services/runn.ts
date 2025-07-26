@@ -1,9 +1,12 @@
-import { spawn, ChildProcess } from 'child_process'
-import { EventEmitter } from 'events'
+import { type ChildProcess, spawn } from 'child_process'
 import { createHash } from 'crypto'
+import { EventEmitter } from 'events'
 import type { ExecutionResult } from '../types/types'
 import { EnvironmentManager } from './environment-manager'
-import { ExecutionOptionsManager, type ExecutionOptions } from './execution-options-manager'
+import {
+  type ExecutionOptions,
+  ExecutionOptionsManager,
+} from './execution-options-manager'
 
 export class RunnExecutor extends EventEmitter {
   private process: ChildProcess | null = null
@@ -14,7 +17,12 @@ export class RunnExecutor extends EventEmitter {
     this.executionId = this.generateId()
   }
 
-  async execute(runbookPath: string, variables: Record<string, any> = {}, timeout: number = 60000, executionOptions?: ExecutionOptions): Promise<ExecutionResult> {
+  async execute(
+    runbookPath: string,
+    variables: Record<string, any> = {},
+    timeout: number = 60000,
+    executionOptions?: ExecutionOptions,
+  ): Promise<ExecutionResult> {
     return new Promise(async (resolve, reject) => {
       if (this.process) {
         reject(new Error('Execution already in progress'))
@@ -23,7 +31,7 @@ export class RunnExecutor extends EventEmitter {
 
       const startTime = new Date()
       const args = ['run', runbookPath]
-      
+
       // Add variables using --var flag
       Object.entries(variables).forEach(([key, value]) => {
         args.push('--var', `${key}:${value}`)
@@ -36,7 +44,11 @@ export class RunnExecutor extends EventEmitter {
         args.push(...optionArgs)
       }
 
-      console.log(`[RunnExecutor] Starting execution ${this.executionId}:`, 'runn', args.join(' '))
+      console.log(
+        `[RunnExecutor] Starting execution ${this.executionId}:`,
+        'runn',
+        args.join(' '),
+      )
 
       // Get environment variables for execution
       const envManager = EnvironmentManager.getInstance()
@@ -44,11 +56,11 @@ export class RunnExecutor extends EventEmitter {
 
       this.process = spawn('runn', args, {
         cwd: process.cwd(),
-        stdio: ['ignore', 'pipe', 'pipe'],  // ignore stdin to prevent hanging
+        stdio: ['ignore', 'pipe', 'pipe'], // ignore stdin to prevent hanging
         env: {
-          ...process.env,  // Preserve current environment (including PATH)
-          ...execEnv       // Add managed environment variables
-        }
+          ...process.env, // Preserve current environment (including PATH)
+          ...execEnv, // Add managed environment variables
+        },
       })
 
       let output = ''
@@ -59,7 +71,9 @@ export class RunnExecutor extends EventEmitter {
 
       // Set up timeout
       timeoutHandle = setTimeout(() => {
-        console.log(`[RunnExecutor] Execution ${this.executionId} timed out after ${timeout}ms`)
+        console.log(
+          `[RunnExecutor] Execution ${this.executionId} timed out after ${timeout}ms`,
+        )
         if (this.process) {
           this.process.kill('SIGTERM')
           setTimeout(() => {
@@ -83,14 +97,17 @@ export class RunnExecutor extends EventEmitter {
       })
 
       this.process.on('close', (code) => {
-        console.log(`[RunnExecutor] Process ${this.executionId} closed with code:`, code)
+        console.log(
+          `[RunnExecutor] Process ${this.executionId} closed with code:`,
+          code,
+        )
         if (timeoutHandle) {
           clearTimeout(timeoutHandle)
           timeoutHandle = null
         }
         this.process = null
         const endTime = new Date()
-        
+
         const result: ExecutionResult = {
           id: this.executionId,
           runbookId: this.generateRunbookId(runbookPath),
@@ -100,25 +117,31 @@ export class RunnExecutor extends EventEmitter {
           startTime,
           endTime,
           duration: endTime.getTime() - startTime.getTime(),
-          output: output.split('\n').filter(line => line.trim()),
+          output: output.split('\n').filter((line) => line.trim()),
           error: code !== 0 ? errorOutput : undefined,
-          variables
+          variables,
         }
 
-        console.log(`[RunnExecutor] Emitting complete event for ${this.executionId}:`, result.status)
+        console.log(
+          `[RunnExecutor] Emitting complete event for ${this.executionId}:`,
+          result.status,
+        )
         this.emit('complete', result)
         resolve(result)
       })
 
       this.process.on('error', (error) => {
-        console.log(`[RunnExecutor] Process ${this.executionId} error:`, error.message)
+        console.log(
+          `[RunnExecutor] Process ${this.executionId} error:`,
+          error.message,
+        )
         if (timeoutHandle) {
           clearTimeout(timeoutHandle)
           timeoutHandle = null
         }
         this.process = null
         const endTime = new Date()
-        
+
         const result: ExecutionResult = {
           id: this.executionId,
           runbookId: this.generateRunbookId(runbookPath),
@@ -130,7 +153,7 @@ export class RunnExecutor extends EventEmitter {
           duration: endTime.getTime() - startTime.getTime(),
           output: [],
           error: `Failed to start runn: ${error.message}`,
-          variables
+          variables,
         }
 
         this.emit('complete', result)
@@ -143,7 +166,7 @@ export class RunnExecutor extends EventEmitter {
     return new Promise((resolve, reject) => {
       const childProcess = spawn('runn', ['list', pattern, '--long'], {
         stdio: ['pipe', 'pipe', 'pipe'],
-        env: process.env
+        env: process.env,
       })
 
       let output = ''
@@ -180,7 +203,7 @@ export class RunnExecutor extends EventEmitter {
   private parseListOutput(output: string): any[] {
     const lines = output.split('\n')
     const results: any[] = []
-    
+
     // Skip header and separator lines
     let dataStartIndex = -1
     for (let i = 0; i < lines.length; i++) {
@@ -189,13 +212,13 @@ export class RunnExecutor extends EventEmitter {
         break
       }
     }
-    
+
     if (dataStartIndex === -1) return results
-    
+
     for (let i = dataStartIndex; i < lines.length; i++) {
       const line = lines[i].trim()
       if (!line) continue
-      
+
       // Parse the line format: id, desc, if, steps, path
       const parts = line.split(/\s{2,}/) // Split by 2 or more spaces
       if (parts.length >= 5) {
@@ -204,11 +227,11 @@ export class RunnExecutor extends EventEmitter {
           desc: parts[1].trim(),
           if: parts[2].trim(),
           steps: parseInt(parts[3].trim()) || 0,
-          path: parts[4].trim()
+          path: parts[4].trim(),
         })
       }
     }
-    
+
     return results
   }
 
@@ -235,15 +258,15 @@ export class RunnExecutor extends EventEmitter {
 
   static async checkRunnAvailable(): Promise<boolean> {
     return new Promise((resolve) => {
-      const childProcess = spawn('runn', ['--version'], { 
+      const childProcess = spawn('runn', ['--version'], {
         stdio: 'pipe',
-        env: process.env
+        env: process.env,
       })
-      
+
       childProcess.on('close', (code) => {
         resolve(code === 0)
       })
-      
+
       childProcess.on('error', () => {
         resolve(false)
       })

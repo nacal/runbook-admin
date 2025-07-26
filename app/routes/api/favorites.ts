@@ -10,16 +10,19 @@ export const GET = createRoute(async (c) => {
     return c.json({
       success: true,
       data: favorites,
-      count: favorites.length
+      count: favorites.length,
     })
   } catch (error) {
     console.error('Error fetching favorites:', error)
-    return c.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      data: [],
-      count: 0
-    }, 500)
+    return c.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        data: [],
+        count: 0,
+      },
+      500,
+    )
   }
 })
 
@@ -29,10 +32,13 @@ export const POST = createRoute(async (c) => {
     const { runbookId } = await c.req.json()
 
     if (!runbookId) {
-      return c.json({
-        success: false,
-        error: 'runbookId is required'
-      }, 400)
+      return c.json(
+        {
+          success: false,
+          error: 'runbookId is required',
+        },
+        400,
+      )
     }
 
     const manager = FavoritesManager.getInstance()
@@ -41,14 +47,17 @@ export const POST = createRoute(async (c) => {
     return c.json({
       success: true,
       isFavorite,
-      message: isFavorite ? 'Added to favorites' : 'Removed from favorites'
+      message: isFavorite ? 'Added to favorites' : 'Removed from favorites',
     })
   } catch (error) {
     console.error('Error toggling favorite:', error)
-    return c.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }, 500)
+    return c.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500,
+    )
   }
 })
 
@@ -60,13 +69,16 @@ export const DELETE = createRoute(async (c) => {
 
     return c.json({
       success: true,
-      message: 'All favorites cleared'
+      message: 'All favorites cleared',
     })
   } catch (error) {
     console.error('Error clearing favorites:', error)
-    return c.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }, 500)
+    return c.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500,
+    )
   }
 })

@@ -1,22 +1,27 @@
 import { useState } from 'hono/jsx'
+import { useConfirmDialog } from '../components/ConfirmDialog'
 import type { ExecutionResult } from '../types/types'
 import { ExecutionResultModal } from './ExecutionResult'
 import { Toast, useToast } from './Toast'
-import { useConfirmDialog } from '../components/ConfirmDialog'
 
 interface ExecutionHistoryProps {
   initialExecutions: ExecutionResult[]
   initialError: string | null
 }
 
-export function ExecutionHistory({ initialExecutions, initialError }: ExecutionHistoryProps) {
-  const [executions, setExecutions] = useState<ExecutionResult[]>(initialExecutions)
+export function ExecutionHistory({
+  initialExecutions,
+  initialError,
+}: ExecutionHistoryProps) {
+  const [executions, setExecutions] =
+    useState<ExecutionResult[]>(initialExecutions)
   const [loading] = useState(false) // 初期データがあるのでfalse
   const [error] = useState<string | null>(initialError)
-  const [showExecutionResult, setShowExecutionResult] = useState<string | null>(null)
+  const [showExecutionResult, setShowExecutionResult] = useState<string | null>(
+    null,
+  )
   const { toasts, showSuccess, showError, removeToast } = useToast()
   const { showConfirm, ConfirmDialogComponent } = useConfirmDialog()
-
 
   const clearHistory = async () => {
     const confirmed = await showConfirm(
@@ -24,9 +29,9 @@ export function ExecutionHistory({ initialExecutions, initialError }: ExecutionH
       'Are you sure you want to clear all execution history? This action cannot be undone.',
       {
         confirmText: 'Clear All',
-        cancelText: 'Cancel', 
-        variant: 'danger'
-      }
+        cancelText: 'Cancel',
+        variant: 'danger',
+      },
     )
 
     if (!confirmed) return
@@ -34,7 +39,7 @@ export function ExecutionHistory({ initialExecutions, initialError }: ExecutionH
     try {
       const response = await fetch('/api/executions', { method: 'DELETE' })
       const result = await response.json()
-      
+
       if (result.success) {
         setExecutions([])
         showSuccess(result.message)
@@ -54,19 +59,27 @@ export function ExecutionHistory({ initialExecutions, initialError }: ExecutionH
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'running': return '🔄'
-      case 'success': return '✅'
-      case 'failed': return '❌'
-      default: return '⏳'
+      case 'running':
+        return '🔄'
+      case 'success':
+        return '✅'
+      case 'failed':
+        return '❌'
+      default:
+        return '⏳'
     }
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'running': return 'text-blue-400 bg-blue-900/20'
-      case 'success': return 'text-green-400 bg-green-900/20'
-      case 'failed': return 'text-red-400 bg-red-900/20'
-      default: return 'text-slate-400 bg-slate-900/20'
+      case 'running':
+        return 'text-blue-400 bg-blue-900/20'
+      case 'success':
+        return 'text-green-400 bg-green-900/20'
+      case 'failed':
+        return 'text-red-400 bg-red-900/20'
+      default:
+        return 'text-slate-400 bg-slate-900/20'
     }
   }
 
@@ -102,26 +115,26 @@ export function ExecutionHistory({ initialExecutions, initialError }: ExecutionH
         <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
           <div class="text-slate-400 text-sm mb-1">Successful</div>
           <div class="text-2xl font-bold text-green-400">
-            {executions.filter(e => e.status === 'success').length}
+            {executions.filter((e) => e.status === 'success').length}
           </div>
         </div>
         <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
           <div class="text-slate-400 text-sm mb-1">Failed</div>
           <div class="text-2xl font-bold text-red-400">
-            {executions.filter(e => e.status === 'failed').length}
+            {executions.filter((e) => e.status === 'failed').length}
           </div>
         </div>
         <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
           <div class="text-slate-400 text-sm mb-1">Running</div>
           <div class="text-2xl font-bold text-blue-400">
-            {executions.filter(e => e.status === 'running').length}
+            {executions.filter((e) => e.status === 'running').length}
           </div>
         </div>
       </div>
 
       {/* Action Buttons */}
       <div class="mb-6 flex justify-end space-x-2">
-        <button 
+        <button
           onClick={clearHistory}
           class="px-3 py-1 text-sm bg-red-700 hover:bg-red-600 rounded text-white"
           disabled={executions.length === 0}
@@ -138,7 +151,7 @@ export function ExecutionHistory({ initialExecutions, initialError }: ExecutionH
           <p class="text-slate-500">
             Execute some runbooks to see the history here
           </p>
-          <a 
+          <a
             href="/"
             class="inline-block mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white text-sm"
           >
@@ -148,15 +161,18 @@ export function ExecutionHistory({ initialExecutions, initialError }: ExecutionH
       ) : (
         <div class="space-y-3">
           {executions.map((execution) => (
-            <div 
+            <div
               key={execution.id}
               class="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:border-slate-600 transition-colors cursor-pointer"
               onClick={() => setShowExecutionResult(execution.id)}
             >
               <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                  <span class={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(execution.status)}`}>
-                    {getStatusIcon(execution.status)} {execution.status.toUpperCase()}
+                  <span
+                    class={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(execution.status)}`}
+                  >
+                    {getStatusIcon(execution.status)}{' '}
+                    {execution.status.toUpperCase()}
                   </span>
                   <div>
                     <div class="font-medium text-white">
@@ -167,27 +183,35 @@ export function ExecutionHistory({ initialExecutions, initialError }: ExecutionH
                     </div>
                   </div>
                 </div>
-                
+
                 <div class="flex items-center space-x-4 text-sm">
                   <div class="text-slate-400">
-                    Duration: <span class="text-white">{formatDuration(execution.duration)}</span>
+                    Duration:{' '}
+                    <span class="text-white">
+                      {formatDuration(execution.duration)}
+                    </span>
                   </div>
                   <div class="text-slate-400">
-                    Exit: <span class={execution.exitCode === 0 ? 'text-green-400' : 'text-red-400'}>
+                    Exit:{' '}
+                    <span
+                      class={
+                        execution.exitCode === 0
+                          ? 'text-green-400'
+                          : 'text-red-400'
+                      }
+                    >
                       {execution.exitCode}
                     </span>
                   </div>
-                  <div class="text-slate-500 text-xs">
-                    ID: {execution.id}
-                  </div>
+                  <div class="text-slate-500 text-xs">ID: {execution.id}</div>
                 </div>
               </div>
-              
+
               {Object.keys(execution.variables).length > 0 && (
                 <div class="mt-2 pt-2 border-t border-slate-700">
                   <div class="flex flex-wrap gap-2">
                     {Object.entries(execution.variables).map(([key, value]) => (
-                      <span 
+                      <span
                         key={key}
                         class="text-xs bg-slate-700 px-2 py-1 rounded text-slate-300"
                       >
@@ -204,7 +228,7 @@ export function ExecutionHistory({ initialExecutions, initialError }: ExecutionH
 
       {/* Execution Result Modal */}
       {showExecutionResult && (
-        <ExecutionResultModal 
+        <ExecutionResultModal
           executionId={showExecutionResult}
           onClose={() => setShowExecutionResult(null)}
         />

@@ -1,7 +1,7 @@
-import { writeFile, readFile, mkdir } from 'fs/promises'
 import { existsSync } from 'fs'
-import { join } from 'path'
+import { mkdir, readFile, writeFile } from 'fs/promises'
 import { homedir } from 'os'
+import { join } from 'path'
 import type { ExecutionResult } from '../types/types'
 
 export class Storage {
@@ -31,15 +31,17 @@ export class Storage {
   async saveExecutionHistory(executions: ExecutionResult[]): Promise<void> {
     try {
       await this.ensureStorageDir()
-      
+
       const data = {
         version: '1.0',
         timestamp: new Date().toISOString(),
-        executions: executions
+        executions: executions,
       }
 
       await writeFile(this.historyFile, JSON.stringify(data, null, 2), 'utf-8')
-      console.log(`[Storage] Saved ${executions.length} executions to ${this.historyFile}`)
+      console.log(
+        `[Storage] Saved ${executions.length} executions to ${this.historyFile}`,
+      )
     } catch (error) {
       console.error('[Storage] Failed to save execution history:', error)
     }
@@ -64,10 +66,12 @@ export class Storage {
       const executions = data.executions.map((exec: any) => ({
         ...exec,
         startTime: new Date(exec.startTime),
-        endTime: new Date(exec.endTime)
+        endTime: new Date(exec.endTime),
       }))
 
-      console.log(`[Storage] Loaded ${executions.length} executions from ${this.historyFile}`)
+      console.log(
+        `[Storage] Loaded ${executions.length} executions from ${this.historyFile}`,
+      )
       return executions
     } catch (error) {
       console.error('[Storage] Failed to load execution history:', error)
@@ -79,11 +83,11 @@ export class Storage {
     try {
       await this.ensureStorageDir()
       const settingsFile = join(this.storageDir, 'settings.json')
-      
+
       const data = {
         version: '1.0',
         timestamp: new Date().toISOString(),
-        settings
+        settings,
       }
 
       await writeFile(settingsFile, JSON.stringify(data, null, 2), 'utf-8')
@@ -96,7 +100,7 @@ export class Storage {
   async loadSettings(): Promise<Record<string, any>> {
     try {
       const settingsFile = join(this.storageDir, 'settings.json')
-      
+
       if (!existsSync(settingsFile)) {
         return {}
       }
@@ -114,11 +118,19 @@ export class Storage {
   async clearHistory(): Promise<void> {
     try {
       if (existsSync(this.historyFile)) {
-        await writeFile(this.historyFile, JSON.stringify({
-          version: '1.0',
-          timestamp: new Date().toISOString(),
-          executions: []
-        }, null, 2), 'utf-8')
+        await writeFile(
+          this.historyFile,
+          JSON.stringify(
+            {
+              version: '1.0',
+              timestamp: new Date().toISOString(),
+              executions: [],
+            },
+            null,
+            2,
+          ),
+          'utf-8',
+        )
         console.log('[Storage] Cleared execution history')
       }
     } catch (error) {
@@ -130,15 +142,17 @@ export class Storage {
     try {
       await this.ensureStorageDir()
       const favoritesFile = join(this.storageDir, 'favorites.json')
-      
+
       const data = {
         version: '1.0',
         timestamp: new Date().toISOString(),
-        favorites
+        favorites,
       }
 
       await writeFile(favoritesFile, JSON.stringify(data, null, 2), 'utf-8')
-      console.log(`[Storage] Saved ${favorites.length} favorites to ${favoritesFile}`)
+      console.log(
+        `[Storage] Saved ${favorites.length} favorites to ${favoritesFile}`,
+      )
     } catch (error) {
       console.error('[Storage] Failed to save favorites:', error)
     }
@@ -147,7 +161,7 @@ export class Storage {
   async loadFavorites(): Promise<string[]> {
     try {
       const favoritesFile = join(this.storageDir, 'favorites.json')
-      
+
       if (!existsSync(favoritesFile)) {
         console.log('[Storage] No existing favorites file found')
         return []
@@ -157,11 +171,15 @@ export class Storage {
       const data = JSON.parse(content)
 
       if (data.version !== '1.0') {
-        console.warn('[Storage] Favorites file version mismatch, starting fresh')
+        console.warn(
+          '[Storage] Favorites file version mismatch, starting fresh',
+        )
         return []
       }
 
-      console.log(`[Storage] Loaded ${data.favorites.length} favorites from ${favoritesFile}`)
+      console.log(
+        `[Storage] Loaded ${data.favorites.length} favorites from ${favoritesFile}`,
+      )
       return data.favorites || []
     } catch (error) {
       console.error('[Storage] Failed to load favorites:', error)
@@ -173,11 +191,11 @@ export class Storage {
     try {
       await this.ensureStorageDir()
       const presetsFile = join(this.storageDir, 'variable-presets.json')
-      
+
       const data = {
         version: '1.0',
         timestamp: new Date().toISOString(),
-        presets
+        presets,
       }
 
       await writeFile(presetsFile, JSON.stringify(data, null, 2), 'utf-8')
@@ -190,7 +208,7 @@ export class Storage {
   async loadVariablePresets(): Promise<Record<string, any>> {
     try {
       const presetsFile = join(this.storageDir, 'variable-presets.json')
-      
+
       if (!existsSync(presetsFile)) {
         console.log('[Storage] No existing variable presets file found')
         return {}
@@ -200,7 +218,9 @@ export class Storage {
       const data = JSON.parse(content)
 
       if (data.version !== '1.0') {
-        console.warn('[Storage] Variable presets file version mismatch, starting fresh')
+        console.warn(
+          '[Storage] Variable presets file version mismatch, starting fresh',
+        )
         return {}
       }
 
@@ -216,11 +236,11 @@ export class Storage {
     try {
       await this.ensureStorageDir()
       const globalVarsFile = join(this.storageDir, 'global-variables.json')
-      
+
       const data = {
         version: '1.0',
         timestamp: new Date().toISOString(),
-        variables
+        variables,
       }
 
       await writeFile(globalVarsFile, JSON.stringify(data, null, 2), 'utf-8')
@@ -233,7 +253,7 @@ export class Storage {
   async loadGlobalVariables(): Promise<Record<string, string>> {
     try {
       const globalVarsFile = join(this.storageDir, 'global-variables.json')
-      
+
       if (!existsSync(globalVarsFile)) {
         console.log('[Storage] No existing global variables file found')
         return {}
@@ -243,7 +263,9 @@ export class Storage {
       const data = JSON.parse(content)
 
       if (data.version !== '1.0') {
-        console.warn('[Storage] Global variables file version mismatch, starting fresh')
+        console.warn(
+          '[Storage] Global variables file version mismatch, starting fresh',
+        )
         return {}
       }
 
@@ -255,15 +277,17 @@ export class Storage {
     }
   }
 
-  async saveEnvironmentVariables(variables: Record<string, any>): Promise<void> {
+  async saveEnvironmentVariables(
+    variables: Record<string, any>,
+  ): Promise<void> {
     try {
       await this.ensureStorageDir()
       const envFile = join(this.storageDir, 'environment.json')
-      
+
       const data = {
         version: '1.0',
         timestamp: new Date().toISOString(),
-        variables
+        variables,
       }
 
       await writeFile(envFile, JSON.stringify(data, null, 2), 'utf-8')
@@ -276,7 +300,7 @@ export class Storage {
   async loadEnvironmentVariables(): Promise<Record<string, any>> {
     try {
       const envFile = join(this.storageDir, 'environment.json')
-      
+
       if (!existsSync(envFile)) {
         console.log('[Storage] No existing environment file found')
         return {}
@@ -286,7 +310,9 @@ export class Storage {
       const data = JSON.parse(content)
 
       if (data.version !== '1.0') {
-        console.warn('[Storage] Environment file version mismatch, starting fresh')
+        console.warn(
+          '[Storage] Environment file version mismatch, starting fresh',
+        )
         return {}
       }
 
@@ -302,11 +328,11 @@ export class Storage {
     try {
       await this.ensureStorageDir()
       const presetsFile = join(this.storageDir, 'execution-presets.json')
-      
+
       const data = {
         version: '1.0',
         timestamp: new Date().toISOString(),
-        presets
+        presets,
       }
 
       await writeFile(presetsFile, JSON.stringify(data, null, 2), 'utf-8')
@@ -319,7 +345,7 @@ export class Storage {
   async loadExecutionPresets(): Promise<Record<string, any>> {
     try {
       const presetsFile = join(this.storageDir, 'execution-presets.json')
-      
+
       if (!existsSync(presetsFile)) {
         console.log('[Storage] No existing execution presets file found')
         return {}
@@ -329,7 +355,9 @@ export class Storage {
       const data = JSON.parse(content)
 
       if (data.version !== '1.0') {
-        console.warn('[Storage] Execution presets file version mismatch, starting fresh')
+        console.warn(
+          '[Storage] Execution presets file version mismatch, starting fresh',
+        )
         return {}
       }
 
@@ -344,27 +372,38 @@ export class Storage {
   async saveDefaultExecutionOptions(options: any): Promise<void> {
     try {
       await this.ensureStorageDir()
-      const optionsFile = join(this.storageDir, 'default-execution-options.json')
-      
+      const optionsFile = join(
+        this.storageDir,
+        'default-execution-options.json',
+      )
+
       const data = {
         version: '1.0',
         timestamp: new Date().toISOString(),
-        options
+        options,
       }
 
       await writeFile(optionsFile, JSON.stringify(data, null, 2), 'utf-8')
       console.log(`[Storage] Saved default execution options to ${optionsFile}`)
     } catch (error) {
-      console.error('[Storage] Failed to save default execution options:', error)
+      console.error(
+        '[Storage] Failed to save default execution options:',
+        error,
+      )
     }
   }
 
   async loadDefaultExecutionOptions(): Promise<any> {
     try {
-      const optionsFile = join(this.storageDir, 'default-execution-options.json')
-      
+      const optionsFile = join(
+        this.storageDir,
+        'default-execution-options.json',
+      )
+
       if (!existsSync(optionsFile)) {
-        console.log('[Storage] No existing default execution options file found')
+        console.log(
+          '[Storage] No existing default execution options file found',
+        )
         return {}
       }
 
@@ -372,14 +411,21 @@ export class Storage {
       const data = JSON.parse(content)
 
       if (data.version !== '1.0') {
-        console.warn('[Storage] Default execution options file version mismatch, starting fresh')
+        console.warn(
+          '[Storage] Default execution options file version mismatch, starting fresh',
+        )
         return {}
       }
 
-      console.log(`[Storage] Loaded default execution options from ${optionsFile}`)
+      console.log(
+        `[Storage] Loaded default execution options from ${optionsFile}`,
+      )
       return data.options || {}
     } catch (error) {
-      console.error('[Storage] Failed to load default execution options:', error)
+      console.error(
+        '[Storage] Failed to load default execution options:',
+        error,
+      )
       return {}
     }
   }

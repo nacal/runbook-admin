@@ -42,7 +42,7 @@ export class VariableManager {
             variables: preset.variables,
             executionOptions: preset.executionOptions,
             createdAt: new Date(preset.createdAt || Date.now()),
-            lastUsed: preset.lastUsed ? new Date(preset.lastUsed) : undefined
+            lastUsed: preset.lastUsed ? new Date(preset.lastUsed) : undefined,
           }
         }
       })
@@ -51,14 +51,21 @@ export class VariableManager {
       this.globalVariables = await this.storage.loadGlobalVariables()
 
       this.initialized = true
-      console.log(`[VariableManager] Loaded ${Object.keys(this.presets).length} presets and ${Object.keys(this.globalVariables).length} global variables`)
+      console.log(
+        `[VariableManager] Loaded ${Object.keys(this.presets).length} presets and ${Object.keys(this.globalVariables).length} global variables`,
+      )
     } catch (error) {
       console.error('[VariableManager] Failed to initialize:', error)
       this.initialized = true
     }
   }
 
-  async savePreset(name: string, variables: Record<string, string>, description?: string, executionOptions?: ExecutionOptions): Promise<void> {
+  async savePreset(
+    name: string,
+    variables: Record<string, string>,
+    description?: string,
+    executionOptions?: ExecutionOptions,
+  ): Promise<void> {
     await this.initialize()
 
     const preset: VariablePreset = {
@@ -67,7 +74,7 @@ export class VariableManager {
       variables,
       executionOptions,
       createdAt: new Date(),
-      lastUsed: new Date()
+      lastUsed: new Date(),
     }
 
     this.presets[name] = preset
@@ -88,8 +95,8 @@ export class VariableManager {
 
   async getAllPresets(): Promise<VariablePreset[]> {
     await this.initialize()
-    return Object.values(this.presets).sort((a, b) => 
-      (b.lastUsed?.getTime() || 0) - (a.lastUsed?.getTime() || 0)
+    return Object.values(this.presets).sort(
+      (a, b) => (b.lastUsed?.getTime() || 0) - (a.lastUsed?.getTime() || 0),
     )
   }
 
@@ -130,7 +137,7 @@ export class VariableManager {
   async mergeVariables(
     runbookVariables: Record<string, any>,
     presetName?: string,
-    overrides: Record<string, string> = {}
+    overrides: Record<string, string> = {},
   ): Promise<Record<string, string>> {
     await this.initialize()
 
@@ -171,9 +178,9 @@ export class VariableManager {
             variables: preset.variables,
             executionOptions: preset.executionOptions,
             createdAt: preset.createdAt.toISOString(),
-            lastUsed: preset.lastUsed?.toISOString()
-          }
-        ])
+            lastUsed: preset.lastUsed?.toISOString(),
+          },
+        ]),
       )
       await this.storage.saveVariablePresets(serializable)
     } catch (error) {

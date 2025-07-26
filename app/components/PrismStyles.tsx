@@ -1,6 +1,8 @@
 export function PrismStyles() {
   return (
-    <style dangerouslySetInnerHTML={{ __html: `
+    <style
+      dangerouslySetInnerHTML={{
+        __html: `
       /* PrismJS 1.30.0 - YAML Syntax Highlighting */
       .token.comment,
       .token.prolog,
@@ -94,6 +96,8 @@ export function PrismStyles() {
       .language-yaml .token.punctuation {
         color: #e1e4e8;
       }
-    ` }} />
+    `,
+      }}
+    />
   )
 }

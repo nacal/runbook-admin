@@ -22,7 +22,13 @@ export function Toast({ messages, onRemove }: ToastProps) {
   )
 }
 
-function ToastItem({ toast, onRemove }: { toast: ToastMessage; onRemove: (id: string) => void }) {
+function ToastItem({
+  toast,
+  onRemove,
+}: {
+  toast: ToastMessage
+  onRemove: (id: string) => void
+}) {
   useEffect(() => {
     const duration = toast.duration || 5000
     const timer = setTimeout(() => {
@@ -81,20 +87,27 @@ function ToastItem({ toast, onRemove }: { toast: ToastMessage; onRemove: (id: st
 export function useToast() {
   const [toasts, setToasts] = useState<ToastMessage[]>([])
 
-  const showToast = (message: string, type: ToastMessage['type'] = 'info', duration?: number) => {
+  const showToast = (
+    message: string,
+    type: ToastMessage['type'] = 'info',
+    duration?: number,
+  ) => {
     const id = Math.random().toString(36).substring(2, 9)
     const toast: ToastMessage = { id, type, message, duration }
-    
-    setToasts(prev => [...prev, toast])
+
+    setToasts((prev) => [...prev, toast])
   }
 
   const removeToast = (id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id))
+    setToasts((prev) => prev.filter((toast) => toast.id !== id))
   }
 
-  const showSuccess = (message: string, duration?: number) => showToast(message, 'success', duration)
-  const showError = (message: string, duration?: number) => showToast(message, 'error', duration)
-  const showInfo = (message: string, duration?: number) => showToast(message, 'info', duration)
+  const showSuccess = (message: string, duration?: number) =>
+    showToast(message, 'success', duration)
+  const showError = (message: string, duration?: number) =>
+    showToast(message, 'error', duration)
+  const showInfo = (message: string, duration?: number) =>
+    showToast(message, 'info', duration)
 
   return {
     toasts,
@@ -102,6 +115,6 @@ export function useToast() {
     showSuccess,
     showError,
     showInfo,
-    removeToast
+    removeToast,
   }
 }

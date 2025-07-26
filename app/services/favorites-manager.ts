@@ -22,11 +22,16 @@ export class FavoritesManager {
 
     try {
       const saved = await this.storage.loadFavorites()
-      saved.forEach(id => this.favorites.add(id))
+      saved.forEach((id) => this.favorites.add(id))
       this.initialized = true
-      console.log(`[FavoritesManager] Loaded ${saved.length} favorites from storage`)
+      console.log(
+        `[FavoritesManager] Loaded ${saved.length} favorites from storage`,
+      )
     } catch (error) {
-      console.error('[FavoritesManager] Failed to initialize from storage:', error)
+      console.error(
+        '[FavoritesManager] Failed to initialize from storage:',
+        error,
+      )
       this.initialized = true
     }
   }
@@ -42,7 +47,7 @@ export class FavoritesManager {
 
   async toggleFavorite(runbookId: string): Promise<boolean> {
     await this.initializeFromStorage()
-    
+
     if (this.favorites.has(runbookId)) {
       this.favorites.delete(runbookId)
       console.log(`[FavoritesManager] Removed ${runbookId} from favorites`)

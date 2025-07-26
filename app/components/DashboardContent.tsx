@@ -30,7 +30,7 @@ async function loadDashboardData(): Promise<DashboardData> {
 
     // Available labels抽出
     const availableLabels = Array.from(
-      new Set(runbooks.flatMap((r) => r.labels || []))
+      new Set(runbooks.flatMap((r) => r.labels || [])),
     ).sort()
 
     return {

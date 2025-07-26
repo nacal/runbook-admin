@@ -6,20 +6,23 @@ export const GET = createRoute(async (c) => {
     const projectPath = c.req.query('path') || process.cwd()
     const scanner = new FileScanner(projectPath)
     const runbooks = await scanner.scanRunbooks()
-    
+
     return c.json({
       success: true,
       data: runbooks,
       count: runbooks.length,
-      projectPath
+      projectPath,
     })
   } catch (error) {
     console.error('Error scanning runbooks:', error)
-    return c.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      data: [],
-      count: 0
-    }, 500)
+    return c.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        data: [],
+        count: 0,
+      },
+      500,
+    )
   }
 })

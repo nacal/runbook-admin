@@ -1,11 +1,11 @@
-import { readdir, readFile, stat } from 'fs/promises'
-import { join, basename, relative } from 'path'
 import { createHash } from 'crypto'
+import { readdir, readFile, stat } from 'fs/promises'
+import { basename, join, relative } from 'path'
 import type { Runbook } from '../types/types'
 
 export class FileScanner {
   private rootPath: string
-  
+
   private ignore = [
     'node_modules',
     '.git',
@@ -14,7 +14,7 @@ export class FileScanner {
     '.next',
     'coverage',
     '.pnpm',
-    'vendor'
+    'vendor',
   ]
 
   constructor(rootPath: string = process.cwd()) {
@@ -25,26 +25,30 @@ export class FileScanner {
     try {
       const files = await this.findFiles(this.rootPath)
       const runbooks = await Promise.allSettled(
-        files.map(filePath => this.parseRunbook(filePath))
+        files.map((filePath) => this.parseRunbook(filePath)),
       )
 
       return runbooks
-        .filter((result): result is PromiseFulfilledResult<Runbook> => 
-          result.status === 'fulfilled'
+        .filter(
+          (result): result is PromiseFulfilledResult<Runbook> =>
+            result.status === 'fulfilled',
         )
-        .map(result => result.value)
+        .map((result) => result.value)
     } catch (error) {
       console.error('Error scanning runbooks:', error)
       return []
     }
   }
 
-  private async findFiles(dir: string, files: string[] = []): Promise<string[]> {
+  private async findFiles(
+    dir: string,
+    files: string[] = [],
+  ): Promise<string[]> {
     const entries = await readdir(dir, { withFileTypes: true })
 
     for (const entry of entries) {
       const fullPath = join(dir, entry.name)
-      
+
       if (entry.isDirectory()) {
         if (!this.ignore.includes(entry.name)) {
           await this.findFiles(fullPath, files)
@@ -62,19 +66,25 @@ export class FileScanner {
   private async parseRunbook(filePath: string): Promise<Runbook> {
     const content = await readFile(filePath, 'utf-8')
     const stats = await stat(filePath)
-    
+
     try {
       const { load } = await import('js-yaml')
       const yaml = load(content) as any
-      
+
       // Check if this is a valid runbook (has steps or is empty)
-      if (yaml && typeof yaml === 'object' && (yaml.steps !== undefined || yaml.desc !== undefined || yaml.description !== undefined)) {
+      if (
+        yaml &&
+        typeof yaml === 'object' &&
+        (yaml.steps !== undefined ||
+          yaml.desc !== undefined ||
+          yaml.description !== undefined)
+      ) {
         const name = basename(filePath)
           .replace(/\.ya?ml$/, '')
           .replace(/\.(runbook|runn)$/, '')
-        
+
         const relativePath = relative(this.rootPath, filePath)
-        
+
         const runbook: Runbook = {
           id: this.generateId(relativePath),
           path: relativePath,
@@ -83,7 +93,7 @@ export class FileScanner {
           steps: this.countSteps(yaml),
           lastModified: stats.mtime,
           variables: this.extractVariables(yaml),
-          labels: yaml.labels || []
+          labels: yaml.labels || [],
         }
 
         return runbook
@@ -96,7 +106,6 @@ export class FileScanner {
       throw error
     }
   }
-
 
   private generateId(relativePath: string): string {
     // Use SHA-1 like runn does for compatibility
@@ -111,12 +120,12 @@ export class FileScanner {
 
   private extractVariables(yaml: any): Record<string, any> {
     const variables: Record<string, any> = {}
-    
+
     if (yaml.vars) {
       Object.entries(yaml.vars).forEach(([key, value]) => {
         const type = this.inferType(value)
         let filePath: string | undefined
-        
+
         if (typeof value === 'string') {
           if (value.startsWith('file://')) {
             filePath = value.substring(7)
@@ -124,13 +133,13 @@ export class FileScanner {
             filePath = value.substring(7)
           }
         }
-        
+
         variables[key] = {
           name: key,
           defaultValue: value,
           type: type,
           required: false,
-          filePath: filePath
+          filePath: filePath,
         }
       })
     }
@@ -144,7 +153,7 @@ export class FileScanner {
         variables[varName] = {
           name: varName,
           type: 'env',
-          required: true
+          required: true,
         }
       }
     }
@@ -152,7 +161,9 @@ export class FileScanner {
     return variables
   }
 
-  private inferType(value: any): 'string' | 'number' | 'boolean' | 'env' | 'file' | 'json' {
+  private inferType(
+    value: any,
+  ): 'string' | 'number' | 'boolean' | 'env' | 'file' | 'json' {
     if (typeof value === 'string') {
       if (value.startsWith('${')) {
         return 'env'

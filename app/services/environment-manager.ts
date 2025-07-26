@@ -35,30 +35,37 @@ export class EnvironmentManager {
         this.variables.set(key, {
           ...variable,
           createdAt: new Date(variable.createdAt),
-          updatedAt: new Date(variable.updatedAt)
+          updatedAt: new Date(variable.updatedAt),
         })
       })
       this.initialized = true
-      console.log(`[EnvironmentManager] Loaded ${this.variables.size} environment variables`)
+      console.log(
+        `[EnvironmentManager] Loaded ${this.variables.size} environment variables`,
+      )
     } catch (error) {
       console.error('[EnvironmentManager] Failed to initialize:', error)
       this.initialized = true
     }
   }
 
-  async setVariable(key: string, value: string, description?: string, isSecret?: boolean): Promise<void> {
+  async setVariable(
+    key: string,
+    value: string,
+    description?: string,
+    isSecret?: boolean,
+  ): Promise<void> {
     await this.initialize()
 
     const now = new Date()
     const existing = this.variables.get(key)
-    
+
     const variable: EnvironmentVariable = {
       key,
       value,
       description,
       isSecret: isSecret || false,
       createdAt: existing?.createdAt || now,
-      updatedAt: now
+      updatedAt: now,
     }
 
     this.variables.set(key, variable)
@@ -73,8 +80,8 @@ export class EnvironmentManager {
 
   async getAllVariables(): Promise<EnvironmentVariable[]> {
     await this.initialize()
-    return Array.from(this.variables.values()).sort((a, b) => 
-      a.key.localeCompare(b.key)
+    return Array.from(this.variables.values()).sort((a, b) =>
+      a.key.localeCompare(b.key),
     )
   }
 
@@ -92,26 +99,29 @@ export class EnvironmentManager {
   async getEnvironmentForExecution(): Promise<Record<string, string>> {
     await this.initialize()
     const env: Record<string, string> = {}
-    
+
     // Include process environment variables
     Object.assign(env, process.env)
-    
+
     // Override with managed environment variables
     this.variables.forEach((variable, key) => {
       env[key] = variable.value
     })
-    
+
     return env
   }
 
   async getMaskedVariables(): Promise<EnvironmentVariable[]> {
     await this.initialize()
-    return Array.from(this.variables.values()).map(variable => ({
-      ...variable,
-      value: variable.isSecret ? '•'.repeat(variable.value.length) : variable.value
-    })).sort((a, b) => a.key.localeCompare(b.key))
+    return Array.from(this.variables.values())
+      .map((variable) => ({
+        ...variable,
+        value: variable.isSecret
+          ? '•'.repeat(variable.value.length)
+          : variable.value,
+      }))
+      .sort((a, b) => a.key.localeCompare(b.key))
   }
-
 
   private async persist(): Promise<void> {
     try {
@@ -120,7 +130,7 @@ export class EnvironmentManager {
         serializable[key] = {
           ...variable,
           createdAt: variable.createdAt.toISOString(),
-          updatedAt: variable.updatedAt.toISOString()
+          updatedAt: variable.updatedAt.toISOString(),
         }
       })
       await this.storage.saveEnvironmentVariables(serializable)

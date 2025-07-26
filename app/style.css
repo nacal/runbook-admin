@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 html {
   height: 100%;
@@ -24,7 +24,8 @@ body {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: radial-gradient(ellipse at 20% 30%, #1e3a5f 0%, transparent 80%),
+  background:
+    radial-gradient(ellipse at 20% 30%, #1e3a5f 0%, transparent 80%),
     radial-gradient(ellipse at 80% 70%, #2d4a6b 0%, transparent 75%),
     linear-gradient(
       135deg,

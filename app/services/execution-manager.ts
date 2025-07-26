@@ -1,8 +1,8 @@
-import { RunnExecutor } from './runn'
-import { Storage } from '../utils/storage'
 import { createHash } from 'crypto'
 import type { ExecutionResult } from '../types/types'
+import { Storage } from '../utils/storage'
 import type { ExecutionOptions } from './execution-options-manager'
+import { RunnExecutor } from './runn'
 
 export class ExecutionManager {
   private static instance: ExecutionManager
@@ -27,13 +27,18 @@ export class ExecutionManager {
 
     try {
       const savedExecutions = await this.storage.loadExecutionHistory()
-      savedExecutions.forEach(execution => {
+      savedExecutions.forEach((execution) => {
         this.executions.set(execution.id, execution)
       })
       this.initialized = true
-      console.log(`[ExecutionManager] Loaded ${savedExecutions.length} executions from storage`)
+      console.log(
+        `[ExecutionManager] Loaded ${savedExecutions.length} executions from storage`,
+      )
     } catch (error) {
-      console.error('[ExecutionManager] Failed to initialize from storage:', error)
+      console.error(
+        '[ExecutionManager] Failed to initialize from storage:',
+        error,
+      )
       this.initialized = true
     }
   }
@@ -47,7 +52,11 @@ export class ExecutionManager {
     }
   }
 
-  async startExecution(runbookPath: string, variables: Record<string, any> = {}, executionOptions?: ExecutionOptions): Promise<string> {
+  async startExecution(
+    runbookPath: string,
+    variables: Record<string, any> = {},
+    executionOptions?: ExecutionOptions,
+  ): Promise<string> {
     const executor = new RunnExecutor()
     const executionId = executor.executionId
 
@@ -62,7 +71,7 @@ export class ExecutionManager {
       endTime: new Date(),
       duration: 0,
       output: [],
-      variables
+      variables,
     }
 
     this.executions.set(executionId, initialResult)
@@ -74,7 +83,10 @@ export class ExecutionManager {
     })
 
     executor.on('output', (data) => {
-      console.log(`[ExecutionManager] Output from ${executionId}:`, data.chunk.trim())
+      console.log(
+        `[ExecutionManager] Output from ${executionId}:`,
+        data.chunk.trim(),
+      )
       const execution = this.executions.get(executionId)
       if (execution) {
         execution.output.push(`[${data.timestamp.toISOString()}] ${data.chunk}`)
@@ -83,27 +95,38 @@ export class ExecutionManager {
     })
 
     executor.on('error', (data) => {
-      console.log(`[ExecutionManager] Error from ${executionId}:`, data.chunk.trim())
+      console.log(
+        `[ExecutionManager] Error from ${executionId}:`,
+        data.chunk.trim(),
+      )
       const execution = this.executions.get(executionId)
       if (execution) {
-        execution.output.push(`[ERROR ${data.timestamp.toISOString()}] ${data.chunk}`)
+        execution.output.push(
+          `[ERROR ${data.timestamp.toISOString()}] ${data.chunk}`,
+        )
         this.executions.set(executionId, execution)
       }
     })
 
     executor.on('complete', (result: ExecutionResult) => {
-      console.log(`[ExecutionManager] Execution ${executionId} completed:`, result.status, `(${result.duration}ms)`)
+      console.log(
+        `[ExecutionManager] Execution ${executionId} completed:`,
+        result.status,
+        `(${result.duration}ms)`,
+      )
       this.executions.set(executionId, result)
       this.executors.delete(executionId)
-      
+
       // Persist to storage
       this.persistToStorage()
     })
 
     // Start execution in background with 30 second timeout
-    executor.execute(runbookPath, variables, 30000, executionOptions).catch((error) => {
-      console.error(`Execution ${executionId} failed:`, error)
-    })
+    executor
+      .execute(runbookPath, variables, 30000, executionOptions)
+      .catch((error) => {
+        console.error(`Execution ${executionId} failed:`, error)
+      })
 
     return executionId
   }
@@ -114,8 +137,8 @@ export class ExecutionManager {
 
   async getAllExecutions(): Promise<ExecutionResult[]> {
     await this.initializeFromStorage()
-    return Array.from(this.executions.values()).sort((a, b) => 
-      b.startTime.getTime() - a.startTime.getTime()
+    return Array.from(this.executions.values()).sort(
+      (a, b) => b.startTime.getTime() - a.startTime.getTime(),
     )
   }
 
@@ -124,13 +147,14 @@ export class ExecutionManager {
     if (executor) {
       executor.stop()
       this.executors.delete(executionId)
-      
+
       const execution = this.executions.get(executionId)
       if (execution) {
         execution.status = 'failed'
         execution.error = 'Execution stopped by user'
         execution.endTime = new Date()
-        execution.duration = execution.endTime.getTime() - execution.startTime.getTime()
+        execution.duration =
+          execution.endTime.getTime() - execution.startTime.getTime()
         this.executions.set(executionId, execution)
       }
       return true
@@ -152,5 +176,4 @@ export class ExecutionManager {
     await this.storage.clearHistory()
     console.log('[ExecutionManager] Cleared all execution history')
   }
-
 }

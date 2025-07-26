@@ -128,7 +128,7 @@ export function ExecutionResultModal({
                   <div class="text-xs text-slate-400 mb-1">Status</div>
                   <div
                     class={`flex items-center space-x-2 ${getStatusColor(
-                      execution.status
+                      execution.status,
                     )}`}
                   >
                     <span class="text-lg">

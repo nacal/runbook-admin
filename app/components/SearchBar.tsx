@@ -7,7 +7,7 @@ interface SearchBarProps {
 export function SearchBar({
   searchTerm,
   onSearchChange,
-  placeholder = "🔍 Search runbooks..."
+  placeholder = '🔍 Search runbooks...',
 }: SearchBarProps) {
   return (
     <div class="mb-6">

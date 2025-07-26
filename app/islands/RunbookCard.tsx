@@ -35,11 +35,12 @@ export function RunbookCard({
 
   // Check if runbook has required variables or file type variables
   const hasRequiredVariables = Object.values(runbook.variables).some(
-    (variable) => variable.required || variable.type === 'file' || variable.type === 'json'
+    (variable) =>
+      variable.required || variable.type === 'file' || variable.type === 'json',
   )
 
   const [executionMode, setExecutionMode] = useState<'quick' | 'configure'>(
-    hasRequiredVariables ? 'configure' : 'quick'
+    hasRequiredVariables ? 'configure' : 'quick',
   )
   const showDropdown = openDropdown === runbook.id
 
@@ -142,9 +143,7 @@ export function RunbookCard({
       <div class="flex flex-col flex-grow">
         <div class="flex items-start justify-between mb-3 gap-2">
           <div class="min-w-0 flex-1">
-            <h3 class="font-semibold text-white truncate">
-              {runbook.name}
-            </h3>
+            <h3 class="font-semibold text-white truncate">{runbook.name}</h3>
           </div>
           <span class="text-xs bg-slate-700 px-2 py-1 rounded text-slate-300 flex-shrink-0">
             {runbook.steps} steps
@@ -152,7 +151,10 @@ export function RunbookCard({
         </div>
 
         {runbook.description && (
-          <p class="text-sm text-slate-400 mb-3 overflow-hidden" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+          <p
+            class="text-sm text-slate-400 mb-3 overflow-hidden"
+            style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;"
+          >
             {runbook.description}
           </p>
         )}
@@ -180,7 +182,7 @@ export function RunbookCard({
                   onClick={(e) => {
                     e.stopPropagation()
                     if (!selectedLabels.includes(label)) {
-                      setSelectedLabels(prev => [...prev, label])
+                      setSelectedLabels((prev) => [...prev, label])
                     }
                   }}
                   class={`text-xs px-2 py-1 rounded transition-colors ${

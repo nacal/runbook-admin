@@ -28,5 +28,5 @@ export default jsxRenderer(
   },
   {
     stream: true,
-  }
+  },
 )
