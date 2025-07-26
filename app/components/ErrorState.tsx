@@ -1,6 +1,6 @@
 interface ErrorStateProps {
   error: string
-  onRetry: () => void
+  onRetry?: () => void
 }
 
 export function ErrorState({ error, onRetry }: ErrorStateProps) {
@@ -8,12 +8,18 @@ export function ErrorState({ error, onRetry }: ErrorStateProps) {
     <div class="bg-red-900/20 border border-red-500/50 rounded-lg p-6">
       <h3 class="text-red-400 font-semibold mb-2">Error Loading Runbooks</h3>
       <p class="text-red-300">{error}</p>
-      <button
-        onClick={onRetry}
-        class="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-white text-sm"
-      >
-        Retry
-      </button>
+      {onRetry ? (
+        <button
+          onClick={onRetry}
+          class="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-white text-sm"
+        >
+          Retry
+        </button>
+      ) : (
+        <p class="text-slate-400 text-sm mt-2">
+          Please refresh the page to retry.
+        </p>
+      )}
     </div>
   )
 }

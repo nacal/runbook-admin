@@ -4,7 +4,6 @@ interface StatsBarProps {
   selectedLabels: string[]
   favoritesCount: number
   onShowEnvironmentSettings: () => void
-  onRefresh: () => void
 }
 
 export function StatsBar({
@@ -13,7 +12,6 @@ export function StatsBar({
   selectedLabels,
   favoritesCount,
   onShowEnvironmentSettings,
-  onRefresh,
 }: StatsBarProps) {
   return (
     <div class="mb-6 flex items-center justify-between">
@@ -39,12 +37,6 @@ export function StatsBar({
           title="Manage Environment Variables"
         >
           🌍 Environment
-        </button>
-        <button
-          onClick={onRefresh}
-          class="px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
-        >
-          🔄 Refresh
         </button>
       </div>
     </div>

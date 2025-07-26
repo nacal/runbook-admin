@@ -11,29 +11,12 @@ interface ExecutionHistoryProps {
 
 export function ExecutionHistory({ initialExecutions, initialError }: ExecutionHistoryProps) {
   const [executions, setExecutions] = useState<ExecutionResult[]>(initialExecutions)
-  const [loading, setLoading] = useState(false) // 初期データがあるのでfalse
-  const [error, setError] = useState<string | null>(initialError)
+  const [loading] = useState(false) // 初期データがあるのでfalse
+  const [error] = useState<string | null>(initialError)
   const [showExecutionResult, setShowExecutionResult] = useState<string | null>(null)
   const { toasts, showSuccess, showError, removeToast } = useToast()
   const { showConfirm, ConfirmDialogComponent } = useConfirmDialog()
 
-  const loadExecutions = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch('/api/executions')
-      const result = await response.json()
-      
-      if (result.success) {
-        setExecutions(result.data)
-      } else {
-        setError(result.error)
-      }
-    } catch (err) {
-      setError('Failed to load execution history')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const clearHistory = async () => {
     const confirmed = await showConfirm(
@@ -101,12 +84,9 @@ export function ExecutionHistory({ initialExecutions, initialError }: ExecutionH
       <div class="bg-red-900/20 border border-red-500/50 rounded-lg p-6">
         <h3 class="text-red-400 font-semibold mb-2">Error Loading History</h3>
         <p class="text-red-300">{error}</p>
-        <button 
-          onClick={loadExecutions}
-          class="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-white text-sm"
-        >
-          Retry
-        </button>
+        <p class="text-slate-400 text-sm mt-2">
+          Please refresh the page to retry.
+        </p>
       </div>
     )
   }
@@ -147,12 +127,6 @@ export function ExecutionHistory({ initialExecutions, initialError }: ExecutionH
           disabled={executions.length === 0}
         >
           🗑️ Clear History
-        </button>
-        <button 
-          onClick={loadExecutions}
-          class="px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
-        >
-          🔄 Refresh
         </button>
       </div>
 

@@ -1,33 +1,33 @@
 import { useState } from 'hono/jsx'
+import { EmptyState } from '../components/EmptyState'
+import { ErrorState } from '../components/ErrorState'
+import { LabelFilter } from '../components/LabelFilter'
+import { RunbookGrid } from '../components/RunbookGrid'
+import { RunbookViewer } from '../components/RunbookViewer'
+import { SearchBar } from '../components/SearchBar'
+import { StatsBar } from '../components/StatsBar'
 import type { ExecutionOptions } from '../services/execution-options-manager'
 import type { Runbook } from '../types/types'
 import { EnvironmentSettings } from './EnvironmentSettings'
 import { ExecutionResultModal } from './ExecutionResult'
-import { RunbookViewer } from '../components/RunbookViewer'
-import { VariableInput } from './VariableInput'
 import { Toast, useToast } from './Toast'
-import { SearchBar } from '../components/SearchBar'
-import { LabelFilter } from '../components/LabelFilter'
-import { StatsBar } from '../components/StatsBar'
-import { LoadingState } from '../components/LoadingState'
-import { ErrorState } from '../components/ErrorState'
-import { EmptyState } from '../components/EmptyState'
-import { RunbookGrid } from '../components/RunbookGrid'
+import { VariableInput } from './VariableInput'
 
 interface RunbookListProps {
-  initialRunbooks: Runbook[]
-  initialFavorites: string[]
-  initialLabels: string[]
-  initialError: string | null
+  runbooks: Runbook[]
+  favorites: string[]
+  availableLabels: string[]
+  error: string | null
 }
 
-export function RunbookList({ initialRunbooks, initialFavorites, initialLabels, initialError }: RunbookListProps) {
-  const [runbooks, setRunbooks] = useState<Runbook[]>(initialRunbooks)
-  const [loading, setLoading] = useState(false) // 初期データがあるのでfalse
-  const [error, setError] = useState<string | null>(initialError)
+export function RunbookList({
+  runbooks,
+  favorites: initialFavorites,
+  availableLabels,
+  error,
+}: RunbookListProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedLabels, setSelectedLabels] = useState<string[]>([])
-  const [availableLabels, setAvailableLabels] = useState<string[]>(initialLabels)
   const [showExecutionResult, setShowExecutionResult] = useState<string | null>(
     null
   )
@@ -44,59 +44,6 @@ export function RunbookList({ initialRunbooks, initialFavorites, initialLabels, 
     new Set()
   )
   const { toasts, showError, removeToast } = useToast()
-
-  const loadRunbooks = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch('/api/runbooks')
-      const result = await response.json()
-
-      if (result.success) {
-        // Check for duplicate IDs
-        const ids = result.data.map((r: Runbook) => r.id)
-        const uniqueIds = new Set(ids)
-        if (ids.length !== uniqueIds.size) {
-          console.warn('WARNING: Duplicate runbook IDs detected!')
-          const duplicates = ids.filter(
-            (id: string, index: number) => ids.indexOf(id) !== index
-          )
-          console.warn('Duplicate IDs:', duplicates)
-        }
-
-        setRunbooks(result.data)
-        
-        // Extract all unique labels from runbooks
-        const allLabels = new Set<string>()
-        result.data.forEach((runbook: Runbook) => {
-          if (runbook.labels) {
-            runbook.labels.forEach((label: string) => {
-              allLabels.add(label)
-            })
-          }
-        })
-        setAvailableLabels(Array.from(allLabels).sort())
-      } else {
-        setError(result.error)
-      }
-    } catch (err) {
-      setError('Failed to load runbooks')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const loadFavorites = async () => {
-    try {
-      const response = await fetch('/api/favorites')
-      const result = await response.json()
-
-      if (result.success) {
-        setFavorites(result.data)
-      }
-    } catch (err) {
-      console.error('Failed to load favorites:', err)
-    }
-  }
 
   const executeRunbook = async (
     runbook: Runbook,
@@ -205,10 +152,8 @@ export function RunbookList({ initialRunbooks, initialFavorites, initialLabels, 
   }
 
   const toggleLabel = (label: string) => {
-    setSelectedLabels(prev => 
-      prev.includes(label) 
-        ? prev.filter(l => l !== label)
-        : [...prev, label]
+    setSelectedLabels((prev) =>
+      prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label]
     )
   }
 
@@ -218,15 +163,18 @@ export function RunbookList({ initialRunbooks, initialFavorites, initialLabels, 
 
   const filteredRunbooks = runbooks.filter((runbook) => {
     // Text search filter
-    const matchesSearch = !searchTerm || 
+    const matchesSearch =
+      !searchTerm ||
       runbook.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       runbook.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       runbook.path.toLowerCase().includes(searchTerm.toLowerCase())
-    
+
     // Label filter
-    const matchesLabels = selectedLabels.length === 0 || 
-      (runbook.labels && selectedLabels.every(label => runbook.labels!.includes(label)))
-    
+    const matchesLabels =
+      selectedLabels.length === 0 ||
+      (runbook.labels &&
+        selectedLabels.every((label) => runbook.labels!.includes(label)))
+
     return matchesSearch && matchesLabels
   })
 
@@ -240,26 +188,14 @@ export function RunbookList({ initialRunbooks, initialFavorites, initialLabels, 
     return a.name.localeCompare(b.name)
   })
 
-  const handleRefresh = () => {
-    loadRunbooks()
-    loadFavorites()
-  }
-
-  if (loading) {
-    return <LoadingState />
-  }
-
   if (error) {
-    return <ErrorState error={error} onRetry={loadRunbooks} />
+    return <ErrorState error={error} />
   }
 
   return (
     <div>
       {/* Search Bar */}
-      <SearchBar 
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-      />
+      <SearchBar searchTerm={searchTerm} onSearchChange={setSearchTerm} />
 
       {/* Label Filter */}
       <LabelFilter
@@ -276,7 +212,6 @@ export function RunbookList({ initialRunbooks, initialFavorites, initialLabels, 
         selectedLabels={selectedLabels}
         favoritesCount={favorites.length}
         onShowEnvironmentSettings={() => setShowEnvironmentSettings(true)}
-        onRefresh={handleRefresh}
       />
 
       {/* Runbook Grid */}

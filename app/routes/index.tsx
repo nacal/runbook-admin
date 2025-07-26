@@ -99,10 +99,10 @@ export default createRoute(async (c) => {
 
       <main>
         <RunbookList 
-          initialRunbooks={dashboardData.runbooks} 
-          initialFavorites={dashboardData.favorites} 
-          initialLabels={dashboardData.availableLabels}
-          initialError={dashboardData.error} 
+          runbooks={dashboardData.runbooks} 
+          favorites={dashboardData.favorites} 
+          availableLabels={dashboardData.availableLabels}
+          error={dashboardData.error} 
         />
       </main>
     </>

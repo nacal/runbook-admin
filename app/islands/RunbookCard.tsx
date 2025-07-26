@@ -152,7 +152,7 @@ export function RunbookCard({
         </div>
 
         {runbook.description && (
-          <p class="text-sm text-slate-400 mb-3 line-clamp-2">
+          <p class="text-sm text-slate-400 mb-3 overflow-hidden" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
             {runbook.description}
           </p>
         )}
