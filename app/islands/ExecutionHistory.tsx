@@ -1,20 +1,21 @@
-import { useState, useEffect } from 'hono/jsx'
+import { useState } from 'hono/jsx'
 import type { ExecutionResult } from '../types/types'
 import { ExecutionResultModal } from './ExecutionResult'
 import { Toast, useToast } from './Toast'
 import { useConfirmDialog } from '../components/ConfirmDialog'
 
-export function ExecutionHistory() {
-  const [executions, setExecutions] = useState<ExecutionResult[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+interface ExecutionHistoryProps {
+  initialExecutions: ExecutionResult[]
+  initialError: string | null
+}
+
+export function ExecutionHistory({ initialExecutions, initialError }: ExecutionHistoryProps) {
+  const [executions, setExecutions] = useState<ExecutionResult[]>(initialExecutions)
+  const [loading, setLoading] = useState(false) // 初期データがあるのでfalse
+  const [error, setError] = useState<string | null>(initialError)
   const [showExecutionResult, setShowExecutionResult] = useState<string | null>(null)
   const { toasts, showSuccess, showError, removeToast } = useToast()
   const { showConfirm, ConfirmDialogComponent } = useConfirmDialog()
-
-  useEffect(() => {
-    loadExecutions()
-  }, [])
 
   const loadExecutions = async () => {
     try {

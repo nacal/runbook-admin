@@ -47,35 +47,57 @@ export function VariableInput({
   }, [])
 
   const initializeData = async () => {
-    const [, globalVars, envVars] = await Promise.all([
-      loadPresets(),
-      loadGlobalVariables(),
-      loadEnvironmentVariables(),
-    ])
+    try {
+      const response = await fetch(`/api/variables/initialize?runbookId=${runbook.id}`)
+      const result = await response.json()
+      
+      if (result.success) {
+        const { presets, globalVariables, environmentVariables } = result.data
+        
+        // Set all data from the unified API
+        setPresets(presets)
+        setGlobalVariables(globalVariables)
+        
+        // Process environment variables with masking
+        const processedEnvVars: Record<string, string> = {}
+        Object.entries(environmentVariables).forEach(([key, value]) => {
+          // Environment variables from API are already processed
+          processedEnvVars[key] = String(value)
+        })
+        setEnvironmentVariables(processedEnvVars)
 
-    // Initialize variables with the loaded data
-    const initialVars: Record<string, string> = {}
+        // Initialize variables with the loaded data
+        const initialVars: Record<string, string> = {}
 
-    // Priority order: Environment Variables > Global Variables > Runbook Defaults
-    Object.entries(runbook.variables).forEach(([key, variable]) => {
-      // First check environment variables
-      if (envVars && envVars[key]) {
-        initialVars[key] = envVars[key]
-      }
-      // Then check global variables
-      else if (globalVars && globalVars[key]) {
-        initialVars[key] = globalVars[key]
-      }
-      // Finally use runbook defaults
-      else if (variable.defaultValue) {
-        initialVars[key] = String(variable.defaultValue)
-      }
-    })
+        // Priority order: Environment Variables > Global Variables > Runbook Defaults
+        Object.entries(runbook.variables).forEach(([key, variable]) => {
+          // First check environment variables
+          if (processedEnvVars && processedEnvVars[key]) {
+            initialVars[key] = processedEnvVars[key]
+          }
+          // Then check global variables
+          else if (globalVariables && globalVariables[key]) {
+            initialVars[key] = globalVariables[key]
+          }
+          // Finally use runbook defaults
+          else if (variable.defaultValue) {
+            initialVars[key] = String(variable.defaultValue)
+          }
+        })
 
-    setVariables(initialVars)
+        setVariables(initialVars)
+      } else {
+        showError('Failed to load initialization data')
+        console.error('Failed to load initialization data:', result.error)
+      }
+    } catch (error) {
+      showError('Failed to initialize variable input')
+      console.error('Failed to initialize variable input:', error)
+    }
   }
 
-  const loadPresets = async () => {
+  // プリセット一覧の再読み込み（保存・削除後に使用）
+  const reloadPresets = async () => {
     try {
       const response = await fetch('/api/variables/presets')
       const result = await response.json()
@@ -83,43 +105,8 @@ export function VariableInput({
         setPresets(result.data)
       }
     } catch (error) {
-      console.error('Failed to load presets:', error)
+      console.error('Failed to reload presets:', error)
     }
-  }
-
-  const loadGlobalVariables = async () => {
-    try {
-      const response = await fetch('/api/variables/global')
-      const result = await response.json()
-      if (result.success) {
-        setGlobalVariables(result.data)
-        return result.data
-      }
-    } catch (error) {
-      console.error('Failed to load global variables:', error)
-    }
-    return {}
-  }
-
-  const loadEnvironmentVariables = async () => {
-    try {
-      const response = await fetch('/api/environment')
-      const result = await response.json()
-      if (result.success) {
-        const envVars: Record<string, string> = {}
-        result.data.forEach((variable: any) => {
-          // Include all environment variables, mask secrets with asterisks
-          envVars[variable.key] = variable.isSecret
-            ? '••••••••'
-            : variable.value
-        })
-        setEnvironmentVariables(envVars)
-        return envVars
-      }
-    } catch (error) {
-      console.error('Failed to load environment variables:', error)
-    }
-    return {}
   }
 
   const handlePresetChange = async (presetName: string) => {
@@ -177,7 +164,7 @@ export function VariableInput({
       if (result.success) {
         setNewPresetName('')
         setShowSavePreset(false)
-        loadPresets() // Reload presets
+        reloadPresets() // Reload presets
         showSuccess(`Preset '${newPresetName}' saved successfully`)
       } else {
         showError(`Failed to save preset: ${result.error}`)
