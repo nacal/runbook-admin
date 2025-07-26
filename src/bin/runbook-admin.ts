@@ -1,35 +1,77 @@
 #!/usr/bin/env node
 
-import { serve } from '@hono/node-server'
-import { createApp } from 'honox/server'
+import { spawn } from 'child_process'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
 import open from 'open'
 
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 3444
 const HOST = '127.0.0.1'
+
+// Get the directory of this script
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+const appRoot = join(__dirname, '..', '..')
 
 async function main() {
   console.log('🔥 Starting Runbook Admin...')
   console.log(`📁 Project: ${process.cwd()}`)
   
   try {
-    // Create HonoX app
-    const app = createApp()
-    
-    // Start server
-    serve({
-      fetch: app.fetch,
-      port: Number(PORT),
-      hostname: HOST
+    // Use npx to run vite dev for development mode
+    const viteCommand = process.platform === 'win32' ? 'npx.cmd' : 'npx'
+    const viteProcess = spawn(viteCommand, ['vite', 'dev', '--host', HOST, '--port', String(PORT)], {
+      cwd: appRoot,
+      stdio: ['inherit', 'pipe', 'pipe'],
+      env: {
+        ...process.env,
+        NODE_ENV: 'development'
+      }
     })
 
+    let serverStarted = false
     const url = `http://${HOST}:${PORT}`
+
+    // Listen for server startup
+    if (viteProcess.stdout) {
+      viteProcess.stdout.on('data', (data) => {
+        const output = data.toString()
+        
+        // Log vite output for debugging
+        if (output.includes('➜')) {
+          console.log(output.trim())
+        }
+        
+        if (!serverStarted && (output.includes('ready in') || output.includes('Local:'))) {
+          serverStarted = true
+        }
+      })
+    }
+
+    if (viteProcess.stderr) {
+      viteProcess.stderr.on('data', (data) => {
+        console.error(data.toString())
+      })
+    }
+
+    viteProcess.on('error', (error) => {
+      console.error('❌ Failed to start server:', error)
+      process.exit(1)
+    })
+
+    viteProcess.on('close', (code) => {
+      if (code !== 0 && code !== null) {
+        console.error(`Server process exited with code ${code}`)
+        process.exit(code)
+      }
+    })
     
     console.log(`✨ Server running at ${url}`)
     console.log(`🔍 Scanning for runbooks...`)
     console.log(``)
     console.log(`Press Ctrl+C to stop`)
     
-    // Auto-open browser
+    // Auto-open browser after server starts
     setTimeout(async () => {
       try {
         await open(url)
@@ -37,18 +79,17 @@ async function main() {
       } catch (error) {
         console.log(`💡 Manually open: ${url}`)
       }
-    }, 1000)
+    }, 1500)
 
     // Handle graceful shutdown
-    process.on('SIGINT', () => {
+    const shutdown = () => {
       console.log('\n👋 Shutting down gracefully...')
-      process.exit(0)
-    })
+      viteProcess.kill('SIGTERM')
+      setTimeout(() => process.exit(0), 1000)
+    }
 
-    process.on('SIGTERM', () => {
-      console.log('\n👋 Shutting down gracefully...')
-      process.exit(0)
-    })
+    process.on('SIGINT', shutdown)
+    process.on('SIGTERM', shutdown)
 
   } catch (error) {
     console.error('❌ Failed to start server:', error)

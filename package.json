@@ -6,12 +6,19 @@
   "bin": {
     "runbook-admin": "./dist/bin/runbook-admin.js"
   },
+  "files": [
+    "dist/",
+    "app/",
+    "vite.config.ts",
+    "tsconfig.json"
+  ],
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build && npm run build:cli",
+    "build": "vite build && pnpm run build:cli",
     "build:cli": "tsc src/bin/runbook-admin.ts --outDir dist/bin --target es2022 --module node16 --moduleResolution node16",
     "preview": "vite preview",
-    "start": "node dist/bin/runbook-admin.js"
+    "start": "node dist/bin/runbook-admin.js",
+    "start:vite": "vite dev --host"
   },
   "dependencies": {
     "@hono/node-server": "^1.12.0",
