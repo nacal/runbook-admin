@@ -80,20 +80,11 @@ export function ExecutionResultModal({
   }
 
   return (
-    <div
-      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-      role="button"
-      tabIndex={0}
-      onClick={onClose}
-      onKeyDown={(e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-          onClose()
-        }
-      }}
-    >
+    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div
         class="bg-slate-800 border border-slate-700 rounded-lg max-w-4xl w-full max-h-[80vh] flex flex-col mx-4"
-        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
       >
         {/* Header */}
         <div class="flex items-center justify-between p-4 border-b border-slate-700">

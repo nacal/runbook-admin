@@ -195,7 +195,7 @@ app.post('/merge', async (c) => {
     )
 
     // Get execution options from preset if available
-    let executionOptions = { args: [] }
+    let executionOptions: { args: string[] } = { args: [] }
     if (presetName) {
       const preset = await manager.getPreset(presetName)
       if (preset?.executionOptions) {

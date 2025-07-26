@@ -19,14 +19,14 @@ export class RunnExecutor extends EventEmitter {
 
   async execute(
     runbookPath: string,
-    variables: Record<string, any> = {},
+    variables: Record<string, string | number | boolean> = {},
     timeout: number = 60000,
     executionOptions?: ExecutionOptions,
   ): Promise<ExecutionResult> {
-    return new Promise(async (resolve, reject) => {
+    // Extract async setup outside Promise constructor
+    const setupExecution = async () => {
       if (this.process) {
-        reject(new Error('Execution already in progress'))
-        return
+        throw new Error('Execution already in progress')
       }
 
       const startTime = new Date()
@@ -54,115 +54,121 @@ export class RunnExecutor extends EventEmitter {
       const envManager = EnvironmentManager.getInstance()
       const execEnv = await envManager.getEnvironmentForExecution()
 
-      this.process = spawn('runn', args, {
-        cwd: process.cwd(),
-        stdio: ['ignore', 'pipe', 'pipe'], // ignore stdin to prevent hanging
-        env: {
-          ...process.env, // Preserve current environment (including PATH)
-          ...execEnv, // Add managed environment variables
-        },
-      })
+      return { startTime, args, execEnv }
+    }
 
-      let output = ''
-      let errorOutput = ''
-      let timeoutHandle: NodeJS.Timeout | null = null
+    return setupExecution().then(({ startTime, args, execEnv }) => {
+      return new Promise((resolve, reject) => {
+        this.process = spawn('runn', args, {
+          cwd: process.cwd(),
+          stdio: ['ignore', 'pipe', 'pipe'], // ignore stdin to prevent hanging
+          env: {
+            ...process.env, // Preserve current environment (including PATH)
+            ...execEnv, // Add managed environment variables
+          },
+        })
 
-      this.emit('started', { id: this.executionId, runbookPath, startTime })
+        let output = ''
+        let errorOutput = ''
+        let timeoutHandle: NodeJS.Timeout | null = null
 
-      // Set up timeout
-      timeoutHandle = setTimeout(() => {
-        console.log(
-          `[RunnExecutor] Execution ${this.executionId} timed out after ${timeout}ms`,
-        )
-        if (this.process) {
-          this.process.kill('SIGTERM')
-          setTimeout(() => {
-            if (this.process) {
-              this.process.kill('SIGKILL')
-            }
-          }, 5000)
-        }
-      }, timeout)
+        this.emit('started', { id: this.executionId, runbookPath, startTime })
 
-      this.process.stdout?.on('data', (data) => {
-        const chunk = data.toString()
-        output += chunk
-        this.emit('output', { chunk, timestamp: new Date() })
-      })
+        // Set up timeout
+        timeoutHandle = setTimeout(() => {
+          console.log(
+            `[RunnExecutor] Execution ${this.executionId} timed out after ${timeout}ms`,
+          )
+          if (this.process) {
+            this.process.kill('SIGTERM')
+            setTimeout(() => {
+              if (this.process) {
+                this.process.kill('SIGKILL')
+              }
+            }, 5000)
+          }
+        }, timeout)
 
-      this.process.stderr?.on('data', (data) => {
-        const chunk = data.toString()
-        errorOutput += chunk
-        this.emit('error', { chunk, timestamp: new Date() })
-      })
+        this.process.stdout?.on('data', (data) => {
+          const chunk = data.toString()
+          output += chunk
+          this.emit('output', { chunk, timestamp: new Date() })
+        })
 
-      this.process.on('close', (code) => {
-        console.log(
-          `[RunnExecutor] Process ${this.executionId} closed with code:`,
-          code,
-        )
-        if (timeoutHandle) {
-          clearTimeout(timeoutHandle)
-          timeoutHandle = null
-        }
-        this.process = null
-        const endTime = new Date()
+        this.process.stderr?.on('data', (data) => {
+          const chunk = data.toString()
+          errorOutput += chunk
+          this.emit('error', { chunk, timestamp: new Date() })
+        })
 
-        const result: ExecutionResult = {
-          id: this.executionId,
-          runbookId: this.generateRunbookId(runbookPath),
-          runbookPath,
-          status: code === 0 ? 'success' : 'failed',
-          exitCode: code || 0,
-          startTime,
-          endTime,
-          duration: endTime.getTime() - startTime.getTime(),
-          output: output.split('\n').filter((line) => line.trim()),
-          error: code !== 0 ? errorOutput : undefined,
-          variables,
-        }
+        this.process.on('close', (code) => {
+          console.log(
+            `[RunnExecutor] Process ${this.executionId} closed with code:`,
+            code,
+          )
+          if (timeoutHandle) {
+            clearTimeout(timeoutHandle)
+            timeoutHandle = null
+          }
+          this.process = null
+          const endTime = new Date()
 
-        console.log(
-          `[RunnExecutor] Emitting complete event for ${this.executionId}:`,
-          result.status,
-        )
-        this.emit('complete', result)
-        resolve(result)
-      })
+          const result: ExecutionResult = {
+            id: this.executionId,
+            runbookId: this.generateRunbookId(runbookPath),
+            runbookPath,
+            status: code === 0 ? 'success' : 'failed',
+            exitCode: code || 0,
+            startTime,
+            endTime,
+            duration: endTime.getTime() - startTime.getTime(),
+            output: output.split('\n').filter((line) => line.trim()),
+            error: code !== 0 ? errorOutput : undefined,
+            variables,
+          }
 
-      this.process.on('error', (error) => {
-        console.log(
-          `[RunnExecutor] Process ${this.executionId} error:`,
-          error.message,
-        )
-        if (timeoutHandle) {
-          clearTimeout(timeoutHandle)
-          timeoutHandle = null
-        }
-        this.process = null
-        const endTime = new Date()
+          console.log(
+            `[RunnExecutor] Emitting complete event for ${this.executionId}:`,
+            result.status,
+          )
+          this.emit('complete', result)
+          resolve(result)
+        })
 
-        const result: ExecutionResult = {
-          id: this.executionId,
-          runbookId: this.generateRunbookId(runbookPath),
-          runbookPath,
-          status: 'failed',
-          exitCode: -1,
-          startTime,
-          endTime,
-          duration: endTime.getTime() - startTime.getTime(),
-          output: [],
-          error: `Failed to start runn: ${error.message}`,
-          variables,
-        }
+        this.process.on('error', (error) => {
+          console.log(
+            `[RunnExecutor] Process ${this.executionId} error:`,
+            error.message,
+          )
+          if (timeoutHandle) {
+            clearTimeout(timeoutHandle)
+            timeoutHandle = null
+          }
+          this.process = null
+          const endTime = new Date()
 
-        this.emit('complete', result)
-        reject(result)
+          const result: ExecutionResult = {
+            id: this.executionId,
+            runbookId: this.generateRunbookId(runbookPath),
+            runbookPath,
+            status: 'failed',
+            exitCode: -1,
+            startTime,
+            endTime,
+            duration: endTime.getTime() - startTime.getTime(),
+            output: [],
+            error: `Failed to start runn: ${error.message}`,
+            variables,
+          }
+
+          this.emit('complete', result)
+          reject(result)
+        })
       })
     })
   }
 
-  async list(pattern: string = '**/*.yml'): Promise<any[]> {
+  async list(pattern: string = '**/*.yml'): Promise<unknown[]> {
     return new Promise((resolve, reject) => {
       const childProcess = spawn('runn', ['list', pattern, '--long'], {
         stdio: ['pipe', 'pipe', 'pipe'],
@@ -200,9 +206,9 @@ export class RunnExecutor extends EventEmitter {
     })
   }
 
-  private parseListOutput(output: string): any[] {
+  private parseListOutput(output: string): unknown[] {
     const lines = output.split('\n')
-    const results: any[] = []
+    const results: unknown[] = []
 
     // Skip header and separator lines
     let dataStartIndex = -1

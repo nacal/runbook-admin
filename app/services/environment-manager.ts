@@ -32,11 +32,17 @@ export class EnvironmentManager {
     try {
       const saved = await this.storage.loadEnvironmentVariables()
       Object.entries(saved).forEach(([key, variable]) => {
-        this.variables.set(key, {
-          ...variable,
-          createdAt: new Date(variable.createdAt),
-          updatedAt: new Date(variable.updatedAt),
-        })
+        if (typeof variable === 'object' && variable && 'key' in variable && 'value' in variable) {
+          const v = variable as EnvironmentVariable & { createdAt: string | Date; updatedAt: string | Date }
+          this.variables.set(key, {
+            key: v.key,
+            value: v.value,
+            description: v.description,
+            isSecret: v.isSecret,
+            createdAt: new Date(v.createdAt),
+            updatedAt: new Date(v.updatedAt),
+          })
+        }
       })
       this.initialized = true
       console.log(
@@ -125,7 +131,7 @@ export class EnvironmentManager {
 
   private async persist(): Promise<void> {
     try {
-      const serializable: Record<string, any> = {}
+      const serializable: Record<string, unknown> = {}
       this.variables.forEach((variable, key) => {
         serializable[key] = {
           ...variable,

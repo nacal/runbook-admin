@@ -77,7 +77,7 @@ async function getEnvironmentVariables(): Promise<Record<string, string>> {
 
     // 配列形式から辞書形式に変換
     const envVars: Record<string, string> = {}
-    variables.forEach((variable: any) => {
+    variables.forEach((variable) => {
       envVars[variable.key] = variable.value
     })
 

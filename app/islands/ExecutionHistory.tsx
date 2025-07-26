@@ -162,17 +162,11 @@ export function ExecutionHistory({
       ) : (
         <div class="space-y-3">
           {executions.map((execution) => (
-            <div
+            <button
               key={execution.id}
-              role="button"
-              tabIndex={0}
-              class="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:border-slate-600 transition-colors cursor-pointer"
+              type="button"
+              class="w-full text-left bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:border-slate-600 transition-colors cursor-pointer"
               onClick={() => setShowExecutionResult(execution.id)}
-              onKeyDown={(e: KeyboardEvent) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  setShowExecutionResult(execution.id)
-                }
-              }}
             >
               <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
@@ -229,7 +223,7 @@ export function ExecutionHistory({
                   </div>
                 </div>
               )}
-            </div>
+            </button>
           ))}
         </div>
       )}

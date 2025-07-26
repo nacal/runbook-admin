@@ -38,20 +38,25 @@ export class ExecutionOptionsManager {
       // Load presets
       const savedPresets = await this.storage.loadExecutionPresets()
       Object.entries(savedPresets).forEach(([key, preset]) => {
-        if (typeof preset === 'object' && preset.name && preset.options) {
+        if (typeof preset === 'object' && preset && 'name' in preset && 'options' in preset) {
+          const p = preset as ExecutionPreset & { createdAt?: string | Date; lastUsed?: string | Date }
           this.presets[key] = {
-            name: preset.name,
-            description: preset.description,
-            options: preset.options,
-            createdAt: new Date(preset.createdAt || Date.now()),
-            lastUsed: preset.lastUsed ? new Date(preset.lastUsed) : undefined,
+            name: p.name,
+            description: p.description,
+            options: p.options,
+            createdAt: new Date(p.createdAt || Date.now()),
+            lastUsed: p.lastUsed ? new Date(p.lastUsed) : undefined,
           }
         }
       })
 
       // Load default options
       const loadedOptions = await this.storage.loadDefaultExecutionOptions()
-      this.defaultOptions = loadedOptions.args ? loadedOptions : { args: [] }
+      if (typeof loadedOptions === 'object' && loadedOptions && 'args' in loadedOptions) {
+        this.defaultOptions = loadedOptions as ExecutionOptions
+      } else {
+        this.defaultOptions = { args: [] }
+      }
 
       this.initialized = true
       console.log(
@@ -129,7 +134,7 @@ export class ExecutionOptionsManager {
 
   private async persistPresets(): Promise<void> {
     try {
-      const serializable: Record<string, any> = Object.fromEntries(
+      const serializable: Record<string, unknown> = Object.fromEntries(
         Object.entries(this.presets).map(([key, preset]) => [
           key,
           {

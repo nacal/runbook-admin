@@ -5,7 +5,7 @@ export interface Runbook {
   description?: string
   steps: number
   lastModified: Date
-  variables: Record<string, any>
+  variables: Record<string, RunbookVariable>
   labels?: string[]
 }
 
@@ -20,13 +20,14 @@ export interface ExecutionResult {
   duration: number
   output: string[]
   error?: string
-  variables: Record<string, any>
+  variables: Record<string, string | number | boolean>
 }
 
 export interface RunbookVariable {
   name: string
-  type: 'string' | 'number' | 'boolean' | 'env'
+  type: 'string' | 'number' | 'boolean' | 'env' | 'file' | 'json'
   required: boolean
-  defaultValue?: any
+  defaultValue?: string | number | boolean
   description?: string
+  filePath?: string
 }

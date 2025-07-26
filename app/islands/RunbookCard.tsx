@@ -242,10 +242,7 @@ export function RunbookCard({
 
           {/* Dropdown menu */}
           {showDropdown && (
-            <div
-              class="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-600 rounded shadow-lg z-10"
-              onClick={(e) => e.stopPropagation()}
-            >
+            <div class="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-600 rounded shadow-lg z-10">
               <button
                 type="button"
                 onClick={(e) => {

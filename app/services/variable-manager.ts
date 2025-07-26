@@ -1,5 +1,6 @@
 import { Storage } from '../utils/storage'
 import type { ExecutionOptions } from './execution-options-manager'
+import type { RunbookVariable } from '../types/types'
 
 export interface VariablePreset {
   name: string
@@ -35,14 +36,15 @@ export class VariableManager {
       // Load presets
       const savedPresets = await this.storage.loadVariablePresets()
       Object.entries(savedPresets).forEach(([key, preset]) => {
-        if (typeof preset === 'object' && preset.name && preset.variables) {
+        if (typeof preset === 'object' && preset && 'name' in preset && 'variables' in preset) {
+          const p = preset as VariablePreset & { createdAt?: string | Date; lastUsed?: string | Date }
           this.presets[key] = {
-            name: preset.name,
-            description: preset.description,
-            variables: preset.variables,
-            executionOptions: preset.executionOptions,
-            createdAt: new Date(preset.createdAt || Date.now()),
-            lastUsed: preset.lastUsed ? new Date(preset.lastUsed) : undefined,
+            name: p.name,
+            description: p.description,
+            variables: p.variables,
+            executionOptions: p.executionOptions,
+            createdAt: new Date(p.createdAt || Date.now()),
+            lastUsed: p.lastUsed ? new Date(p.lastUsed) : undefined,
           }
         }
       })
@@ -135,7 +137,7 @@ export class VariableManager {
   }
 
   async mergeVariables(
-    runbookVariables: Record<string, any>,
+    runbookVariables: Record<string, RunbookVariable>,
     presetName?: string,
     overrides: Record<string, string> = {},
   ): Promise<Record<string, string>> {
@@ -169,7 +171,7 @@ export class VariableManager {
 
   private async persistPresets(): Promise<void> {
     try {
-      const serializable: Record<string, any> = Object.fromEntries(
+      const serializable: Record<string, unknown> = Object.fromEntries(
         Object.entries(this.presets).map(([key, preset]) => [
           key,
           {

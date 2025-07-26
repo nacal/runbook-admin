@@ -217,10 +217,14 @@ export function VariableInput({
 
         {/* Preset Selection */}
         <div class="mb-6">
-          <label class="block text-sm font-medium text-white mb-2">
+          <label
+            for="variable-preset"
+            class="block text-sm font-medium text-white mb-2"
+          >
             🎯 Variable Preset
           </label>
           <select
+            id="variable-preset"
             value={selectedPreset}
             onChange={(e) =>
               handlePresetChange((e.target as HTMLSelectElement)?.value || '')
@@ -247,7 +251,10 @@ export function VariableInput({
 
             return (
               <div key={key} class="space-y-2">
-                <label class="block text-sm text-slate-300">
+                <label
+                  for={`variable-${key}`}
+                  class="block text-sm text-slate-300"
+                >
                   {variable.name || key}
                   {variable.required && (
                     <span class="text-red-400 ml-1">*</span>
@@ -297,6 +304,7 @@ export function VariableInput({
                   />
                 ) : (
                   <input
+                    id={`variable-${key}`}
                     type={
                       variable.type === 'number'
                         ? 'number'
@@ -304,7 +312,7 @@ export function VariableInput({
                           ? 'password'
                           : 'text'
                     }
-                    placeholder={variable.defaultValue || `Enter ${key}...`}
+                    placeholder={variable.defaultValue?.toString() || `Enter ${key}...`}
                     value={variables[key] || ''}
                     onInput={(e) =>
                       handleVariableChange(
@@ -330,10 +338,14 @@ export function VariableInput({
         <div class="mb-6">
           <h4 class="text-white font-medium mb-3">⚙️ Execution Options</h4>
           <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">
+            <label
+              for="exec-options"
+              class="block text-sm font-medium text-slate-300 mb-2"
+            >
               Command Line Arguments
             </label>
             <textarea
+              id="exec-options"
               placeholder="Enter runn command line arguments (e.g., --debug --verbose --concurrent on)"
               value={executionOptions.args.join(' ')}
               onInput={(e) => {

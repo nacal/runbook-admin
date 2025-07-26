@@ -54,7 +54,7 @@ export class ExecutionManager {
 
   async startExecution(
     runbookPath: string,
-    variables: Record<string, any> = {},
+    variables: Record<string, string | number | boolean> = {},
     executionOptions?: ExecutionOptions,
   ): Promise<string> {
     const executor = new RunnExecutor()

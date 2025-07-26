@@ -4,6 +4,7 @@ html {
   height: 100%;
   margin: 0;
   padding: 0;
+  overflow-y: scroll;
   background-color: #1e293b;
 }
 
@@ -14,7 +15,7 @@ body {
   font-family: system-ui, -apple-system, sans-serif;
   color: #e2e8f0;
   background: transparent;
-  min-height: 100vh;
+  min-height: 100svh;
 }
 
 /* 固定グラデーション背景 */
@@ -23,7 +24,7 @@ body {
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100svh;
   background:
     radial-gradient(ellipse at 20% 30%, #1e3a5f 0%, transparent 80%),
     radial-gradient(ellipse at 80% 70%, #2d4a6b 0%, transparent 75%),
@@ -38,4 +39,13 @@ body {
     );
   z-index: -1;
   pointer-events: none;
+}
+
+/* ボタンのカーソルスタイル */
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
 }

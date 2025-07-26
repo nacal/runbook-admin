@@ -63,7 +63,7 @@ export class Storage {
       }
 
       // Convert date strings back to Date objects
-      const executions = data.executions.map((exec: any) => ({
+      const executions = data.executions.map((exec: ExecutionResult) => ({
         ...exec,
         startTime: new Date(exec.startTime),
         endTime: new Date(exec.endTime),
@@ -79,7 +79,7 @@ export class Storage {
     }
   }
 
-  async saveSettings(settings: Record<string, any>): Promise<void> {
+  async saveSettings(settings: Record<string, unknown>): Promise<void> {
     try {
       await this.ensureStorageDir()
       const settingsFile = join(this.storageDir, 'settings.json')
@@ -97,7 +97,7 @@ export class Storage {
     }
   }
 
-  async loadSettings(): Promise<Record<string, any>> {
+  async loadSettings(): Promise<Record<string, unknown>> {
     try {
       const settingsFile = join(this.storageDir, 'settings.json')
 
@@ -187,7 +187,7 @@ export class Storage {
     }
   }
 
-  async saveVariablePresets(presets: Record<string, any>): Promise<void> {
+  async saveVariablePresets(presets: Record<string, unknown>): Promise<void> {
     try {
       await this.ensureStorageDir()
       const presetsFile = join(this.storageDir, 'variable-presets.json')
@@ -205,7 +205,7 @@ export class Storage {
     }
   }
 
-  async loadVariablePresets(): Promise<Record<string, any>> {
+  async loadVariablePresets(): Promise<Record<string, unknown>> {
     try {
       const presetsFile = join(this.storageDir, 'variable-presets.json')
 
@@ -278,7 +278,7 @@ export class Storage {
   }
 
   async saveEnvironmentVariables(
-    variables: Record<string, any>,
+    variables: Record<string, unknown>,
   ): Promise<void> {
     try {
       await this.ensureStorageDir()
@@ -297,7 +297,7 @@ export class Storage {
     }
   }
 
-  async loadEnvironmentVariables(): Promise<Record<string, any>> {
+  async loadEnvironmentVariables(): Promise<Record<string, unknown>> {
     try {
       const envFile = join(this.storageDir, 'environment.json')
 
@@ -324,7 +324,7 @@ export class Storage {
     }
   }
 
-  async saveExecutionPresets(presets: Record<string, any>): Promise<void> {
+  async saveExecutionPresets(presets: Record<string, unknown>): Promise<void> {
     try {
       await this.ensureStorageDir()
       const presetsFile = join(this.storageDir, 'execution-presets.json')
@@ -342,7 +342,7 @@ export class Storage {
     }
   }
 
-  async loadExecutionPresets(): Promise<Record<string, any>> {
+  async loadExecutionPresets(): Promise<Record<string, unknown>> {
     try {
       const presetsFile = join(this.storageDir, 'execution-presets.json')
 
@@ -369,7 +369,7 @@ export class Storage {
     }
   }
 
-  async saveDefaultExecutionOptions(options: any): Promise<void> {
+  async saveDefaultExecutionOptions(options: unknown): Promise<void> {
     try {
       await this.ensureStorageDir()
       const optionsFile = join(
@@ -393,7 +393,7 @@ export class Storage {
     }
   }
 
-  async loadDefaultExecutionOptions(): Promise<any> {
+  async loadDefaultExecutionOptions(): Promise<unknown> {
     try {
       const optionsFile = join(
         this.storageDir,
