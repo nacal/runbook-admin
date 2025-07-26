@@ -2,7 +2,13 @@ import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import type { ExecutionResult } from '../types/types'
+import type {
+  EnvironmentVariable,
+  ExecutionOptions,
+  ExecutionPreset,
+  ExecutionResult,
+  VariablePreset,
+} from '../types/types'
 
 export class Storage {
   private static instance: Storage
@@ -79,7 +85,9 @@ export class Storage {
     }
   }
 
-  async saveSettings(settings: Record<string, unknown>): Promise<void> {
+  async saveSettings(
+    settings: Record<string, string | number | boolean>,
+  ): Promise<void> {
     try {
       await this.ensureStorageDir()
       const settingsFile = join(this.storageDir, 'settings.json')
@@ -97,7 +105,7 @@ export class Storage {
     }
   }
 
-  async loadSettings(): Promise<Record<string, unknown>> {
+  async loadSettings(): Promise<Record<string, string | number | boolean>> {
     try {
       const settingsFile = join(this.storageDir, 'settings.json')
 
@@ -187,7 +195,15 @@ export class Storage {
     }
   }
 
-  async saveVariablePresets(presets: Record<string, unknown>): Promise<void> {
+  async saveVariablePresets(
+    presets: Record<
+      string,
+      Omit<VariablePreset, 'createdAt' | 'lastUsed'> & {
+        createdAt: string
+        lastUsed?: string
+      }
+    >,
+  ): Promise<void> {
     try {
       await this.ensureStorageDir()
       const presetsFile = join(this.storageDir, 'variable-presets.json')
@@ -205,7 +221,15 @@ export class Storage {
     }
   }
 
-  async loadVariablePresets(): Promise<Record<string, unknown>> {
+  async loadVariablePresets(): Promise<
+    Record<
+      string,
+      Omit<VariablePreset, 'createdAt' | 'lastUsed'> & {
+        createdAt: string
+        lastUsed?: string
+      }
+    >
+  > {
     try {
       const presetsFile = join(this.storageDir, 'variable-presets.json')
 
@@ -278,7 +302,13 @@ export class Storage {
   }
 
   async saveEnvironmentVariables(
-    variables: Record<string, unknown>,
+    variables: Record<
+      string,
+      Omit<EnvironmentVariable, 'createdAt' | 'updatedAt'> & {
+        createdAt: string
+        updatedAt: string
+      }
+    >,
   ): Promise<void> {
     try {
       await this.ensureStorageDir()
@@ -297,7 +327,15 @@ export class Storage {
     }
   }
 
-  async loadEnvironmentVariables(): Promise<Record<string, unknown>> {
+  async loadEnvironmentVariables(): Promise<
+    Record<
+      string,
+      Omit<EnvironmentVariable, 'createdAt' | 'updatedAt'> & {
+        createdAt: string
+        updatedAt: string
+      }
+    >
+  > {
     try {
       const envFile = join(this.storageDir, 'environment.json')
 
@@ -324,7 +362,15 @@ export class Storage {
     }
   }
 
-  async saveExecutionPresets(presets: Record<string, unknown>): Promise<void> {
+  async saveExecutionPresets(
+    presets: Record<
+      string,
+      Omit<ExecutionPreset, 'createdAt' | 'lastUsed'> & {
+        createdAt: string
+        lastUsed?: string
+      }
+    >,
+  ): Promise<void> {
     try {
       await this.ensureStorageDir()
       const presetsFile = join(this.storageDir, 'execution-presets.json')
@@ -342,7 +388,15 @@ export class Storage {
     }
   }
 
-  async loadExecutionPresets(): Promise<Record<string, unknown>> {
+  async loadExecutionPresets(): Promise<
+    Record<
+      string,
+      Omit<ExecutionPreset, 'createdAt' | 'lastUsed'> & {
+        createdAt: string
+        lastUsed?: string
+      }
+    >
+  > {
     try {
       const presetsFile = join(this.storageDir, 'execution-presets.json')
 
@@ -369,7 +423,7 @@ export class Storage {
     }
   }
 
-  async saveDefaultExecutionOptions(options: unknown): Promise<void> {
+  async saveDefaultExecutionOptions(options: ExecutionOptions): Promise<void> {
     try {
       await this.ensureStorageDir()
       const optionsFile = join(
@@ -393,7 +447,7 @@ export class Storage {
     }
   }
 
-  async loadDefaultExecutionOptions(): Promise<unknown> {
+  async loadDefaultExecutionOptions(): Promise<ExecutionOptions> {
     try {
       const optionsFile = join(
         this.storageDir,
@@ -404,7 +458,7 @@ export class Storage {
         console.log(
           '[Storage] No existing default execution options file found',
         )
-        return {}
+        return { args: [] }
       }
 
       const content = await readFile(optionsFile, 'utf-8')
@@ -414,19 +468,19 @@ export class Storage {
         console.warn(
           '[Storage] Default execution options file version mismatch, starting fresh',
         )
-        return {}
+        return { args: [] }
       }
 
       console.log(
         `[Storage] Loaded default execution options from ${optionsFile}`,
       )
-      return data.options || {}
+      return data.options || { args: [] }
     } catch (error) {
       console.error(
         '[Storage] Failed to load default execution options:',
         error,
       )
-      return {}
+      return { args: [] }
     }
   }
 

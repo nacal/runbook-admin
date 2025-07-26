@@ -1,12 +1,9 @@
 import { type ChildProcess, spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { EventEmitter } from 'node:events'
-import type { ExecutionResult } from '../types/types'
+import type { ExecutionOptions, ExecutionResult } from '../types/types'
 import { EnvironmentManager } from './environment-manager'
-import {
-  type ExecutionOptions,
-  ExecutionOptionsManager,
-} from './execution-options-manager'
+import { ExecutionOptionsManager } from './execution-options-manager'
 
 export class RunnExecutor extends EventEmitter {
   private process: ChildProcess | null = null
@@ -168,7 +165,9 @@ export class RunnExecutor extends EventEmitter {
     })
   }
 
-  async list(pattern: string = '**/*.yml'): Promise<unknown[]> {
+  async list(
+    pattern: string = '**/*.yml',
+  ): Promise<Array<Record<string, string | number | boolean>>> {
     return new Promise((resolve, reject) => {
       const childProcess = spawn('runn', ['list', pattern, '--long'], {
         stdio: ['pipe', 'pipe', 'pipe'],
@@ -206,9 +205,11 @@ export class RunnExecutor extends EventEmitter {
     })
   }
 
-  private parseListOutput(output: string): unknown[] {
+  private parseListOutput(
+    output: string,
+  ): Array<Record<string, string | number | boolean>> {
     const lines = output.split('\n')
-    const results: unknown[] = []
+    const results: Array<Record<string, string | number | boolean>> = []
 
     // Skip header and separator lines
     let dataStartIndex = -1

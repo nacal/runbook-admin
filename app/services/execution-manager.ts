@@ -1,7 +1,6 @@
 import { createHash } from 'node:crypto'
-import type { ExecutionResult } from '../types/types'
+import type { ExecutionOptions, ExecutionResult } from '../types/types'
 import { Storage } from '../utils/storage'
-import type { ExecutionOptions } from './execution-options-manager'
 import { RunnExecutor } from './runn'
 
 export class ExecutionManager {

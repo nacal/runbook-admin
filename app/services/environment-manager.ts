@@ -1,13 +1,5 @@
+import type { EnvironmentVariable } from '../types/types'
 import { Storage } from '../utils/storage'
-
-export interface EnvironmentVariable {
-  key: string
-  value: string
-  description?: string
-  isSecret?: boolean
-  createdAt: Date
-  updatedAt: Date
-}
 
 export class EnvironmentManager {
   private static instance: EnvironmentManager
@@ -32,8 +24,16 @@ export class EnvironmentManager {
     try {
       const saved = await this.storage.loadEnvironmentVariables()
       Object.entries(saved).forEach(([key, variable]) => {
-        if (typeof variable === 'object' && variable && 'key' in variable && 'value' in variable) {
-          const v = variable as EnvironmentVariable & { createdAt: string | Date; updatedAt: string | Date }
+        if (
+          typeof variable === 'object' &&
+          variable &&
+          'key' in variable &&
+          'value' in variable
+        ) {
+          const v = variable as EnvironmentVariable & {
+            createdAt: string | Date
+            updatedAt: string | Date
+          }
           this.variables.set(key, {
             key: v.key,
             value: v.value,
@@ -131,7 +131,13 @@ export class EnvironmentManager {
 
   private async persist(): Promise<void> {
     try {
-      const serializable: Record<string, unknown> = {}
+      const serializable: Record<
+        string,
+        Omit<EnvironmentVariable, 'createdAt' | 'updatedAt'> & {
+          createdAt: string
+          updatedAt: string
+        }
+      > = {}
       this.variables.forEach((variable, key) => {
         serializable[key] = {
           ...variable,

@@ -1,15 +1,9 @@
+import type {
+  ExecutionOptions,
+  RunbookVariable,
+  VariablePreset,
+} from '../types/types'
 import { Storage } from '../utils/storage'
-import type { ExecutionOptions } from './execution-options-manager'
-import type { RunbookVariable } from '../types/types'
-
-export interface VariablePreset {
-  name: string
-  description?: string
-  variables: Record<string, string>
-  executionOptions?: ExecutionOptions
-  createdAt: Date
-  lastUsed?: Date
-}
 
 export class VariableManager {
   private static instance: VariableManager
@@ -36,8 +30,16 @@ export class VariableManager {
       // Load presets
       const savedPresets = await this.storage.loadVariablePresets()
       Object.entries(savedPresets).forEach(([key, preset]) => {
-        if (typeof preset === 'object' && preset && 'name' in preset && 'variables' in preset) {
-          const p = preset as VariablePreset & { createdAt?: string | Date; lastUsed?: string | Date }
+        if (
+          typeof preset === 'object' &&
+          preset &&
+          'name' in preset &&
+          'variables' in preset
+        ) {
+          const p = preset as VariablePreset & {
+            createdAt?: string | Date
+            lastUsed?: string | Date
+          }
           this.presets[key] = {
             name: p.name,
             description: p.description,
@@ -171,7 +173,13 @@ export class VariableManager {
 
   private async persistPresets(): Promise<void> {
     try {
-      const serializable: Record<string, unknown> = Object.fromEntries(
+      const serializable: Record<
+        string,
+        Omit<VariablePreset, 'createdAt' | 'lastUsed'> & {
+          createdAt: string
+          lastUsed?: string
+        }
+      > = Object.fromEntries(
         Object.entries(this.presets).map(([key, preset]) => [
           key,
           {

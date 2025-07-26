@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'hono/jsx'
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
-import type { ExecutionOptions as ExecutionOptionsType } from '../services/execution-options-manager'
-import type { Runbook } from '../types/types'
+import type {
+  ExecutionOptions as ExecutionOptionsType,
+  Runbook,
+} from '../types/types'
 import { FileUpload } from './FileUpload'
 import { Toast, useToast } from './Toast'
 
@@ -312,7 +314,9 @@ export function VariableInput({
                           ? 'password'
                           : 'text'
                     }
-                    placeholder={variable.defaultValue?.toString() || `Enter ${key}...`}
+                    placeholder={
+                      variable.defaultValue?.toString() || `Enter ${key}...`
+                    }
                     value={variables[key] || ''}
                     onInput={(e) =>
                       handleVariableChange(

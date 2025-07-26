@@ -69,7 +69,10 @@ export class FileScanner {
 
     try {
       const { load } = await import('js-yaml')
-      const yaml = load(content) as Record<string, unknown>
+      const yaml = load(content) as Record<
+        string,
+        string | number | boolean | object | null
+      >
 
       // Check if this is a valid runbook (has steps or is empty)
       if (
@@ -112,18 +115,22 @@ export class FileScanner {
     return createHash('sha1').update(relativePath).digest('hex')
   }
 
-  private countSteps(yaml: Record<string, unknown>): number {
+  private countSteps(
+    yaml: Record<string, string | number | boolean | object | null>,
+  ): number {
     const steps = yaml.steps
     if (!steps) return 0
     return Array.isArray(steps) ? steps.length : 0
   }
 
   private extractVariables(
-    yaml: Record<string, unknown>,
+    yaml: Record<string, string | number | boolean | object | null>,
   ): Record<string, RunbookVariable> {
     const variables: Record<string, RunbookVariable> = {}
 
-    const vars = yaml.vars as Record<string, unknown> | undefined
+    const vars = yaml.vars as
+      | Record<string, string | number | boolean>
+      | undefined
     if (vars) {
       Object.entries(vars).forEach(([key, value]) => {
         const type = this.inferType(value)
@@ -139,7 +146,7 @@ export class FileScanner {
 
         variables[key] = {
           name: key,
-          defaultValue: value as string | number | boolean | undefined,
+          defaultValue: value,
           type: type,
           required: false,
           filePath: filePath,
@@ -165,7 +172,7 @@ export class FileScanner {
   }
 
   private inferType(
-    value: unknown,
+    value: string | number | boolean,
   ): 'string' | 'number' | 'boolean' | 'env' | 'file' | 'json' {
     if (typeof value === 'string') {
       if (value.startsWith('${')) {

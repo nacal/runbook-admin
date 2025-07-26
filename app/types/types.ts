@@ -31,3 +31,33 @@ export interface RunbookVariable {
   description?: string
   filePath?: string
 }
+
+export interface VariablePreset {
+  name: string
+  description?: string
+  variables: Record<string, string>
+  executionOptions?: ExecutionOptions
+  createdAt: Date
+  lastUsed?: Date
+}
+
+export interface ExecutionOptions {
+  args: string[]
+}
+
+export interface ExecutionPreset {
+  name: string
+  description?: string
+  options: ExecutionOptions
+  createdAt: Date
+  lastUsed?: Date
+}
+
+export interface EnvironmentVariable {
+  key: string
+  value: string
+  description?: string
+  isSecret?: boolean
+  createdAt: Date
+  updatedAt: Date
+}

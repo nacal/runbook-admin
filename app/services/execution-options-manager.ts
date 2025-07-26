@@ -1,17 +1,5 @@
+import type { ExecutionOptions, ExecutionPreset } from '../types/types'
 import { Storage } from '../utils/storage'
-
-export interface ExecutionOptions {
-  // Free-form command line arguments
-  args: string[]
-}
-
-export interface ExecutionPreset {
-  name: string
-  description?: string
-  options: ExecutionOptions
-  createdAt: Date
-  lastUsed?: Date
-}
 
 export class ExecutionOptionsManager {
   private static instance: ExecutionOptionsManager
@@ -38,8 +26,16 @@ export class ExecutionOptionsManager {
       // Load presets
       const savedPresets = await this.storage.loadExecutionPresets()
       Object.entries(savedPresets).forEach(([key, preset]) => {
-        if (typeof preset === 'object' && preset && 'name' in preset && 'options' in preset) {
-          const p = preset as ExecutionPreset & { createdAt?: string | Date; lastUsed?: string | Date }
+        if (
+          typeof preset === 'object' &&
+          preset &&
+          'name' in preset &&
+          'options' in preset
+        ) {
+          const p = preset as ExecutionPreset & {
+            createdAt?: string | Date
+            lastUsed?: string | Date
+          }
           this.presets[key] = {
             name: p.name,
             description: p.description,
@@ -52,7 +48,11 @@ export class ExecutionOptionsManager {
 
       // Load default options
       const loadedOptions = await this.storage.loadDefaultExecutionOptions()
-      if (typeof loadedOptions === 'object' && loadedOptions && 'args' in loadedOptions) {
+      if (
+        typeof loadedOptions === 'object' &&
+        loadedOptions &&
+        'args' in loadedOptions
+      ) {
         this.defaultOptions = loadedOptions as ExecutionOptions
       } else {
         this.defaultOptions = { args: [] }
@@ -134,7 +134,13 @@ export class ExecutionOptionsManager {
 
   private async persistPresets(): Promise<void> {
     try {
-      const serializable: Record<string, unknown> = Object.fromEntries(
+      const serializable: Record<
+        string,
+        Omit<ExecutionPreset, 'createdAt' | 'lastUsed'> & {
+          createdAt: string
+          lastUsed?: string
+        }
+      > = Object.fromEntries(
         Object.entries(this.presets).map(([key, preset]) => [
           key,
           {
