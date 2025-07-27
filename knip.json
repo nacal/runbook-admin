@@ -1,0 +1,38 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "app/server.ts",
+    "app/client.ts",
+    "src/bin/runbook-admin.ts",
+    "app/routes/**/*.{ts,tsx}",
+    "tests/**/*.test.{ts,tsx}",
+    "tests/mocks/**",
+    "tests/integration/api/test-helper.ts"
+  ],
+  "project": [
+    "app/**/*.{ts,tsx}",
+    "src/**/*.{ts,tsx}",
+    "tests/**/*.{ts,tsx}"
+  ],
+  "ignore": [
+    "dist/**",
+    "build/**",
+    "node_modules/**",
+    "**/*.d.ts"
+  ],
+  "ignoreDependencies": [
+    "@vitest/coverage-v8",
+    "tailwindcss"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "includeEntryExports": false,
+  "typescript": {
+    "config": "tsconfig.json"
+  },
+  "vite": {
+    "config": "vite.config.ts"
+  },
+  "vitest": {
+    "config": "vitest.config.ts"
+  }
+}

@@ -7,13 +7,13 @@ describe('Storage (Simple Tests)', () => {
   // 基本的なテストのみを実装し、ファイルI/Oをモックしない
 
   describe('Static Methods and Basic Functionality', () => {
-    let Storage: typeof import('../../app/utils/storage').Storage
+    let Storage: typeof import('../../app/services/storage').Storage
 
     beforeEach(async () => {
       // Reset singleton
-      const storageModule = await import('../../app/utils/storage')
+      const storageModule = await import('../../app/services/storage')
       Storage = storageModule.Storage
-      const StorageWithPrivateAccess = Storage as {
+      const StorageWithPrivateAccess = Storage as unknown as {
         instance?: unknown
       }
       StorageWithPrivateAccess.instance = undefined
@@ -31,7 +31,8 @@ describe('Storage (Simple Tests)', () => {
       const storage = Storage.getInstance()
       const path = storage.getStoragePath()
 
-      expect(path).toContain('.runbook-admin')
+      // テスト環境では .test-storage が使用される
+      expect(path).toMatch(/\.(runbook-admin|test-storage)$/)
       expect(typeof path).toBe('string')
     })
 
@@ -120,12 +121,12 @@ describe('Storage (Simple Tests)', () => {
   })
 
   describe('Error Resilience', () => {
-    let Storage: typeof import('../../app/utils/storage').Storage
+    let Storage: typeof import('../../app/services/storage').Storage
 
     beforeEach(async () => {
-      const storageModule = await import('../../app/utils/storage')
+      const storageModule = await import('../../app/services/storage')
       Storage = storageModule.Storage
-      const StorageWithPrivateAccess = Storage as {
+      const StorageWithPrivateAccess = Storage as unknown as {
         instance?: unknown
       }
       StorageWithPrivateAccess.instance = undefined
@@ -149,7 +150,7 @@ describe('Storage (Simple Tests)', () => {
       const instance1 = Storage.getInstance()
 
       // Reset singleton
-      const StorageWithPrivateAccess = Storage as {
+      const StorageWithPrivateAccess = Storage as unknown as {
         instance?: unknown
       }
       StorageWithPrivateAccess.instance = undefined
