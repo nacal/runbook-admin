@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ExecutionManager } from '../../app/services/execution-manager'
 import type { ExecutionResult } from '../../app/types/types'
 
@@ -18,13 +18,19 @@ describe('ExecutionManager', () => {
 
   beforeEach(async () => {
     // Reset the singleton instance
-    ;(ExecutionManager as any).instance = undefined
+    const ExecutionManagerWithPrivateAccess = ExecutionManager as unknown as {
+      instance?: unknown
+    }
+    ExecutionManagerWithPrivateAccess.instance = undefined
     // Get new instance
     executionManager = ExecutionManager.getInstance()
     // Wait for initialization
-    await new Promise(resolve => setTimeout(resolve, 10))
+    await new Promise((resolve) => setTimeout(resolve, 10))
     // Clear executions for clean test state
-    ;(executionManager as any).executions.clear()
+    const executionManagerWithPrivateAccess = executionManager as unknown as {
+      executions: Map<string, unknown>
+    }
+    executionManagerWithPrivateAccess.executions.clear()
   })
 
   afterEach(() => {
@@ -35,7 +41,7 @@ describe('ExecutionManager', () => {
     it('should return same instance', () => {
       const instance1 = ExecutionManager.getInstance()
       const instance2 = ExecutionManager.getInstance()
-      
+
       expect(instance1).toBe(instance2)
     })
   })
@@ -55,18 +61,24 @@ describe('ExecutionManager', () => {
         output: ['test output'],
         variables: { TEST_VAR: 'value' },
       }
-      
+
       // Add execution directly to the map
-      ;(executionManager as any).executions.set('test-execution-123', mockExecution)
+      const executionManagerWithAccess = executionManager as unknown as {
+        executions: Map<string, unknown>
+      }
+      executionManagerWithAccess.executions.set(
+        'test-execution-123',
+        mockExecution,
+      )
 
       const retrieved = executionManager.getExecution('test-execution-123')
-      
+
       expect(retrieved).toEqual(mockExecution)
     })
 
     it('should return undefined for non-existent execution', () => {
       const retrieved = executionManager.getExecution('non-existent-id')
-      
+
       expect(retrieved).toBeUndefined()
     })
 
@@ -84,7 +96,7 @@ describe('ExecutionManager', () => {
         output: [],
         variables: {},
       }
-      
+
       const execution2: ExecutionResult = {
         id: 'test-2',
         runbookId: 'runbook-2',
@@ -98,11 +110,14 @@ describe('ExecutionManager', () => {
         variables: {},
       }
 
-      ;(executionManager as any).executions.set('test-1', execution1)
-      ;(executionManager as any).executions.set('test-2', execution2)
+      const executionManagerAccess = executionManager as unknown as {
+        executions: Map<string, unknown>
+      }
+      executionManagerAccess.executions.set('test-1', execution1)
+      executionManagerAccess.executions.set('test-2', execution2)
 
       const allExecutions = await executionManager.getAllExecutions()
-      
+
       expect(allExecutions).toHaveLength(2)
       expect(allExecutions).toContainEqual(execution1)
       expect(allExecutions).toContainEqual(execution2)
@@ -111,9 +126,12 @@ describe('ExecutionManager', () => {
     it('should check if execution is running', () => {
       // isRunning checks the executors map, not executions
       const mockExecutor = { on: vi.fn() }
-      
+
       // Add to executors map (running)
-      ;(executionManager as any).executors.set('running-test', mockExecutor)
+      const executionManagerWithExecutors = executionManager as unknown as {
+        executors: Map<string, unknown>
+      }
+      executionManagerWithExecutors.executors.set('running-test', mockExecutor)
 
       expect(executionManager.isRunning('running-test')).toBe(true)
       expect(executionManager.isRunning('completed-test')).toBe(false)
@@ -135,7 +153,10 @@ describe('ExecutionManager', () => {
         variables: {},
       }
 
-      ;(executionManager as any).executions.set('test-clear', execution)
+      const executionManagerWithExecutions = executionManager as unknown as {
+        executions: Map<string, unknown>
+      }
+      executionManagerWithExecutions.executions.set('test-clear', execution)
 
       // clearHistory is the actual method name
       await executionManager.clearHistory()

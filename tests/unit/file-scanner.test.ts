@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { FileScanner } from '../../app/services/file-scanner'
 
 // Mock the js-yaml module
@@ -11,13 +11,19 @@ vi.mock('js-yaml', () => ({
         vars: { TEST_VAR: 'default-value', OPTIONAL_VAR: '' },
         labels: ['test', 'sample'],
         steps: [
-          { desc: 'Step 1', http: { url: 'https://example.com', method: 'GET' } },
-          { desc: 'Step 2', exec: { command: 'echo "Hello ${TEST_VAR}"' } },
+          {
+            desc: 'Step 1',
+            http: { url: 'https://example.com', method: 'GET' },
+          },
+          { desc: 'Step 2', exec: { command: 'echo "Hello $TEST_VAR"' } },
           { desc: 'Step 3', test: ['current.res.status == 200'] },
         ],
       }
     }
-    return { desc: 'Simple runbook', steps: [{ exec: { command: 'echo "test"' } }] }
+    return {
+      desc: 'Simple runbook',
+      steps: [{ exec: { command: 'echo "test"' } }],
+    }
   }),
 }))
 
@@ -47,7 +53,9 @@ describe('FileScanner', () => {
       // Mock fs/promises for this test suite
       vi.doMock('node:fs/promises', () => ({
         readdir: vi.fn().mockResolvedValue([]),
-        readFile: vi.fn().mockResolvedValue('desc: Test runbook\nsteps:\n  - exec: echo test'),
+        readFile: vi
+          .fn()
+          .mockResolvedValue('desc: Test runbook\nsteps:\n  - exec: echo test'),
         stat: vi.fn().mockResolvedValue({
           isDirectory: () => false,
           isFile: () => true,
@@ -81,7 +89,7 @@ describe('FileScanner', () => {
     it('should handle empty directory', async () => {
       const scanner = new FileScanner('/test/empty')
       const runbooks = await scanner.scanRunbooks()
-      
+
       expect(Array.isArray(runbooks)).toBe(true)
       expect(runbooks).toHaveLength(0)
     })

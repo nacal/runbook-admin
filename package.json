@@ -15,7 +15,7 @@
     "build": "vite build && pnpm run build:cli",
     "build:cli": "tsc src/bin/runbook-admin.ts --outDir dist/bin --target es2022 --module node16 --moduleResolution node16",
     "start": "node dist/bin/runbook-admin.js",
-    "test": "vitest run",
+    "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "test:run": "vitest run",
@@ -26,7 +26,7 @@
     "format": "biome format --write",
     "check": "biome check --write",
     "typecheck": "tsc --noEmit",
-    "agentcheck": "pnpm check && pnpm build && pnpm test && pnpm test:e2e:list"
+    "agentcheck": "pnpm check && pnpm build && pnpm test:run && pnpm test:e2e:list"
   },
   "dependencies": {
     "@hono/node-server": "^1.12.0",
@@ -63,6 +63,6 @@
     "cli",
     "gui"
   ],
-  "author": "runbook-admin",
+  "author": "nacal",
   "license": "MIT"
 }

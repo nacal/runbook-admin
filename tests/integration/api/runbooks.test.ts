@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock FileScanner at module level
-vi.mock('../../app/services/file-scanner', () => {
+vi.mock('../../../app/services/file-scanner', () => {
   const mockScanRunbooks = vi.fn()
   return {
     FileScanner: vi.fn().mockImplementation(() => ({
@@ -12,13 +12,16 @@ vi.mock('../../app/services/file-scanner', () => {
 })
 
 describe('/api/runbooks', () => {
-  let mockScanRunbooks: any
+  let mockScanRunbooks: ReturnType<typeof vi.fn>
 
   beforeEach(async () => {
     vi.clearAllMocks()
-    const fileScannerModule = await import('../../app/services/file-scanner')
-    mockScanRunbooks = (fileScannerModule as any).mockScanRunbooks
-    
+    const fileScannerModule = await import('../../../app/services/file-scanner')
+    const moduleWithMock = fileScannerModule as {
+      mockScanRunbooks?: ReturnType<typeof vi.fn>
+    }
+    mockScanRunbooks = moduleWithMock.mockScanRunbooks ?? vi.fn()
+
     mockScanRunbooks.mockResolvedValue([
       {
         id: 'test-runbook-1',
@@ -35,8 +38,11 @@ describe('/api/runbooks', () => {
 
   describe('FileScanner integration', () => {
     it('should call scanRunbooks', async () => {
-      const { FileScanner } = await import('../../app/services/file-scanner')
-      const scanner = new (FileScanner as any)('/test/path')
+      const { FileScanner } = await import('../../../app/services/file-scanner')
+      const FileScannerconstructor = FileScanner as new (
+        path: string,
+      ) => InstanceType<typeof FileScanner>
+      const scanner = new FileScannerconstructor('/test/path')
       const runbooks = await scanner.scanRunbooks()
 
       expect(mockScanRunbooks).toHaveBeenCalled()
@@ -51,9 +57,12 @@ describe('/api/runbooks', () => {
 
     it('should handle empty results', async () => {
       mockScanRunbooks.mockResolvedValue([])
-      
-      const { FileScanner } = await import('../../app/services/file-scanner')
-      const scanner = new (FileScanner as any)('/test/path')
+
+      const { FileScanner } = await import('../../../app/services/file-scanner')
+      const FileScannerconstructor = FileScanner as new (
+        path: string,
+      ) => InstanceType<typeof FileScanner>
+      const scanner = new FileScannerconstructor('/test/path')
       const runbooks = await scanner.scanRunbooks()
 
       expect(runbooks).toHaveLength(0)
@@ -61,10 +70,13 @@ describe('/api/runbooks', () => {
 
     it('should handle errors', async () => {
       mockScanRunbooks.mockRejectedValue(new Error('Scanner error'))
-      
-      const { FileScanner } = await import('../../app/services/file-scanner')
-      const scanner = new (FileScanner as any)('/test/path')
-      
+
+      const { FileScanner } = await import('../../../app/services/file-scanner')
+      const FileScannerconstructor = FileScanner as new (
+        path: string,
+      ) => InstanceType<typeof FileScanner>
+      const scanner = new FileScannerconstructor('/test/path')
+
       await expect(scanner.scanRunbooks()).rejects.toThrow('Scanner error')
     })
   })
