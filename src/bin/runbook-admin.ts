@@ -93,7 +93,7 @@ async function main() {
       } catch (_error) {
         console.log(`💡 Manually open: ${url}`)
       }
-    }, 1500)
+    }, 3000)
 
     // Handle graceful shutdown
     const shutdown = () => {
