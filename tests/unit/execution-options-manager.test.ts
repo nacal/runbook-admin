@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { ExecutionOptions, ExecutionPreset } from '../../app/types/types'
+import type { ExecutionOptions } from '../../app/types/types'
 
 // Simple ExecutionOptionsManager tests that focus on logic rather than file I/O
 describe('ExecutionOptionsManager (Simple Tests)', () => {

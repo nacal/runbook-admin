@@ -3,7 +3,7 @@ import type {
   RunbookVariable,
   VariablePreset,
 } from '../types/types'
-import { Storage } from '../utils/storage'
+import { Storage } from './storage'
 
 export class VariableManager {
   private static instance: VariableManager
@@ -149,7 +149,7 @@ export class VariableManager {
     const runbookKeys = Object.keys(runbookVariables)
 
     // Only process variables that are defined in the runbook
-    runbookKeys.forEach(key => {
+    runbookKeys.forEach((key) => {
       // Priority: overrides > preset > global > runbook default
       if (overrides[key] !== undefined) {
         merged[key] = overrides[key]

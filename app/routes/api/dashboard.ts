@@ -1,7 +1,7 @@
 import { createRoute } from 'honox/factory'
 import { FileScanner } from '../../services/file-scanner'
-import { ProjectContext } from '../../services/project-context'
 import type { Runbook } from '../../types/types'
+import { getProjectPath } from '../../utils/project-context'
 
 interface DashboardData {
   runbooks: Runbook[]
@@ -12,7 +12,7 @@ interface DashboardData {
 
 async function loadDashboardData(): Promise<DashboardData> {
   try {
-    const projectPath = ProjectContext.getProjectPath()
+    const projectPath = getProjectPath()
     const scanner = new FileScanner(projectPath)
     const runbooks = await scanner.scanRunbooks()
 

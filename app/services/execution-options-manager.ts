@@ -1,5 +1,5 @@
 import type { ExecutionOptions, ExecutionPreset } from '../types/types'
-import { Storage } from '../utils/storage'
+import { Storage } from './storage'
 
 export class ExecutionOptionsManager {
   private static instance: ExecutionOptionsManager

@@ -1,4 +1,4 @@
-import { Storage } from '../utils/storage'
+import { Storage } from './storage'
 
 export class FavoritesManager {
   private static instance: FavoritesManager

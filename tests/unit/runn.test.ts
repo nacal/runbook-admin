@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { ExecutionOptions, ExecutionResult } from '../../app/types/types'
+import type { ExecutionOptions } from '../../app/types/types'
 
 // Mock child_process with proper EventEmitter
 const createMockChildProcess = () => {
@@ -648,7 +648,7 @@ ghi789                                     Complex runbook              true  10
     })
 
     it('should preserve process.env while adding managed variables', async () => {
-      const originalPath = process.env.PATH
+      const _originalPath = process.env.PATH
       const runbookPath = '/test/runbook.yml'
 
       const executionPromise = executor.execute(runbookPath)

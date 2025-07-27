@@ -3,6 +3,7 @@ import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
 import type {
   ExecutionOptions as ExecutionOptionsType,
   Runbook,
+  RunbookVariable,
 } from '../types/types'
 import { FileUpload } from './FileUpload'
 import { Toast, useToast } from './Toast'
@@ -160,8 +161,8 @@ export function VariableInput({
       // runbookで定義されている変数のみを保存
       const runbookVariableKeys = Object.keys(runbook.variables)
       const variablesToSave: Record<string, string> = {}
-      
-      runbookVariableKeys.forEach(key => {
+
+      runbookVariableKeys.forEach((key) => {
         if (variables[key] !== undefined) {
           variablesToSave[key] = variables[key]
         }
@@ -197,13 +198,13 @@ export function VariableInput({
     // runbookで定義されている変数のみを送信
     const runbookVariableKeys = Object.keys(runbook.variables)
     const variablesToSubmit: Record<string, string> = {}
-    
-    runbookVariableKeys.forEach(key => {
+
+    runbookVariableKeys.forEach((key) => {
       if (variables[key] !== undefined) {
         variablesToSubmit[key] = variables[key]
       }
     })
-    
+
     onSubmit(variablesToSubmit, executionOptions)
   }
 
@@ -266,8 +267,8 @@ export function VariableInput({
         <div class="space-y-4 mb-6">
           {(() => {
             // 環境変数とrunbook変数を分離
-            const envVarEntries: Array<[string, any]> = []
-            const runbookVarEntries: Array<[string, any]> = []
+            const envVarEntries: Array<[string, RunbookVariable]> = []
+            const runbookVarEntries: Array<[string, RunbookVariable]> = []
 
             Object.entries(runbook.variables).forEach(([key, variable]) => {
               if (/^[A-Z][A-Z0-9_]*$/.test(key)) {

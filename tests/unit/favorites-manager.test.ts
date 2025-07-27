@@ -101,7 +101,7 @@ describe('FavoritesManager (Simple Tests)', () => {
       const runbookId = 'test-runbook-add'
 
       // Toggle to add (assuming it's not already a favorite)
-      const result = await manager.toggleFavorite(runbookId)
+      const _result = await manager.toggleFavorite(runbookId)
 
       // Check if it's now a favorite
       const isFav = await manager.isFavorite(runbookId)

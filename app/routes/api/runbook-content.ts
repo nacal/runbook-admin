@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { Hono } from 'hono'
-import { ProjectContext } from '../../services/project-context'
+import { getProjectPath } from '../../utils/project-context'
 
 const app = new Hono()
 
@@ -21,7 +21,7 @@ app.get('/', async (c) => {
       )
     }
 
-    const projectPath = ProjectContext.getProjectPath()
+    const projectPath = getProjectPath()
     const filePath = join(projectPath, path)
 
     // Security check - ensure the path is within the project directory

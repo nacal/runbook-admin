@@ -2,9 +2,9 @@ import { type ChildProcess, spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { EventEmitter } from 'node:events'
 import type { ExecutionOptions, ExecutionResult } from '../types/types'
+import { getProjectPath } from '../utils/project-context'
 import { EnvironmentManager } from './environment-manager'
 import { ExecutionOptionsManager } from './execution-options-manager'
-import { ProjectContext } from './project-context'
 
 export class RunnExecutor extends EventEmitter {
   private process: ChildProcess | null = null
@@ -64,15 +64,15 @@ export class RunnExecutor extends EventEmitter {
       // 環境変数付きのコマンド文字列を生成
       const envString =
         Object.keys(envVars).length > 0
-          ? Object.entries(envVars)
+          ? `${Object.entries(envVars)
               .map(([key, value]) => `${key}=${value}`)
-              .join(' ') + ' '
+              .join(' ')} `
           : ''
       const fullCommand = `${envString}runn ${args.join(' ')}`
 
       console.log(`\n🚀 EXECUTING COMMAND 🚀`)
       console.log(`Command: ${fullCommand}`)
-      console.log(`Working Directory: ${ProjectContext.getProjectPath()}`)
+      console.log(`Working Directory: ${getProjectPath()}`)
       console.log(`Execution ID: ${this.executionId}`)
       if (Object.keys(envVars).length > 0) {
         console.log(`Environment Variables: ${Object.keys(envVars).join(', ')}`)
@@ -83,9 +83,7 @@ export class RunnExecutor extends EventEmitter {
       console.log(`=====================================\n`)
 
       console.log(`[RunnExecutor] Starting execution ${this.executionId}`)
-      console.log(
-        `[RunnExecutor] Working directory: ${ProjectContext.getProjectPath()}`,
-      )
+      console.log(`[RunnExecutor] Working directory: ${getProjectPath()}`)
       console.log(`[RunnExecutor] Full command: ${fullCommand}`)
 
       // Get environment variables for execution
@@ -97,10 +95,10 @@ export class RunnExecutor extends EventEmitter {
 
     return setupExecution().then(({ startTime, args, execEnv, envVars }) => {
       return new Promise((resolve, reject) => {
-        const fullCommand = `runn ${args.join(' ')}`
+        const _fullCommand = `runn ${args.join(' ')}`
         console.log(`[RunnExecutor] About to spawn runn process...`)
         this.process = spawn('runn', args, {
-          cwd: ProjectContext.getProjectPath(),
+          cwd: getProjectPath(),
           stdio: ['ignore', 'pipe', 'pipe'], // ignore stdin to prevent hanging
           env: {
             ...process.env, // Preserve current environment (including PATH)
@@ -119,11 +117,11 @@ export class RunnExecutor extends EventEmitter {
         // 実際にコピーして実行できるコマンドを表示
         const envString =
           Object.keys(envVars).length > 0
-            ? Object.entries(envVars)
+            ? `${Object.entries(envVars)
                 .map(([key, value]) => `${key}="${value}"`)
-                .join(' ') + ' '
+                .join(' ')} `
             : ''
-        const copyableCommand = `cd "${ProjectContext.getProjectPath()}" && ${envString}runn ${args.join(' ')}`
+        const copyableCommand = `cd "${getProjectPath()}" && ${envString}runn ${args.join(' ')}`
         console.log(`\n📋 COPY & RUN THIS COMMAND:`)
         console.log(copyableCommand)
         console.log(`==============================\n`)

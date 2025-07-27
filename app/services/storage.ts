@@ -17,10 +17,11 @@ export class Storage {
 
   private constructor() {
     // テスト環境では別のディレクトリを使用
-    const baseDir = process.env.NODE_ENV === 'test' 
-      ? join(process.cwd(), '.test-storage')
-      : join(homedir(), '.runbook-admin')
-    
+    const baseDir =
+      process.env.NODE_ENV === 'test'
+        ? join(process.cwd(), '.test-storage')
+        : join(homedir(), '.runbook-admin')
+
     this.storageDir = baseDir
     this.historyFile = join(this.storageDir, 'history.json')
   }
@@ -68,7 +69,7 @@ export class Storage {
       const content = await readFile(this.historyFile, 'utf-8')
 
       // JSONファイルが壊れている場合の対処
-      let data
+      let data: unknown
       try {
         data = JSON.parse(content)
       } catch (parseError) {

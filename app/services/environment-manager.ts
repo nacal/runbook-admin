@@ -1,5 +1,5 @@
 import type { EnvironmentVariable } from '../types/types'
-import { Storage } from '../utils/storage'
+import { Storage } from './storage'
 
 export class EnvironmentManager {
   private static instance: EnvironmentManager
