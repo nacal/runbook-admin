@@ -100,3 +100,7 @@ build/
 
 # Logs
 *.log
+
+# Playwright test results
+test-results/
+playwright-report/

@@ -57,6 +57,11 @@ npm run build
 
 # Run built version
 npm run start
+
+# Run tests
+npm run test          # Unit tests
+npm run test:coverage # Coverage report  
+npm run test:e2e      # E2E tests
 ```
 
 ## 📁 Project Structure

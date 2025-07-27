@@ -88,3 +88,7 @@ app/
 - **services/**: Business logic and external service integrations
 - **utils/**: Utility functions and helpers
 - **types/**: TypeScript type definitions
+
+## Development Best Practices
+
+- コード差分を加えた後は、pnpm agentcheckをpassすることまで確認する
