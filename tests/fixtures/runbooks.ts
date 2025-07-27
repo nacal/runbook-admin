@@ -1,39 +1,3 @@
-import type { Runbook } from '../../app/types/types'
-
-export const sampleRunbook: Runbook = {
-  id: 'test-runbook-1',
-  path: 'test/sample.runbook.yml',
-  name: 'sample',
-  description: 'Sample test runbook',
-  steps: 3,
-  lastModified: new Date('2024-01-01'),
-  variables: {
-    TEST_VAR: {
-      name: 'TEST_VAR',
-      type: 'string',
-      required: true,
-      defaultValue: 'default-value',
-    },
-    OPTIONAL_VAR: {
-      name: 'OPTIONAL_VAR',
-      type: 'string',
-      required: false,
-    },
-  },
-  labels: ['test', 'sample'],
-}
-
-export const runbookWithoutVariables: Runbook = {
-  id: 'test-runbook-2',
-  path: 'test/simple.runbook.yml',
-  name: 'simple',
-  description: 'Simple runbook without variables',
-  steps: 1,
-  lastModified: new Date('2024-01-02'),
-  variables: {},
-  labels: [],
-}
-
 export const sampleRunbookYaml = `
 desc: Sample test runbook
 vars:
@@ -61,10 +25,4 @@ steps:
   - desc: Simple step
     exec:
       command: echo "Hello World"
-`
-
-export const invalidRunbookYaml = `
-invalid: yaml: content
-  - this: is
-    - not: valid
 `

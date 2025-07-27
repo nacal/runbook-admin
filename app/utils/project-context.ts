@@ -6,14 +6,6 @@
 let projectPath: string | null = null
 
 /**
- * プロジェクトパスを設定する
- * @param path プロジェクトのルートパス
- */
-export function setProjectPath(path: string): void {
-  projectPath = path
-}
-
-/**
  * 現在のプロジェクトパスを取得する
  * 環境変数PROJECT_PATHがあればそれを優先、なければprocess.cwd()
  * @returns プロジェクトのルートパス
@@ -33,12 +25,4 @@ export function getProjectPath(): string {
   // フォールバック
   projectPath = process.cwd()
   return projectPath
-}
-
-/**
- * テスト用: プロジェクトパスをリセットする
- * @internal
- */
-export function resetProjectPath(): void {
-  projectPath = null
 }
