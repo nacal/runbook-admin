@@ -157,12 +157,22 @@ export function VariableInput({
     if (!newPresetName.trim()) return
 
     try {
+      // runbookで定義されている変数のみを保存
+      const runbookVariableKeys = Object.keys(runbook.variables)
+      const variablesToSave: Record<string, string> = {}
+      
+      runbookVariableKeys.forEach(key => {
+        if (variables[key] !== undefined) {
+          variablesToSave[key] = variables[key]
+        }
+      })
+
       const response = await fetch('/api/variables/presets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: newPresetName,
-          variables,
+          variables: variablesToSave,
           executionOptions,
           description: `Preset for ${runbook.name}`,
         }),
@@ -184,7 +194,17 @@ export function VariableInput({
   }
 
   const handleSubmit = () => {
-    onSubmit(variables, executionOptions)
+    // runbookで定義されている変数のみを送信
+    const runbookVariableKeys = Object.keys(runbook.variables)
+    const variablesToSubmit: Record<string, string> = {}
+    
+    runbookVariableKeys.forEach(key => {
+      if (variables[key] !== undefined) {
+        variablesToSubmit[key] = variables[key]
+      }
+    })
+    
+    onSubmit(variablesToSubmit, executionOptions)
   }
 
   const isValidForm = () => {

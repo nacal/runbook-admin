@@ -146,27 +146,28 @@ export class VariableManager {
     await this.initialize()
 
     const merged: Record<string, string> = {}
+    const runbookKeys = Object.keys(runbookVariables)
 
-    // Start with global variables
-    Object.assign(merged, this.globalVariables)
-
-    // Apply preset variables if specified
-    if (presetName) {
-      const preset = await this.getPreset(presetName)
-      if (preset) {
-        Object.assign(merged, preset.variables)
-      }
-    }
-
-    // Apply runbook default values
-    Object.entries(runbookVariables).forEach(([key, variable]) => {
-      if (variable.defaultValue && !merged[key]) {
-        merged[key] = String(variable.defaultValue)
+    // Only process variables that are defined in the runbook
+    runbookKeys.forEach(key => {
+      // Priority: overrides > preset > global > runbook default
+      if (overrides[key] !== undefined) {
+        merged[key] = overrides[key]
+      } else if (presetName) {
+        const preset = this.presets[presetName]
+        if (preset?.variables[key] !== undefined) {
+          merged[key] = preset.variables[key]
+        } else if (this.globalVariables[key] !== undefined) {
+          merged[key] = this.globalVariables[key]
+        } else if (runbookVariables[key].defaultValue !== undefined) {
+          merged[key] = String(runbookVariables[key].defaultValue)
+        }
+      } else if (this.globalVariables[key] !== undefined) {
+        merged[key] = this.globalVariables[key]
+      } else if (runbookVariables[key].defaultValue !== undefined) {
+        merged[key] = String(runbookVariables[key].defaultValue)
       }
     })
-
-    // Apply user overrides (highest priority)
-    Object.assign(merged, overrides)
 
     return merged
   }

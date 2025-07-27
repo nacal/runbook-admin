@@ -104,3 +104,6 @@ build/
 # Playwright test results
 test-results/
 playwright-report/
+
+# Test storage
+.test-storage/

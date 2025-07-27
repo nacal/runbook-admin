@@ -16,7 +16,12 @@ export class Storage {
   private historyFile: string
 
   private constructor() {
-    this.storageDir = join(homedir(), '.runbook-admin')
+    // テスト環境では別のディレクトリを使用
+    const baseDir = process.env.NODE_ENV === 'test' 
+      ? join(process.cwd(), '.test-storage')
+      : join(homedir(), '.runbook-admin')
+    
+    this.storageDir = baseDir
     this.historyFile = join(this.storageDir, 'history.json')
   }
 
