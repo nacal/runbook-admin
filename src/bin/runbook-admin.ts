@@ -14,8 +14,12 @@ const __dirname = dirname(__filename)
 const appRoot = join(__dirname, '..', '..')
 
 async function main() {
+  // Get project path from command line argument or current working directory
+  const args = process.argv.slice(2)
+  const projectPath = args[0] || process.cwd()
+
   console.log('🔥 Starting Runbook Admin...')
-  console.log(`📁 Project: ${process.cwd()}`)
+  console.log(`📁 Project: ${projectPath}`)
 
   try {
     // Use npx to run vite dev for development mode
@@ -29,6 +33,7 @@ async function main() {
         env: {
           ...process.env,
           NODE_ENV: 'development',
+          PROJECT_PATH: projectPath,
         },
       },
     )

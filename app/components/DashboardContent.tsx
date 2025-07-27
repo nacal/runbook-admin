@@ -1,5 +1,6 @@
 import { RunbookList } from '../islands/RunbookList'
 import { FileScanner } from '../services/file-scanner'
+import { ProjectContext } from '../services/project-context'
 import type { Runbook } from '../types/types'
 
 interface DashboardData {
@@ -11,7 +12,7 @@ interface DashboardData {
 
 async function loadDashboardData(): Promise<DashboardData> {
   try {
-    const projectPath = process.cwd()
+    const projectPath = ProjectContext.getProjectPath()
     const scanner = new FileScanner(projectPath)
     const runbooks = await scanner.scanRunbooks()
 
@@ -59,7 +60,7 @@ export async function DashboardContent() {
   if (dashboardData.error) {
     console.error('❌ Dashboard data loading failed:', {
       error: dashboardData.error,
-      projectPath: process.cwd(),
+      projectPath: ProjectContext.getProjectPath(),
       timestamp: new Date().toISOString(),
     })
   } else {
@@ -68,7 +69,7 @@ export async function DashboardContent() {
       favoritesCount: dashboardData.favorites.length,
       labelsCount: dashboardData.availableLabels.length,
       labels: dashboardData.availableLabels,
-      projectPath: process.cwd(),
+      projectPath: ProjectContext.getProjectPath(),
       timestamp: new Date().toISOString(),
     })
   }

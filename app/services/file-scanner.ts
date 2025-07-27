@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { basename, join, relative } from 'node:path'
 import type { Runbook, RunbookVariable } from '../types/types'
+import { ProjectContext } from './project-context'
 
 export class FileScanner {
   private rootPath: string
@@ -17,8 +18,8 @@ export class FileScanner {
     'vendor',
   ]
 
-  constructor(rootPath: string = process.cwd()) {
-    this.rootPath = rootPath
+  constructor(rootPath?: string) {
+    this.rootPath = rootPath || ProjectContext.getProjectPath()
   }
 
   async scanRunbooks(): Promise<Runbook[]> {

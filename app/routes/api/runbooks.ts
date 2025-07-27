@@ -1,9 +1,10 @@
 import { createRoute } from 'honox/factory'
 import { FileScanner } from '../../services/file-scanner'
+import { ProjectContext } from '../../services/project-context'
 
 export const GET = createRoute(async (c) => {
   try {
-    const projectPath = c.req.query('path') || process.cwd()
+    const projectPath = c.req.query('path') || ProjectContext.getProjectPath()
     const scanner = new FileScanner(projectPath)
     const runbooks = await scanner.scanRunbooks()
 

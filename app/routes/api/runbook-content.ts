@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { Hono } from 'hono'
+import { ProjectContext } from '../../services/project-context'
 
 const app = new Hono()
 
@@ -20,11 +21,12 @@ app.get('/', async (c) => {
       )
     }
 
-    const filePath = join(process.cwd(), path)
+    const projectPath = ProjectContext.getProjectPath()
+    const filePath = join(projectPath, path)
 
     // Security check - ensure the path is within the project directory
     const normalizedPath = filePath.replace(/\\/g, '/')
-    const normalizedCwd = process.cwd().replace(/\\/g, '/')
+    const normalizedCwd = projectPath.replace(/\\/g, '/')
 
     if (!normalizedPath.startsWith(normalizedCwd)) {
       return c.json(

@@ -2,6 +2,7 @@ import { Suspense } from 'hono/jsx'
 import { createRoute } from 'honox/factory'
 import { DashboardContent } from '../components/DashboardContent'
 import { LoadingState } from '../components/LoadingState'
+import { ProjectContext } from '../services/project-context'
 
 export default createRoute((c) => {
   return c.render(
@@ -14,7 +15,9 @@ export default createRoute((c) => {
             <p class="text-slate-400">
               Local GUI for running and managing Runn runbooks
             </p>
-            <p class="mt-4 text-sm text-slate-500">📁 {process.cwd()}</p>
+            <p class="mt-4 text-sm text-slate-500">
+              📁 {ProjectContext.getProjectPath()}
+            </p>
           </div>
           <div class="flex space-x-3">
             <a
