@@ -175,24 +175,71 @@ export function ExecutionResultModal({
                 </div>
               </div>
 
-              {/* Variables */}
-              {Object.keys(execution.variables).length > 0 && (
-                <div class="bg-slate-900/50 rounded-lg p-3">
-                  <div class="text-xs text-slate-400 mb-2">Variables</div>
-                  <div class="max-h-64 overflow-y-auto space-y-1">
-                    {Object.entries(execution.variables).map(([key, value]) => (
-                      <div key={key} class="flex items-start space-x-2">
-                        <span class="text-blue-300 text-sm font-mono shrink-0">
-                          {key}:
-                        </span>
-                        <span class="text-slate-300 text-sm break-all">
-                          {String(value)}
-                        </span>
+              {/* Variables - 環境変数とrunbook変数を分けて表示 */}
+              {Object.keys(execution.variables).length > 0 && (() => {
+                const envVars: Record<string, string | number | boolean> = {}
+                const runbookVars: Record<string, string | number | boolean> = {}
+                
+                Object.entries(execution.variables).forEach(([key, value]) => {
+                  if (/^[A-Z][A-Z0-9_]*$/.test(key)) {
+                    envVars[key] = value
+                  } else {
+                    runbookVars[key] = value
+                  }
+                })
+                
+                return (
+                  <>
+                    {/* Environment Variables */}
+                    {Object.keys(envVars).length > 0 && (
+                      <div class="bg-slate-900/50 rounded-lg p-3">
+                        <div class="text-xs text-slate-400 mb-2">
+                          <span class="flex items-center space-x-1">
+                            <span>🔐 Environment Variables</span>
+                            <span class="text-slate-500">({Object.keys(envVars).length})</span>
+                          </span>
+                        </div>
+                        <div class="max-h-48 overflow-y-auto space-y-1">
+                          {Object.entries(envVars).map(([key, value]) => (
+                            <div key={key} class="flex items-start space-x-2">
+                              <span class="text-slate-300 text-sm font-mono shrink-0">
+                                {key}:
+                              </span>
+                              <span class="text-slate-300 text-sm break-all">
+                                {String(value)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                    )}
+                    
+                    {/* Runbook Variables */}
+                    {Object.keys(runbookVars).length > 0 && (
+                      <div class="bg-slate-900/50 rounded-lg p-3">
+                        <div class="text-xs text-slate-400 mb-2">
+                          <span class="flex items-center space-x-1">
+                            <span>📝 Runbook Variables (vars)</span>
+                            <span class="text-slate-500">({Object.keys(runbookVars).length})</span>
+                          </span>
+                        </div>
+                        <div class="max-h-48 overflow-y-auto space-y-1">
+                          {Object.entries(runbookVars).map(([key, value]) => (
+                            <div key={key} class="flex items-start space-x-2">
+                              <span class="text-blue-300 text-sm font-mono shrink-0">
+                                {key}:
+                              </span>
+                              <span class="text-slate-300 text-sm break-all">
+                                {String(value)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )
+              })()}
 
               {/* Output */}
               <div class="bg-slate-900/50 rounded-lg p-3">

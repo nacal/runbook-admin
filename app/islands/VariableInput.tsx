@@ -244,98 +244,225 @@ export function VariableInput({
 
         {/* Variable Inputs */}
         <div class="space-y-4 mb-6">
-          <h4 class="text-white font-medium">⚙️ Variables</h4>
-          {Object.entries(runbook.variables).map(([key, variable]) => {
-            const globalValue = globalVariables[key]
-            const envValue = environmentVariables[key]
-            const hasGlobalDefault = globalValue !== undefined
-            const hasEnvDefault = envValue !== undefined
+          {(() => {
+            // 環境変数とrunbook変数を分離
+            const envVarEntries: Array<[string, any]> = []
+            const runbookVarEntries: Array<[string, any]> = []
+
+            Object.entries(runbook.variables).forEach(([key, variable]) => {
+              if (/^[A-Z][A-Z0-9_]*$/.test(key)) {
+                envVarEntries.push([key, variable])
+              } else {
+                runbookVarEntries.push([key, variable])
+              }
+            })
 
             return (
-              <div key={key} class="space-y-2">
-                <label
-                  for={`variable-${key}`}
-                  class="block text-sm text-slate-300"
-                >
-                  {variable.name || key}
-                  {variable.required && (
-                    <span class="text-red-400 ml-1">*</span>
-                  )}
-                  {hasEnvDefault && (
-                    <span class="text-green-400 ml-2 text-xs">
-                      🌍 From Environment
-                    </span>
-                  )}
-                  {!hasEnvDefault && hasGlobalDefault && (
-                    <span class="text-blue-400 ml-2 text-xs">
-                      Global: {globalValue}
-                    </span>
-                  )}
-                  {variable.type === 'file' && (
-                    <span class="text-purple-400 ml-2 text-xs">
-                      📁 File Required
-                    </span>
-                  )}
-                  {variable.type === 'json' && (
-                    <span class="text-orange-400 ml-2 text-xs">
-                      📋 JSON Required
-                    </span>
-                  )}
-                </label>
+              <>
+                {/* Environment Variables */}
+                {envVarEntries.length > 0 && (
+                  <>
+                    <h4 class="text-white font-medium flex items-center space-x-2">
+                      <span>🔐 Environment Variables</span>
+                      <span class="text-xs text-slate-500">
+                        ({envVarEntries.length})
+                      </span>
+                    </h4>
+                    {envVarEntries.map(([key, variable]) => {
+                      const globalValue = globalVariables[key]
+                      const envValue = environmentVariables[key]
+                      const hasGlobalDefault = globalValue !== undefined
+                      const hasEnvDefault = envValue !== undefined
 
-                {variable.type === 'file' || variable.type === 'json' ? (
-                  <FileUpload
-                    value={variables[key] || ''}
-                    onChange={(value) => handleVariableChange(key, value)}
-                    placeholder={
-                      variable.filePath
-                        ? `File path in runbook: ${variable.filePath}`
-                        : undefined
-                    }
-                    defaultFilePath={
-                      variable.filePath ||
-                      (typeof variable.defaultValue === 'string'
-                        ? variable.defaultValue
-                        : undefined)
-                    }
-                    accept={
-                      variable.type === 'json'
-                        ? '.json'
-                        : '.txt,.sql,.json,.yaml,.yml,.md,.js,.ts,.py,.sh,.xml,.csv'
-                    }
-                  />
-                ) : (
-                  <input
-                    id={`variable-${key}`}
-                    type={
-                      variable.type === 'number'
-                        ? 'number'
-                        : hasEnvDefault && envValue === '••••••••'
-                          ? 'password'
-                          : 'text'
-                    }
-                    placeholder={
-                      variable.defaultValue?.toString() || `Enter ${key}...`
-                    }
-                    value={variables[key] || ''}
-                    onInput={(e) =>
-                      handleVariableChange(
-                        key,
-                        (e.target as HTMLInputElement)?.value || '',
+                      return (
+                        <div key={key} class="space-y-2">
+                          <label
+                            for={`variable-${key}`}
+                            class="block text-sm text-slate-300"
+                          >
+                            {variable.name || key}
+                            {variable.required && (
+                              <span class="text-red-400 ml-1">*</span>
+                            )}
+                            {hasEnvDefault && (
+                              <span class="text-green-400 ml-2 text-xs">
+                                🌍 From Environment
+                              </span>
+                            )}
+                            {!hasEnvDefault && hasGlobalDefault && (
+                              <span class="text-blue-400 ml-2 text-xs">
+                                Global: {globalValue}
+                              </span>
+                            )}
+                            {variable.type === 'file' && (
+                              <span class="text-purple-400 ml-2 text-xs">
+                                📁 File Required
+                              </span>
+                            )}
+                            {variable.type === 'json' && (
+                              <span class="text-orange-400 ml-2 text-xs">
+                                📋 JSON Required
+                              </span>
+                            )}
+                          </label>
+
+                          {variable.type === 'file' ||
+                          variable.type === 'json' ? (
+                            <FileUpload
+                              value={variables[key] || ''}
+                              onChange={(value) =>
+                                handleVariableChange(key, value)
+                              }
+                              placeholder={
+                                variable.filePath
+                                  ? `File path in runbook: ${variable.filePath}`
+                                  : undefined
+                              }
+                              defaultFilePath={
+                                variable.filePath ||
+                                (typeof variable.defaultValue === 'string'
+                                  ? variable.defaultValue
+                                  : undefined)
+                              }
+                              accept={
+                                variable.type === 'json'
+                                  ? '.json'
+                                  : '.txt,.sql,.json,.yaml,.yml,.md,.js,.ts,.py,.sh,.xml,.csv'
+                              }
+                            />
+                          ) : (
+                            <input
+                              id={`variable-${key}`}
+                              type={
+                                variable.type === 'number'
+                                  ? 'number'
+                                  : hasEnvDefault && envValue === '••••••••'
+                                    ? 'password'
+                                    : 'text'
+                              }
+                              placeholder={
+                                variable.defaultValue?.toString() ||
+                                `Enter ${key}...`
+                              }
+                              value={variables[key] || ''}
+                              onInput={(e) =>
+                                handleVariableChange(
+                                  key,
+                                  (e.target as HTMLInputElement)?.value || '',
+                                )
+                              }
+                              class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500 focus:border-blue-500 outline-none"
+                            />
+                          )}
+                        </div>
                       )
-                    }
-                    class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500 focus:border-blue-500 outline-none"
-                  />
+                    })}
+                  </>
                 )}
 
-                {variable.type === 'env' && (
-                  <p class="text-xs text-yellow-400">
-                    💡 This is an environment variable
-                  </p>
+                {/* Runbook Variables */}
+                {runbookVarEntries.length > 0 && (
+                  <>
+                    <h4 class="text-white font-medium flex items-center space-x-2 mt-6">
+                      <span>📝 Runbook Variables (vars)</span>
+                      <span class="text-xs text-slate-500">
+                        ({runbookVarEntries.length})
+                      </span>
+                    </h4>
+                    {runbookVarEntries.map(([key, variable]) => {
+                      const globalValue = globalVariables[key]
+                      const envValue = environmentVariables[key]
+                      const hasGlobalDefault = globalValue !== undefined
+                      const hasEnvDefault = envValue !== undefined
+
+                      return (
+                        <div key={key} class="space-y-2">
+                          <label
+                            for={`variable-${key}`}
+                            class="block text-sm text-slate-300"
+                          >
+                            {variable.name || key}
+                            {variable.required && (
+                              <span class="text-red-400 ml-1">*</span>
+                            )}
+                            {hasEnvDefault && (
+                              <span class="text-green-400 ml-2 text-xs">
+                                🌍 From Environment
+                              </span>
+                            )}
+                            {!hasEnvDefault && hasGlobalDefault && (
+                              <span class="text-blue-400 ml-2 text-xs">
+                                Global: {globalValue}
+                              </span>
+                            )}
+                            {variable.type === 'file' && (
+                              <span class="text-purple-400 ml-2 text-xs">
+                                📁 File Required
+                              </span>
+                            )}
+                            {variable.type === 'json' && (
+                              <span class="text-orange-400 ml-2 text-xs">
+                                📋 JSON Required
+                              </span>
+                            )}
+                          </label>
+
+                          {variable.type === 'file' ||
+                          variable.type === 'json' ? (
+                            <FileUpload
+                              value={variables[key] || ''}
+                              onChange={(value) =>
+                                handleVariableChange(key, value)
+                              }
+                              placeholder={
+                                variable.filePath
+                                  ? `File path in runbook: ${variable.filePath}`
+                                  : undefined
+                              }
+                              defaultFilePath={
+                                variable.filePath ||
+                                (typeof variable.defaultValue === 'string'
+                                  ? variable.defaultValue
+                                  : undefined)
+                              }
+                              accept={
+                                variable.type === 'json'
+                                  ? '.json'
+                                  : '.txt,.sql,.json,.yaml,.yml,.md,.js,.ts,.py,.sh,.xml,.csv'
+                              }
+                            />
+                          ) : (
+                            <input
+                              id={`variable-${key}`}
+                              type={
+                                variable.type === 'number'
+                                  ? 'number'
+                                  : hasEnvDefault && envValue === '••••••••'
+                                    ? 'password'
+                                    : 'text'
+                              }
+                              placeholder={
+                                variable.defaultValue?.toString() ||
+                                `Enter ${key}...`
+                              }
+                              value={variables[key] || ''}
+                              onInput={(e) =>
+                                handleVariableChange(
+                                  key,
+                                  (e.target as HTMLInputElement)?.value || '',
+                                )
+                              }
+                              class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500 focus:border-blue-500 outline-none"
+                            />
+                          )}
+                        </div>
+                      )
+                    })}
+                  </>
                 )}
-              </div>
+              </>
             )
-          })}
+          })()}
         </div>
 
         {/* Execution Options */}

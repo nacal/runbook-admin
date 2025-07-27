@@ -4,6 +4,7 @@ import { EventEmitter } from 'node:events'
 import type { ExecutionOptions, ExecutionResult } from '../types/types'
 import { EnvironmentManager } from './environment-manager'
 import { ExecutionOptionsManager } from './execution-options-manager'
+import { ProjectContext } from './project-context'
 
 export class RunnExecutor extends EventEmitter {
   private process: ChildProcess | null = null
@@ -29,8 +30,27 @@ export class RunnExecutor extends EventEmitter {
       const startTime = new Date()
       const args = ['run', runbookPath]
 
-      // Add variables using --var flag
+      // 環境変数とrunbook変数を分離
+      // runbookのvarsセクションで定義される変数は--varで渡す
+      // ${}で参照される環境変数は環境変数として渡す
+      const envVars: Record<string, string> = {}
+      const runbookVars: Record<string, string> = {}
+
       Object.entries(variables).forEach(([key, value]) => {
+        const strValue = String(value)
+        // varsセクションの変数（小文字や_で始まる）はrunbook変数
+        // 環境変数は通常大文字とアンダースコアのみ
+        if (/^[A-Z][A-Z0-9_]*$/.test(key)) {
+          // 大文字のみの変数は環境変数として扱う
+          envVars[key] = strValue
+        } else {
+          // それ以外はrunbook変数（varsセクションで定義される変数）
+          runbookVars[key] = strValue
+        }
+      })
+
+      // Add runbook variables using --var flag
+      Object.entries(runbookVars).forEach(([key, value]) => {
         args.push('--var', `${key}:${value}`)
       })
 
@@ -41,35 +61,81 @@ export class RunnExecutor extends EventEmitter {
         args.push(...optionArgs)
       }
 
+      // 環境変数付きのコマンド文字列を生成
+      const envString =
+        Object.keys(envVars).length > 0
+          ? Object.entries(envVars)
+              .map(([key, value]) => `${key}=${value}`)
+              .join(' ') + ' '
+          : ''
+      const fullCommand = `${envString}runn ${args.join(' ')}`
+
+      console.log(`\n🚀 EXECUTING COMMAND 🚀`)
+      console.log(`Command: ${fullCommand}`)
+      console.log(`Working Directory: ${ProjectContext.getProjectPath()}`)
+      console.log(`Execution ID: ${this.executionId}`)
+      if (Object.keys(envVars).length > 0) {
+        console.log(`Environment Variables: ${Object.keys(envVars).join(', ')}`)
+      }
+      if (Object.keys(runbookVars).length > 0) {
+        console.log(`Runbook Variables: ${Object.keys(runbookVars).join(', ')}`)
+      }
+      console.log(`=====================================\n`)
+
+      console.log(`[RunnExecutor] Starting execution ${this.executionId}`)
       console.log(
-        `[RunnExecutor] Starting execution ${this.executionId}:`,
-        'runn',
-        args.join(' '),
+        `[RunnExecutor] Working directory: ${ProjectContext.getProjectPath()}`,
       )
+      console.log(`[RunnExecutor] Full command: ${fullCommand}`)
 
       // Get environment variables for execution
       const envManager = EnvironmentManager.getInstance()
       const execEnv = await envManager.getEnvironmentForExecution()
 
-      return { startTime, args, execEnv }
+      return { startTime, args, execEnv, envVars }
     }
 
-    return setupExecution().then(({ startTime, args, execEnv }) => {
+    return setupExecution().then(({ startTime, args, execEnv, envVars }) => {
       return new Promise((resolve, reject) => {
+        const fullCommand = `runn ${args.join(' ')}`
+        console.log(`[RunnExecutor] About to spawn runn process...`)
         this.process = spawn('runn', args, {
-          cwd: process.cwd(),
+          cwd: ProjectContext.getProjectPath(),
           stdio: ['ignore', 'pipe', 'pipe'], // ignore stdin to prevent hanging
           env: {
             ...process.env, // Preserve current environment (including PATH)
             ...execEnv, // Add managed environment variables
+            ...envVars, // Add user-provided environment variables
+            // Ensure common paths are included for runn command
+            PATH:
+              (process.env.PATH || '') +
+              ':/opt/homebrew/bin:/usr/local/bin:/usr/local/go/bin',
           },
         })
+        console.log(
+          `[RunnExecutor] Spawned runn process with PID: ${this.process.pid}`,
+        )
+
+        // 実際にコピーして実行できるコマンドを表示
+        const envString =
+          Object.keys(envVars).length > 0
+            ? Object.entries(envVars)
+                .map(([key, value]) => `${key}="${value}"`)
+                .join(' ') + ' '
+            : ''
+        const copyableCommand = `cd "${ProjectContext.getProjectPath()}" && ${envString}runn ${args.join(' ')}`
+        console.log(`\n📋 COPY & RUN THIS COMMAND:`)
+        console.log(copyableCommand)
+        console.log(`==============================\n`)
 
         let output = ''
         let errorOutput = ''
         let timeoutHandle: NodeJS.Timeout | null = null
 
         this.emit('started', { id: this.executionId, runbookPath, startTime })
+        console.log(
+          `[RunnExecutor] Emitted 'started' event for ${this.executionId}`,
+        )
 
         // Set up timeout
         timeoutHandle = setTimeout(() => {
@@ -89,12 +155,20 @@ export class RunnExecutor extends EventEmitter {
         this.process.stdout?.on('data', (data) => {
           const chunk = data.toString()
           output += chunk
+          // より目立つログ出力
+          console.log(`\n=== RUNN STDOUT ===`)
+          console.log(chunk.trim())
+          console.log(`===================\n`)
           this.emit('output', { chunk, timestamp: new Date() })
         })
 
         this.process.stderr?.on('data', (data) => {
           const chunk = data.toString()
           errorOutput += chunk
+          // より目立つログ出力
+          console.log(`\n=== RUNN STDERR ===`)
+          console.log(chunk.trim())
+          console.log(`===================\n`)
           this.emit('error', { chunk, timestamp: new Date() })
         })
 
@@ -137,6 +211,13 @@ export class RunnExecutor extends EventEmitter {
             `[RunnExecutor] Process ${this.executionId} error:`,
             error.message,
           )
+
+          // ENOENTエラーの場合、より具体的なエラーメッセージを提供
+          let errorMessage = `Failed to start runn: ${error.message}`
+          if (error.message.includes('ENOENT')) {
+            errorMessage = `runn command not found. Please install runn: go install github.com/k1LoW/runn/cmd/runn@latest`
+          }
+
           if (timeoutHandle) {
             clearTimeout(timeoutHandle)
             timeoutHandle = null
@@ -154,7 +235,7 @@ export class RunnExecutor extends EventEmitter {
             endTime,
             duration: endTime.getTime() - startTime.getTime(),
             output: [],
-            error: `Failed to start runn: ${error.message}`,
+            error: errorMessage,
             variables,
           }
 
@@ -171,7 +252,12 @@ export class RunnExecutor extends EventEmitter {
     return new Promise((resolve, reject) => {
       const childProcess = spawn('runn', ['list', pattern, '--long'], {
         stdio: ['pipe', 'pipe', 'pipe'],
-        env: process.env,
+        env: {
+          ...process.env,
+          PATH:
+            (process.env.PATH || '') +
+            ':/opt/homebrew/bin:/usr/local/bin:/usr/local/go/bin',
+        },
       })
 
       let output = ''
@@ -267,7 +353,12 @@ export class RunnExecutor extends EventEmitter {
     return new Promise((resolve) => {
       const childProcess = spawn('runn', ['--version'], {
         stdio: 'pipe',
-        env: process.env,
+        env: {
+          ...process.env,
+          PATH:
+            (process.env.PATH || '') +
+            ':/opt/homebrew/bin:/usr/local/bin:/usr/local/go/bin',
+        },
       })
 
       childProcess.on('close', (code) => {

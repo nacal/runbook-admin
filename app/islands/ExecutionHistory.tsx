@@ -209,20 +209,55 @@ export function ExecutionHistory({
                 </div>
               </div>
 
-              {Object.keys(execution.variables).length > 0 && (
-                <div class="mt-2 pt-2 border-t border-slate-700">
-                  <div class="flex flex-wrap gap-2">
-                    {Object.entries(execution.variables).map(([key, value]) => (
-                      <span
-                        key={key}
-                        class="text-xs bg-slate-700 px-2 py-1 rounded text-slate-300"
-                      >
-                        {key}: {String(value)}
-                      </span>
-                    ))}
+              {Object.keys(execution.variables).length > 0 && (() => {
+                const envVars: Record<string, string | number | boolean> = {}
+                const runbookVars: Record<string, string | number | boolean> = {}
+                
+                Object.entries(execution.variables).forEach(([key, value]) => {
+                  if (/^[A-Z][A-Z0-9_]*$/.test(key)) {
+                    envVars[key] = value
+                  } else {
+                    runbookVars[key] = value
+                  }
+                })
+                
+                return (
+                  <div class="mt-2 pt-2 border-t border-slate-700">
+                    {Object.keys(envVars).length > 0 && (
+                      <div class="mb-2">
+                        <span class="text-xs text-slate-500 mr-2">🔐 Env:</span>
+                        <div class="inline-flex flex-wrap gap-2">
+                          {Object.entries(envVars).map(([key, value]) => (
+                            <span
+                              key={key}
+                              class="text-xs bg-slate-700/50 border border-slate-600/50 px-2 py-1 rounded text-slate-300"
+                              title="Environment Variable"
+                            >
+                              {key}: {String(value)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {Object.keys(runbookVars).length > 0 && (
+                      <div>
+                        <span class="text-xs text-slate-500 mr-2">📝 Vars:</span>
+                        <div class="inline-flex flex-wrap gap-2">
+                          {Object.entries(runbookVars).map(([key, value]) => (
+                            <span
+                              key={key}
+                              class="text-xs bg-blue-900/30 border border-blue-700/30 px-2 py-1 rounded text-blue-300"
+                              title="Runbook Variable"
+                            >
+                              {key}: {String(value)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
+                )
+              })()}
             </button>
           ))}
         </div>

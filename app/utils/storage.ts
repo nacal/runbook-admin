@@ -61,7 +61,22 @@ export class Storage {
       }
 
       const content = await readFile(this.historyFile, 'utf-8')
-      const data = JSON.parse(content)
+
+      // JSONファイルが壊れている場合の対処
+      let data
+      try {
+        data = JSON.parse(content)
+      } catch (parseError) {
+        console.error(
+          '[Storage] Failed to parse history file, creating backup and starting fresh:',
+          parseError,
+        )
+        // バックアップを作成
+        const backupFile = `${this.historyFile}.backup.${Date.now()}`
+        await writeFile(backupFile, content, 'utf-8')
+        console.log(`[Storage] Corrupted file backed up to: ${backupFile}`)
+        return []
+      }
 
       if (data.version !== '1.0') {
         console.warn('[Storage] History file version mismatch, starting fresh')

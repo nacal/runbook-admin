@@ -34,6 +34,10 @@ async function main() {
           ...process.env,
           NODE_ENV: 'development',
           PROJECT_PATH: projectPath,
+          // Ensure common paths are included for runn command
+          PATH:
+            process.env.PATH +
+            ':/opt/homebrew/bin:/usr/local/bin:/usr/local/go/bin',
         },
       },
     )
@@ -46,10 +50,8 @@ async function main() {
       viteProcess.stdout.on('data', (data) => {
         const output = data.toString()
 
-        // Log vite output for debugging
-        if (output.includes('➜')) {
-          console.log(output.trim())
-        }
+        // Log all vite output to see runn execution logs
+        process.stdout.write(output)
 
         if (
           !serverStarted &&
@@ -136,6 +138,8 @@ async function init() {
     )
     console.log('   Or visit: https://github.com/k1LoW/runn')
     console.log('')
+  } else {
+    console.log('✅ Runn CLI found')
   }
 
   await main()
