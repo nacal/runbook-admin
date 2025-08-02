@@ -1,4 +1,5 @@
 import { createRoute } from 'honox/factory'
+import { FavoritesManager } from '../../services/favorites-manager'
 import { FileScanner } from '../../services/file-scanner'
 import type { Runbook } from '../../types/types'
 import { getProjectPath } from '../../utils/project-context'
@@ -17,17 +18,8 @@ async function loadDashboardData(): Promise<DashboardData> {
     const runbooks = await scanner.scanRunbooks()
 
     // Favorites読み込み
-    let favorites: string[] = []
-    try {
-      const { readFile } = await import('node:fs/promises')
-      const { join } = await import('node:path')
-      const favoritesPath = join(projectPath, '.runbook-favorites.json')
-      const favoritesData = await readFile(favoritesPath, 'utf-8')
-      favorites = JSON.parse(favoritesData)
-    } catch {
-      // favoritesファイルがない場合は空配列
-      favorites = []
-    }
+    const favoritesManager = FavoritesManager.getInstance()
+    const favorites = await favoritesManager.getFavorites()
 
     // Available labels抽出
     const availableLabels = Array.from(

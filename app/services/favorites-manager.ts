@@ -24,9 +24,6 @@ export class FavoritesManager {
       const saved = await this.storage.loadFavorites()
       saved.forEach((id) => this.favorites.add(id))
       this.initialized = true
-      console.log(
-        `[FavoritesManager] Loaded ${saved.length} favorites from storage`,
-      )
     } catch (error) {
       console.error(
         '[FavoritesManager] Failed to initialize from storage:',
@@ -50,10 +47,8 @@ export class FavoritesManager {
 
     if (this.favorites.has(runbookId)) {
       this.favorites.delete(runbookId)
-      console.log(`[FavoritesManager] Removed ${runbookId} from favorites`)
     } else {
       this.favorites.add(runbookId)
-      console.log(`[FavoritesManager] Added ${runbookId} to favorites`)
     }
 
     await this.persistToStorage()
@@ -73,6 +68,5 @@ export class FavoritesManager {
   async clearFavorites(): Promise<void> {
     this.favorites.clear()
     await this.persistToStorage()
-    console.log('[FavoritesManager] Cleared all favorites')
   }
 }
