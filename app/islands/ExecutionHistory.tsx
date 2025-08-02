@@ -6,17 +6,22 @@ import { Toast, useToast } from './Toast'
 
 interface ExecutionHistoryProps {
   initialExecutions: ExecutionResult[]
+  initialEnvironmentVariables: Record<string, { isSecret?: boolean }>
   initialError: string | null
 }
 
 export function ExecutionHistory({
   initialExecutions,
+  initialEnvironmentVariables,
   initialError,
 }: ExecutionHistoryProps) {
   const [executions, setExecutions] =
     useState<ExecutionResult[]>(initialExecutions)
   const [loading] = useState(false) // 初期データがあるのでfalse
   const [error] = useState<string | null>(initialError)
+  const [environmentVariables] = useState<
+    Record<string, { isSecret?: boolean }>
+  >(initialEnvironmentVariables)
   const [showExecutionResult, setShowExecutionResult] = useState<string | null>(
     null,
   )
@@ -239,7 +244,10 @@ export function ExecutionHistory({
                                 class="text-xs bg-slate-700/50 border border-slate-600/50 px-2 py-1 rounded text-slate-300"
                                 title="Environment Variable"
                               >
-                                {key}: {String(value)}
+                                {key}:{' '}
+                                {environmentVariables[key]?.isSecret
+                                  ? '•'.repeat(String(value).length)
+                                  : String(value)}
                               </span>
                             ))}
                           </div>
@@ -274,6 +282,7 @@ export function ExecutionHistory({
       {/* Execution Result Modal */}
       {showExecutionResult && (
         <ExecutionResultModal
+          key={showExecutionResult}
           executionId={showExecutionResult}
           onClose={() => setShowExecutionResult(null)}
         />

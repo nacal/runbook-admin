@@ -1,4 +1,5 @@
 import { createRoute } from 'honox/factory'
+import { EnvironmentManager } from '../../../services/environment-manager'
 import { ExecutionManager } from '../../../services/execution-manager'
 
 // Get specific execution status
@@ -20,13 +21,6 @@ export const GET = createRoute(async (c) => {
     const execution = manager.getExecution(executionId)
     const isRunning = manager.isRunning(executionId)
 
-    console.log(
-      `[API] Execution ${executionId} status:`,
-      execution?.status,
-      'isRunning:',
-      isRunning,
-    )
-
     if (!execution) {
       return c.json(
         {
@@ -37,10 +31,18 @@ export const GET = createRoute(async (c) => {
       )
     }
 
+    // Get environment variable metadata
+    const envManager = EnvironmentManager.getInstance()
+    const envVars = await envManager.getAllVariables()
+    const envVarMap = new Map(
+      envVars.map((v) => [v.key, { isSecret: v.isSecret }]),
+    )
+
     return c.json({
       success: true,
       data: execution,
       isRunning,
+      environmentVariables: Object.fromEntries(envVarMap),
     })
   } catch (error) {
     console.error('Error fetching execution:', error)

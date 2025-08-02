@@ -36,7 +36,6 @@ export class Storage {
   async ensureStorageDir(): Promise<void> {
     if (!existsSync(this.storageDir)) {
       await mkdir(this.storageDir, { recursive: true })
-      console.log(`[Storage] Created storage directory: ${this.storageDir}`)
     }
   }
 
@@ -51,9 +50,6 @@ export class Storage {
       }
 
       await writeFile(this.historyFile, JSON.stringify(data, null, 2), 'utf-8')
-      console.log(
-        `[Storage] Saved ${executions.length} executions to ${this.historyFile}`,
-      )
     } catch (error) {
       console.error('[Storage] Failed to save execution history:', error)
     }
@@ -62,7 +58,6 @@ export class Storage {
   async loadExecutionHistory(): Promise<ExecutionResult[]> {
     try {
       if (!existsSync(this.historyFile)) {
-        console.log('[Storage] No existing history file found')
         return []
       }
 
@@ -80,25 +75,30 @@ export class Storage {
         // バックアップを作成
         const backupFile = `${this.historyFile}.backup.${Date.now()}`
         await writeFile(backupFile, content, 'utf-8')
-        console.log(`[Storage] Corrupted file backed up to: ${backupFile}`)
         return []
       }
 
-      if (data.version !== '1.0') {
+      interface HistoryFileData {
+        version: string
+        executions: ExecutionResult[]
+      }
+
+      const historyData = data as HistoryFileData
+
+      if (historyData.version !== '1.0') {
         console.warn('[Storage] History file version mismatch, starting fresh')
         return []
       }
 
       // Convert date strings back to Date objects
-      const executions = data.executions.map((exec: ExecutionResult) => ({
-        ...exec,
-        startTime: new Date(exec.startTime),
-        endTime: new Date(exec.endTime),
-      }))
-
-      console.log(
-        `[Storage] Loaded ${executions.length} executions from ${this.historyFile}`,
+      const executions = historyData.executions.map(
+        (exec: ExecutionResult) => ({
+          ...exec,
+          startTime: new Date(exec.startTime),
+          endTime: new Date(exec.endTime),
+        }),
       )
+
       return executions
     } catch (error) {
       console.error('[Storage] Failed to load execution history:', error)
@@ -120,7 +120,6 @@ export class Storage {
       }
 
       await writeFile(settingsFile, JSON.stringify(data, null, 2), 'utf-8')
-      console.log(`[Storage] Saved settings to ${settingsFile}`)
     } catch (error) {
       console.error('[Storage] Failed to save settings:', error)
     }
@@ -160,7 +159,6 @@ export class Storage {
           ),
           'utf-8',
         )
-        console.log('[Storage] Cleared execution history')
       }
     } catch (error) {
       console.error('[Storage] Failed to clear history:', error)
@@ -179,9 +177,6 @@ export class Storage {
       }
 
       await writeFile(favoritesFile, JSON.stringify(data, null, 2), 'utf-8')
-      console.log(
-        `[Storage] Saved ${favorites.length} favorites to ${favoritesFile}`,
-      )
     } catch (error) {
       console.error('[Storage] Failed to save favorites:', error)
     }
@@ -192,7 +187,6 @@ export class Storage {
       const favoritesFile = join(this.storageDir, 'favorites.json')
 
       if (!existsSync(favoritesFile)) {
-        console.log('[Storage] No existing favorites file found')
         return []
       }
 
@@ -206,9 +200,6 @@ export class Storage {
         return []
       }
 
-      console.log(
-        `[Storage] Loaded ${data.favorites.length} favorites from ${favoritesFile}`,
-      )
       return data.favorites || []
     } catch (error) {
       console.error('[Storage] Failed to load favorites:', error)
@@ -236,7 +227,6 @@ export class Storage {
       }
 
       await writeFile(presetsFile, JSON.stringify(data, null, 2), 'utf-8')
-      console.log(`[Storage] Saved variable presets to ${presetsFile}`)
     } catch (error) {
       console.error('[Storage] Failed to save variable presets:', error)
     }
@@ -255,7 +245,6 @@ export class Storage {
       const presetsFile = join(this.storageDir, 'variable-presets.json')
 
       if (!existsSync(presetsFile)) {
-        console.log('[Storage] No existing variable presets file found')
         return {}
       }
 
@@ -269,7 +258,6 @@ export class Storage {
         return {}
       }
 
-      console.log(`[Storage] Loaded variable presets from ${presetsFile}`)
       return data.presets || {}
     } catch (error) {
       console.error('[Storage] Failed to load variable presets:', error)
@@ -289,7 +277,6 @@ export class Storage {
       }
 
       await writeFile(globalVarsFile, JSON.stringify(data, null, 2), 'utf-8')
-      console.log(`[Storage] Saved global variables to ${globalVarsFile}`)
     } catch (error) {
       console.error('[Storage] Failed to save global variables:', error)
     }
@@ -300,7 +287,6 @@ export class Storage {
       const globalVarsFile = join(this.storageDir, 'global-variables.json')
 
       if (!existsSync(globalVarsFile)) {
-        console.log('[Storage] No existing global variables file found')
         return {}
       }
 
@@ -314,7 +300,6 @@ export class Storage {
         return {}
       }
 
-      console.log(`[Storage] Loaded global variables from ${globalVarsFile}`)
       return data.variables || {}
     } catch (error) {
       console.error('[Storage] Failed to load global variables:', error)
@@ -342,7 +327,6 @@ export class Storage {
       }
 
       await writeFile(envFile, JSON.stringify(data, null, 2), 'utf-8')
-      console.log(`[Storage] Saved environment variables to ${envFile}`)
     } catch (error) {
       console.error('[Storage] Failed to save environment variables:', error)
     }
@@ -361,7 +345,6 @@ export class Storage {
       const envFile = join(this.storageDir, 'environment.json')
 
       if (!existsSync(envFile)) {
-        console.log('[Storage] No existing environment file found')
         return {}
       }
 
@@ -375,7 +358,6 @@ export class Storage {
         return {}
       }
 
-      console.log(`[Storage] Loaded environment variables from ${envFile}`)
       return data.variables || {}
     } catch (error) {
       console.error('[Storage] Failed to load environment variables:', error)
@@ -403,7 +385,6 @@ export class Storage {
       }
 
       await writeFile(presetsFile, JSON.stringify(data, null, 2), 'utf-8')
-      console.log(`[Storage] Saved execution presets to ${presetsFile}`)
     } catch (error) {
       console.error('[Storage] Failed to save execution presets:', error)
     }
@@ -422,7 +403,6 @@ export class Storage {
       const presetsFile = join(this.storageDir, 'execution-presets.json')
 
       if (!existsSync(presetsFile)) {
-        console.log('[Storage] No existing execution presets file found')
         return {}
       }
 
@@ -436,7 +416,6 @@ export class Storage {
         return {}
       }
 
-      console.log(`[Storage] Loaded execution presets from ${presetsFile}`)
       return data.presets || {}
     } catch (error) {
       console.error('[Storage] Failed to load execution presets:', error)
@@ -459,7 +438,6 @@ export class Storage {
       }
 
       await writeFile(optionsFile, JSON.stringify(data, null, 2), 'utf-8')
-      console.log(`[Storage] Saved default execution options to ${optionsFile}`)
     } catch (error) {
       console.error(
         '[Storage] Failed to save default execution options:',
@@ -476,9 +454,6 @@ export class Storage {
       )
 
       if (!existsSync(optionsFile)) {
-        console.log(
-          '[Storage] No existing default execution options file found',
-        )
         return { args: [] }
       }
 
@@ -492,9 +467,6 @@ export class Storage {
         return { args: [] }
       }
 
-      console.log(
-        `[Storage] Loaded default execution options from ${optionsFile}`,
-      )
       return data.options || { args: [] }
     } catch (error) {
       console.error(

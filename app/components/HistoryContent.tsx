@@ -1,19 +1,32 @@
 import { ExecutionHistory } from '../islands/ExecutionHistory'
+import { EnvironmentManager } from '../services/environment-manager'
 import { ExecutionManager } from '../services/execution-manager'
 import type { ExecutionResult } from '../types/types'
 
 interface HistoryData {
   executions: ExecutionResult[]
+  environmentVariables: Record<string, { isSecret?: boolean }>
   error: string | null
 }
 
 async function loadHistoryData(): Promise<HistoryData> {
   try {
-    const manager = ExecutionManager.getInstance()
-    const executions = await manager.getAllExecutions()
+    const executionManager = ExecutionManager.getInstance()
+    const environmentManager = EnvironmentManager.getInstance()
+
+    const [executions, envVars] = await Promise.all([
+      executionManager.getAllExecutions(),
+      environmentManager.getAllVariables(),
+    ])
+
+    const environmentVariables: Record<string, { isSecret?: boolean }> = {}
+    envVars.forEach((v) => {
+      environmentVariables[v.key] = { isSecret: v.isSecret }
+    })
 
     return {
       executions,
+      environmentVariables,
       error: null,
     }
   } catch (err) {
@@ -21,31 +34,19 @@ async function loadHistoryData(): Promise<HistoryData> {
       err instanceof Error ? err.message : 'Unknown error occurred'
     return {
       executions: [],
+      environmentVariables: {},
       error: errorMessage,
     }
   }
 }
 
 export async function HistoryContent() {
-  console.log('📄 Loading execution history...')
-
   const historyData = await loadHistoryData()
-
-  if (historyData.error) {
-    console.error('❌ History data loading failed:', {
-      error: historyData.error,
-      timestamp: new Date().toISOString(),
-    })
-  } else {
-    console.log(`✅ History data loaded successfully`, {
-      executionsCount: historyData.executions.length,
-      timestamp: new Date().toISOString(),
-    })
-  }
 
   return (
     <ExecutionHistory
       initialExecutions={historyData.executions}
+      initialEnvironmentVariables={historyData.environmentVariables}
       initialError={historyData.error}
     />
   )

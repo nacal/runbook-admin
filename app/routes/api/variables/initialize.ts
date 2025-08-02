@@ -69,16 +69,22 @@ export const GET = createRoute(async (c) => {
   }
 })
 
-// 環境変数取得のヘルパー関数
-async function getEnvironmentVariables(): Promise<Record<string, string>> {
+// 環境変数取得のヘルパー関数（isSecret情報も含む）
+async function getEnvironmentVariables(): Promise<
+  Record<string, { value: string; isSecret: boolean }>
+> {
   try {
     const manager = EnvironmentManager.getInstance()
-    const variables = await manager.getMaskedVariables()
+    // 実際の値を取得
+    const variables = await manager.getAllVariables()
 
-    // 配列形式から辞書形式に変換
-    const envVars: Record<string, string> = {}
+    // 配列形式から辞書形式に変換（isSecret情報も含む）
+    const envVars: Record<string, { value: string; isSecret: boolean }> = {}
     variables.forEach((variable) => {
-      envVars[variable.key] = variable.value
+      envVars[variable.key] = {
+        value: variable.value,
+        isSecret: variable.isSecret || false,
+      }
     })
 
     return envVars

@@ -61,30 +61,14 @@ export class RunnExecutor extends EventEmitter {
         args.push(...optionArgs)
       }
 
-      // 環境変数付きのコマンド文字列を生成
-      const envString =
-        Object.keys(envVars).length > 0
-          ? `${Object.entries(envVars)
-              .map(([key, value]) => `${key}=${value}`)
-              .join(' ')} `
-          : ''
-      const fullCommand = `${envString}runn ${args.join(' ')}`
-
-      console.log(`\n🚀 EXECUTING COMMAND 🚀`)
-      console.log(`Command: ${fullCommand}`)
-      console.log(`Working Directory: ${getProjectPath()}`)
-      console.log(`Execution ID: ${this.executionId}`)
-      if (Object.keys(envVars).length > 0) {
-        console.log(`Environment Variables: ${Object.keys(envVars).join(', ')}`)
-      }
-      if (Object.keys(runbookVars).length > 0) {
-        console.log(`Runbook Variables: ${Object.keys(runbookVars).join(', ')}`)
-      }
-      console.log(`=====================================\n`)
-
-      console.log(`[RunnExecutor] Starting execution ${this.executionId}`)
-      console.log(`[RunnExecutor] Working directory: ${getProjectPath()}`)
-      console.log(`[RunnExecutor] Full command: ${fullCommand}`)
+      // 環境変数付きのコマンド文字列を生成（デバッグ用）
+      // const envString =
+      //   Object.keys(envVars).length > 0
+      //     ? `${Object.entries(envVars)
+      //         .map(([key, value]) => `${key}=${value}`)
+      //         .join(' ')} `
+      //     : ''
+      // const fullCommand = `${envString}runn ${args.join(' ')}`
 
       // Get environment variables for execution
       const envManager = EnvironmentManager.getInstance()
@@ -95,51 +79,31 @@ export class RunnExecutor extends EventEmitter {
 
     return setupExecution().then(({ startTime, args, execEnv, envVars }) => {
       return new Promise((resolve, reject) => {
-        const _fullCommand = `runn ${args.join(' ')}`
-        console.log(`[RunnExecutor] About to spawn runn process...`)
+        // 最終的な環境変数を構築
+        const finalEnv = {
+          ...process.env, // Preserve current environment (including PATH)
+          ...execEnv, // Add managed environment variables
+          ...envVars, // Add user-provided environment variables
+          // Ensure common paths are included for runn command
+          PATH:
+            (process.env.PATH || '') +
+            ':/opt/homebrew/bin:/usr/local/bin:/usr/local/go/bin',
+        }
+
         this.process = spawn('runn', args, {
           cwd: getProjectPath(),
           stdio: ['ignore', 'pipe', 'pipe'], // ignore stdin to prevent hanging
-          env: {
-            ...process.env, // Preserve current environment (including PATH)
-            ...execEnv, // Add managed environment variables
-            ...envVars, // Add user-provided environment variables
-            // Ensure common paths are included for runn command
-            PATH:
-              (process.env.PATH || '') +
-              ':/opt/homebrew/bin:/usr/local/bin:/usr/local/go/bin',
-          },
+          env: finalEnv,
         })
-        console.log(
-          `[RunnExecutor] Spawned runn process with PID: ${this.process.pid}`,
-        )
-
-        // 実際にコピーして実行できるコマンドを表示
-        const envString =
-          Object.keys(envVars).length > 0
-            ? `${Object.entries(envVars)
-                .map(([key, value]) => `${key}="${value}"`)
-                .join(' ')} `
-            : ''
-        const copyableCommand = `cd "${getProjectPath()}" && ${envString}runn ${args.join(' ')}`
-        console.log(`\n📋 COPY & RUN THIS COMMAND:`)
-        console.log(copyableCommand)
-        console.log(`==============================\n`)
 
         let output = ''
         let errorOutput = ''
         let timeoutHandle: NodeJS.Timeout | null = null
 
         this.emit('started', { id: this.executionId, runbookPath, startTime })
-        console.log(
-          `[RunnExecutor] Emitted 'started' event for ${this.executionId}`,
-        )
 
         // Set up timeout
         timeoutHandle = setTimeout(() => {
-          console.log(
-            `[RunnExecutor] Execution ${this.executionId} timed out after ${timeout}ms`,
-          )
           if (this.process) {
             this.process.kill('SIGTERM')
             setTimeout(() => {
@@ -153,28 +117,16 @@ export class RunnExecutor extends EventEmitter {
         this.process.stdout?.on('data', (data) => {
           const chunk = data.toString()
           output += chunk
-          // より目立つログ出力
-          console.log(`\n=== RUNN STDOUT ===`)
-          console.log(chunk.trim())
-          console.log(`===================\n`)
           this.emit('output', { chunk, timestamp: new Date() })
         })
 
         this.process.stderr?.on('data', (data) => {
           const chunk = data.toString()
           errorOutput += chunk
-          // より目立つログ出力
-          console.log(`\n=== RUNN STDERR ===`)
-          console.log(chunk.trim())
-          console.log(`===================\n`)
           this.emit('error', { chunk, timestamp: new Date() })
         })
 
         this.process.on('close', (code) => {
-          console.log(
-            `[RunnExecutor] Process ${this.executionId} closed with code:`,
-            code,
-          )
           if (timeoutHandle) {
             clearTimeout(timeoutHandle)
             timeoutHandle = null
@@ -196,20 +148,11 @@ export class RunnExecutor extends EventEmitter {
             variables,
           }
 
-          console.log(
-            `[RunnExecutor] Emitting complete event for ${this.executionId}:`,
-            result.status,
-          )
           this.emit('complete', result)
           resolve(result)
         })
 
         this.process.on('error', (error) => {
-          console.log(
-            `[RunnExecutor] Process ${this.executionId} error:`,
-            error.message,
-          )
-
           // ENOENTエラーの場合、より具体的なエラーメッセージを提供
           let errorMessage = `Failed to start runn: ${error.message}`
           if (error.message.includes('ENOENT')) {

@@ -43,7 +43,7 @@ export function VariableInput({
     Record<string, string>
   >({})
   const [environmentVariables, setEnvironmentVariables] = useState<
-    Record<string, string>
+    Record<string, { value: string; isSecret: boolean }>
   >({})
   const [executionOptions, setExecutionOptions] =
     useState<ExecutionOptionsType>({ args: [] })
@@ -67,13 +67,8 @@ export function VariableInput({
         setPresets(presets)
         setGlobalVariables(globalVariables)
 
-        // Process environment variables with masking
-        const processedEnvVars: Record<string, string> = {}
-        Object.entries(environmentVariables).forEach(([key, value]) => {
-          // Environment variables from API are already processed
-          processedEnvVars[key] = String(value)
-        })
-        setEnvironmentVariables(processedEnvVars)
+        // Set environment variables (now with isSecret info)
+        setEnvironmentVariables(environmentVariables)
 
         // Initialize variables with the loaded data
         const initialVars: Record<string, string> = {}
@@ -81,8 +76,8 @@ export function VariableInput({
         // Priority order: Environment Variables > Global Variables > Runbook Defaults
         Object.entries(runbook.variables).forEach(([key, variable]) => {
           // First check environment variables
-          if (processedEnvVars?.[key]) {
-            initialVars[key] = processedEnvVars[key]
+          if (environmentVariables?.[key]) {
+            initialVars[key] = environmentVariables[key].value
           }
           // Then check global variables
           else if (globalVariables?.[key]) {
@@ -357,7 +352,7 @@ export function VariableInput({
                               type={
                                 variable.type === 'number'
                                   ? 'number'
-                                  : hasEnvDefault && envValue === '••••••••'
+                                  : envValue?.isSecret
                                     ? 'password'
                                     : 'text'
                               }
@@ -458,7 +453,7 @@ export function VariableInput({
                               type={
                                 variable.type === 'number'
                                   ? 'number'
-                                  : hasEnvDefault && envValue === '••••••••'
+                                  : envValue?.isSecret
                                     ? 'password'
                                     : 'text'
                               }
