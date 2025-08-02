@@ -8,7 +8,6 @@ import { SearchBar } from '../components/SearchBar'
 import { StatsBar } from '../components/StatsBar'
 import type { ExecutionOptions, Runbook } from '../types/types'
 import { EnvironmentSettings } from './EnvironmentSettings'
-import { ExecutionResultModal } from './ExecutionResult'
 import { Toast, useToast } from './Toast'
 import { VariableInput } from './VariableInput'
 
@@ -27,9 +26,6 @@ export function RunbookList({
 }: RunbookListProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedLabels, setSelectedLabels] = useState<string[]>([])
-  const [showExecutionResult, setShowExecutionResult] = useState<string | null>(
-    null,
-  )
   const [favorites, setFavorites] = useState<string[]>(initialFavorites)
   const [showVariableInput, setShowVariableInput] = useState<Runbook | null>(
     null,
@@ -107,8 +103,10 @@ export function RunbookList({
               return newSet
             })
           }
-          // Show result modal
-          setShowExecutionResult(execId)
+          // Navigate to result modal
+          const url = new URL(window.location.href)
+          url.searchParams.set('execution', execId)
+          window.location.href = url.toString()
         }
       }
     } catch (error) {
@@ -221,7 +219,7 @@ export function RunbookList({
           runbooks={sortedRunbooks}
           favorites={favorites}
           onToggleFavorite={toggleFavorite}
-          onShowResult={setShowExecutionResult}
+          onShowResult={() => {}}
           onShowVariableInput={setShowVariableInput}
           onShowRunbookViewer={setShowRunbookViewer}
           openDropdown={openDropdown}
@@ -258,14 +256,6 @@ export function RunbookList({
       {showEnvironmentSettings && (
         <EnvironmentSettings
           onClose={() => setShowEnvironmentSettings(false)}
-        />
-      )}
-
-      {/* Execution Result Modal */}
-      {showExecutionResult && (
-        <ExecutionResultModal
-          executionId={showExecutionResult}
-          onClose={() => setShowExecutionResult(null)}
         />
       )}
 

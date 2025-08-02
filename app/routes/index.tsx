@@ -1,10 +1,12 @@
 import { Suspense } from 'hono/jsx'
 import { createRoute } from 'honox/factory'
 import { DashboardContent } from '../components/DashboardContent'
+import { ExecutionModal } from '../components/ExecutionModal'
 import { LoadingState } from '../components/LoadingState'
 import { getProjectPath } from '../utils/project-context'
 
 export default createRoute((c) => {
+  const executionId = c.req.query('execution')
   return c.render(
     <>
       <title>Dashboard - Runbook Admin</title>
@@ -33,6 +35,22 @@ export default createRoute((c) => {
           <DashboardContent />
         </Suspense>
       </main>
+
+      {/* Execution Result Modal */}
+      {executionId && (
+        <Suspense
+          fallback={
+            <div class="fixed inset-0 z-50 flex items-center justify-center">
+              <div class="absolute inset-0 bg-black/70" />
+              <div class="relative bg-slate-900 border border-slate-700 rounded-lg p-8">
+                <LoadingState />
+              </div>
+            </div>
+          }
+        >
+          <ExecutionModal executionId={executionId} backUrl="/" />
+        </Suspense>
+      )}
     </>,
   )
 })

@@ -5,7 +5,7 @@ interface RunbookCardProps {
   runbook: Runbook
   isFavorite: boolean
   onToggleFavorite: () => void
-  onShowResult: (id: string) => void
+  onShowResult?: (id: string) => void
   onShowVariableInput: (runbook: Runbook) => void
   onShowRunbookViewer: (runbook: Runbook) => void
   openDropdown: string | null
@@ -20,7 +20,7 @@ export function RunbookCard({
   runbook,
   isFavorite,
   onToggleFavorite,
-  onShowResult,
+  onShowResult: _onShowResult,
   onShowVariableInput,
   onShowRunbookViewer,
   openDropdown,
@@ -121,8 +121,10 @@ export function RunbookCard({
           setTimeout(() => pollExecutionStatus(execId), 1000)
         } else {
           setExecutionId(null)
-          // Show result modal
-          onShowResult(execId)
+          // Navigate to result modal
+          const url = new URL(window.location.href)
+          url.searchParams.set('execution', execId)
+          window.location.href = url.toString()
         }
       }
     } catch (error) {

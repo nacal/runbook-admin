@@ -1,7 +1,6 @@
 import { useState } from 'hono/jsx'
 import { useConfirmDialog } from '../components/ConfirmDialog'
 import type { ExecutionResult } from '../types/types'
-import { ExecutionResultModal } from './ExecutionResult'
 import { Toast, useToast } from './Toast'
 
 interface ExecutionHistoryProps {
@@ -22,9 +21,6 @@ export function ExecutionHistory({
   const [environmentVariables] = useState<
     Record<string, { isSecret?: boolean }>
   >(initialEnvironmentVariables)
-  const [showExecutionResult, setShowExecutionResult] = useState<string | null>(
-    null,
-  )
   const { toasts, showSuccess, showError, removeToast } = useToast()
   const { showConfirm, ConfirmDialogComponent } = useConfirmDialog()
 
@@ -167,11 +163,10 @@ export function ExecutionHistory({
       ) : (
         <div class="space-y-3">
           {executions.map((execution) => (
-            <button
+            <a
               key={execution.id}
-              type="button"
-              class="w-full text-left bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:border-slate-600 transition-colors cursor-pointer"
-              onClick={() => setShowExecutionResult(execution.id)}
+              href={`/history?execution=${execution.id}`}
+              class="block w-full text-left bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:border-slate-600 transition-colors"
             >
               <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
@@ -274,18 +269,9 @@ export function ExecutionHistory({
                     </div>
                   )
                 })()}
-            </button>
+            </a>
           ))}
         </div>
-      )}
-
-      {/* Execution Result Modal */}
-      {showExecutionResult && (
-        <ExecutionResultModal
-          key={showExecutionResult}
-          executionId={showExecutionResult}
-          onClose={() => setShowExecutionResult(null)}
-        />
       )}
 
       {/* Toast Notifications */}
