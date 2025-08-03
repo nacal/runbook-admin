@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'hono/jsx'
+import { useMemo, useState } from 'hono/jsx'
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
+import { escapeHtml, getShikiInstance } from '../utils/shiki-instance'
 
 interface FilePreviewModalProps {
   isOpen: boolean
@@ -8,65 +9,124 @@ interface FilePreviewModalProps {
   onClose: () => void
 }
 
+// ファイル拡張子から言語を判定
+function getLanguageFromFileName(filename: string): string {
+  const ext = filename.split('.').pop()?.toLowerCase()
+  switch (ext) {
+    case 'sql':
+      return 'sql'
+    case 'json':
+      return 'json'
+    case 'yaml':
+    case 'yml':
+      return 'yaml'
+    case 'py':
+      return 'python'
+    case 'js':
+      return 'javascript'
+    case 'ts':
+    case 'tsx':
+      return 'typescript'
+    case 'sh':
+    case 'bash':
+      return 'bash'
+    case 'md':
+    case 'markdown':
+      return 'markdown'
+    default:
+      return 'plaintext'
+  }
+}
+
 function FilePreviewModal({
   isOpen,
   fileName,
   content,
   onClose,
 }: FilePreviewModalProps) {
-  const preRef = useRef<HTMLPreElement>(null)
-
   // モーダル表示時にスクロールを無効化
   useBodyScrollLock(isOpen)
 
-  useEffect(() => {
-    if (isOpen && preRef.current) {
-      // Simple plain text display
-      preRef.current.textContent = content
-      preRef.current.className = 'language-plaintext'
+  // レンダリング時に同期的にハイライト処理
+  const highlightedHtml = useMemo(() => {
+    const highlighter = getShikiInstance()
+
+    // Shikiが未初期化の場合はプレーンテキスト
+    if (!highlighter) {
+      return `<pre class="p-4 text-sm font-mono overflow-x-auto text-slate-300 whitespace-pre">${escapeHtml(content)}</pre>`
     }
-  }, [isOpen, content, fileName])
+
+    const language = getLanguageFromFileName(fileName)
+
+    try {
+      // 同期的にハイライト（highlighterは既に初期化済み）
+      return highlighter.codeToHtml(content, {
+        lang: language,
+        theme: 'github-dark',
+      })
+    } catch (err) {
+      console.error('[FilePreview] Highlight error:', err)
+      return `<pre class="p-4 text-sm font-mono overflow-x-auto text-slate-300 whitespace-pre">${escapeHtml(content)}</pre>`
+    }
+  }, [content, fileName])
 
   if (!isOpen) return null
 
   return (
-    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-slate-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col mx-4">
-        {/* Header */}
-        <div class="flex items-center justify-between p-4 border-b border-slate-700">
-          <h3 class="text-lg font-semibold text-white flex items-center">
-            📄 {fileName}
-          </h3>
-          <button
-            type="button"
-            onClick={onClose}
-            class="text-slate-400 hover:text-slate-200 transition-colors"
-          >
-            ✕
-          </button>
-        </div>
+    <>
+      {/* Shiki styling adjustments */}
+      <style>{`
+        .shiki-container pre {
+          margin: 0;
+          padding: 1rem;
+          font-size: 0.875rem;
+          font-family: ui-monospace, SFMono-Regular, 'SF Mono', monospace;
+          overflow-x: auto;
+          background: transparent !important;
+        }
 
-        {/* Content */}
-        <div class="flex-1 overflow-auto p-4">
-          <div class="bg-slate-900 border border-slate-600 rounded p-4 overflow-auto">
-            <pre
-              ref={preRef}
-              class="text-sm whitespace-pre-wrap font-mono overflow-x-auto"
-              style="word-break: break-all; white-space: pre-wrap;"
+        .shiki-container code {
+          white-space: pre;
+        }
+      `}</style>
+
+      <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div class="bg-slate-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col mx-4">
+          {/* Header */}
+          <div class="flex items-center justify-between p-4 border-b border-slate-700">
+            <h3 class="text-lg font-semibold text-white flex items-center">
+              📄 {fileName}
+            </h3>
+            <button
+              type="button"
+              onClick={onClose}
+              class="text-slate-400 hover:text-slate-200 transition-colors"
             >
-              {content}
-            </pre>
+              ✕
+            </button>
           </div>
-        </div>
 
-        {/* Footer */}
-        <div class="p-4 border-t border-slate-700 text-center">
-          <div class="text-xs text-slate-500">
-            {content.length.toLocaleString()} characters
+          {/* Content */}
+          <div class="flex-1 overflow-auto p-4">
+            <div class="bg-slate-900 border border-slate-600 rounded overflow-auto">
+              <div
+                class="shiki-container"
+                // biome-ignore lint/security/noDangerouslySetInnerHtml: Syntax highlighting requires raw HTML injection
+                dangerouslySetInnerHTML={{ __html: highlightedHtml }}
+              />
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div class="p-4 border-t border-slate-700 text-center">
+            <div class="text-xs text-slate-500">
+              {content.length.toLocaleString()} characters •{' '}
+              {getShikiInstance() ? 'Shiki highlighted' : 'Plain text'}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
 
