@@ -1,13 +1,4 @@
 import { useEffect, useRef, useState } from 'hono/jsx'
-import Prism from 'prismjs'
-import 'prismjs/components/prism-yaml'
-import 'prismjs/components/prism-sql'
-import 'prismjs/components/prism-json'
-import 'prismjs/components/prism-python'
-import 'prismjs/components/prism-bash'
-import 'prismjs/components/prism-typescript'
-import 'prismjs/components/prism-markdown'
-import { PrismStyles } from '../components/PrismStyles'
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
 
 interface FilePreviewModalProps {
@@ -28,50 +19,11 @@ function FilePreviewModal({
   // モーダル表示時にスクロールを無効化
   useBodyScrollLock(isOpen)
 
-  // Detect language from file extension for Prism
-  const getLanguageFromFileName = (filename: string): string => {
-    const ext = filename.split('.').pop()?.toLowerCase()
-    switch (ext) {
-      case 'sql':
-        return 'sql'
-      case 'json':
-        return 'json'
-      case 'yaml':
-      case 'yml':
-        return 'yaml'
-      case 'py':
-        return 'python'
-      case 'js':
-        return 'javascript'
-      case 'ts':
-        return 'typescript'
-      case 'sh':
-        return 'bash'
-      case 'md':
-        return 'markdown'
-      default:
-        return 'plaintext'
-    }
-  }
-
   useEffect(() => {
     if (isOpen && preRef.current) {
-      const language = getLanguageFromFileName(fileName)
-
-      try {
-        const highlighted = Prism.highlight(
-          content,
-          Prism.languages[language] || Prism.languages.plaintext,
-          language,
-        )
-        preRef.current.innerHTML = highlighted
-        preRef.current.className = `language-${language}`
-      } catch (error) {
-        // Fallback to plain text if highlighting fails
-        console.warn('Prism highlighting failed:', error)
-        preRef.current.textContent = content
-        preRef.current.className = 'language-plaintext'
-      }
+      // Simple plain text display
+      preRef.current.textContent = content
+      preRef.current.className = 'language-plaintext'
     }
   }, [isOpen, content, fileName])
 
@@ -297,9 +249,6 @@ export function FileUpload({
         content={value}
         onClose={() => setShowPreview(false)}
       />
-
-      {/* Prism Styles */}
-      <PrismStyles />
     </div>
   )
 }

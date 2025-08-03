@@ -3,13 +3,10 @@ import { EmptyState } from '../components/EmptyState'
 import { ErrorState } from '../components/ErrorState'
 import { LabelFilter } from '../components/LabelFilter'
 import { RunbookGrid } from '../components/RunbookGrid'
-import { RunbookViewer } from '../components/RunbookViewer'
 import { SearchBar } from '../components/SearchBar'
 import { StatsBar } from '../components/StatsBar'
-import type { ExecutionOptions, Runbook } from '../types/types'
-import { EnvironmentSettings } from './EnvironmentSettings'
+import type { Runbook } from '../types/types'
 import { Toast, useToast } from './Toast'
-import { VariableInput } from './VariableInput'
 
 interface RunbookListProps {
   runbooks: Runbook[]
@@ -27,100 +24,9 @@ export function RunbookList({
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedLabels, setSelectedLabels] = useState<string[]>([])
   const [favorites, setFavorites] = useState<string[]>(initialFavorites)
-  const [showVariableInput, setShowVariableInput] = useState<Runbook | null>(
-    null,
-  )
-  const [showRunbookViewer, setShowRunbookViewer] = useState<Runbook | null>(
-    null,
-  )
-  const [showEnvironmentSettings, setShowEnvironmentSettings] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
-  const [executingRunbooks, setExecutingRunbooks] = useState<Set<string>>(
-    new Set(),
-  )
+  const [executingRunbooks] = useState<Set<string>>(new Set())
   const { toasts, showError, removeToast } = useToast()
-
-  const executeRunbook = async (
-    runbook: Runbook,
-    variables: Record<string, string>,
-    executionOptions?: ExecutionOptions,
-  ) => {
-    // Mark runbook as executing
-    setExecutingRunbooks((prev) => new Set([...prev, runbook.id]))
-
-    try {
-      const response = await fetch('/api/execute', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          runbookPath: runbook.path,
-          variables: variables,
-          executionOptions: executionOptions,
-        }),
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        // Poll for execution status and show result when complete
-        pollExecutionStatus(result.executionId, runbook.id)
-      } else {
-        // Remove from executing set on error
-        setExecutingRunbooks((prev) => {
-          const newSet = new Set(prev)
-          newSet.delete(runbook.id)
-          return newSet
-        })
-        showError(`Failed to execute: ${result.error}`)
-      }
-    } catch (error) {
-      // Remove from executing set on error
-      setExecutingRunbooks((prev) => {
-        const newSet = new Set(prev)
-        newSet.delete(runbook.id)
-        return newSet
-      })
-      showError(`Failed to execute ${runbook.name}: ${error}`)
-    }
-  }
-
-  const pollExecutionStatus = async (execId: string, runbookId?: string) => {
-    try {
-      const response = await fetch(`/api/executions/${execId}`)
-      const result = await response.json()
-
-      if (result.success) {
-        if (result.data.status === 'running' && result.isRunning) {
-          setTimeout(() => pollExecutionStatus(execId, runbookId), 1000)
-        } else {
-          // Remove from executing set when complete
-          if (runbookId) {
-            setExecutingRunbooks((prev) => {
-              const newSet = new Set(prev)
-              newSet.delete(runbookId)
-              return newSet
-            })
-          }
-          // Navigate to result modal
-          const url = new URL(window.location.href)
-          url.searchParams.set('execution', execId)
-          window.location.href = url.toString()
-        }
-      }
-    } catch (error) {
-      console.error('Failed to poll execution status:', error)
-      // Remove from executing set on error
-      if (runbookId) {
-        setExecutingRunbooks((prev) => {
-          const newSet = new Set(prev)
-          newSet.delete(runbookId)
-          return newSet
-        })
-      }
-    }
-  }
 
   const toggleFavorite = async (runbookId: string) => {
     try {
@@ -208,7 +114,9 @@ export function RunbookList({
         searchTerm={searchTerm}
         selectedLabels={selectedLabels}
         favoritesCount={favorites.length}
-        onShowEnvironmentSettings={() => setShowEnvironmentSettings(true)}
+        onShowEnvironmentSettings={() => {
+          window.location.href = '/?environment-settings=true'
+        }}
       />
 
       {/* Runbook Grid */}
@@ -220,42 +128,18 @@ export function RunbookList({
           favorites={favorites}
           onToggleFavorite={toggleFavorite}
           onShowResult={() => {}}
-          onShowVariableInput={setShowVariableInput}
-          onShowRunbookViewer={setShowRunbookViewer}
+          onShowVariableInput={(runbook) => {
+            window.location.href = `/?variable-input=${runbook.id}`
+          }}
+          onShowRunbookViewer={(runbook) => {
+            window.location.href = `/?runbook-viewer=${runbook.id}`
+          }}
           openDropdown={openDropdown}
           setOpenDropdown={setOpenDropdown}
           executingRunbooks={executingRunbooks}
           onShowError={showError}
           selectedLabels={selectedLabels}
           setSelectedLabels={setSelectedLabels}
-        />
-      )}
-
-      {/* Variable Input Modal */}
-      {showVariableInput && (
-        <VariableInput
-          runbook={showVariableInput}
-          onSubmit={async (variables, executionOptions) => {
-            setShowVariableInput(null)
-            await executeRunbook(showVariableInput, variables, executionOptions)
-          }}
-          onCancel={() => setShowVariableInput(null)}
-        />
-      )}
-
-      {/* Runbook Viewer Modal */}
-      {showRunbookViewer && (
-        <RunbookViewer
-          path={showRunbookViewer.path}
-          name={showRunbookViewer.name}
-          onClose={() => setShowRunbookViewer(null)}
-        />
-      )}
-
-      {/* Environment Settings Modal */}
-      {showEnvironmentSettings && (
-        <EnvironmentSettings
-          onClose={() => setShowEnvironmentSettings(false)}
         />
       )}
 

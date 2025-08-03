@@ -133,228 +133,196 @@ export function EnvironmentSettings({ onClose }: EnvironmentSettingsProps) {
   }
 
   return (
-    <div class="fixed inset-0 bg-black/50 z-50 overflow-y-auto">
-      <div class="flex items-center justify-center min-h-full p-4">
-        <div class="bg-slate-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[calc(100vh-2rem)] flex flex-col">
-          {/* Header */}
-          <div class="flex items-center justify-between p-6 border-b border-slate-700 flex-shrink-0">
+    <div class="p-6">
+      {/* Header content moved to parent modal */}
+      {/* Add/Edit Form */}
+      <div class="mb-6 p-4 bg-slate-900/50 border border-slate-700 rounded-lg">
+        <h3 class="text-lg font-medium text-white mb-4">
+          {editingVar ? `Edit ${editingVar}` : 'Add Environment Variable'}
+        </h3>
+        <div class="grid gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <h2 class="text-xl font-semibold text-white">
-                🌍 Environment Variables
-              </h2>
-              <p class="text-sm text-slate-400 mt-1">
-                Manage persistent environment variables for runbook execution
-              </p>
+              <label
+                for="env-var-name"
+                class="block text-sm font-medium text-slate-300 mb-2"
+              >
+                Variable Name *
+              </label>
+              <input
+                id="env-var-name"
+                type="text"
+                placeholder="e.g., API_TOKEN, DATABASE_URL"
+                value={newVar.key}
+                onInput={(e) =>
+                  setNewVar((prev) => ({
+                    ...prev,
+                    key: (e.target as HTMLInputElement)?.value || '',
+                  }))
+                }
+                disabled={!!editingVar}
+                class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500 focus:border-blue-500 outline-none disabled:opacity-50"
+              />
             </div>
+            <div>
+              <label
+                for="env-var-value"
+                class="block text-sm font-medium text-slate-300 mb-2"
+              >
+                Value *
+              </label>
+              <input
+                id="env-var-value"
+                type={newVar.isSecret ? 'password' : 'text'}
+                placeholder="Variable value"
+                value={newVar.value}
+                onInput={(e) =>
+                  setNewVar((prev) => ({
+                    ...prev,
+                    value: (e.target as HTMLInputElement)?.value || '',
+                  }))
+                }
+                class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500 focus:border-blue-500 outline-none"
+              />
+            </div>
+          </div>
+          <div>
+            <label
+              for="env-var-desc"
+              class="block text-sm font-medium text-slate-300 mb-2"
+            >
+              Description
+            </label>
+            <input
+              id="env-var-desc"
+              type="text"
+              placeholder="Optional description"
+              value={newVar.description}
+              onInput={(e) =>
+                setNewVar((prev) => ({
+                  ...prev,
+                  description: (e.target as HTMLInputElement)?.value || '',
+                }))
+              }
+              class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500 focus:border-blue-500 outline-none"
+            />
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="isSecret"
+              checked={newVar.isSecret}
+              onChange={(e) =>
+                setNewVar((prev) => ({
+                  ...prev,
+                  isSecret: (e.target as HTMLInputElement)?.checked || false,
+                }))
+              }
+              class="mr-2"
+            />
+            <label for="isSecret" class="text-sm text-slate-300">
+              🔒 Secret (value will be masked in the UI)
+            </label>
+          </div>
+          <div class="flex space-x-3">
             <button
               type="button"
-              onClick={onClose}
-              class="text-slate-400 hover:text-white text-xl"
+              onClick={handleSave}
+              disabled={!newVar.key.trim() || !newVar.value.trim()}
+              class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed rounded text-white font-medium"
             >
-              ✕
+              {editingVar ? 'Update' : 'Add'} Variable
             </button>
-          </div>
-
-          {/* Content */}
-          <div class="flex-1 overflow-y-auto p-6">
-            {/* Add/Edit Form */}
-            <div class="mb-6 p-4 bg-slate-900/50 border border-slate-700 rounded-lg">
-              <h3 class="text-lg font-medium text-white mb-4">
-                {editingVar ? `Edit ${editingVar}` : 'Add Environment Variable'}
-              </h3>
-              <div class="grid gap-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label
-                      for="env-var-name"
-                      class="block text-sm font-medium text-slate-300 mb-2"
-                    >
-                      Variable Name *
-                    </label>
-                    <input
-                      id="env-var-name"
-                      type="text"
-                      placeholder="e.g., API_TOKEN, DATABASE_URL"
-                      value={newVar.key}
-                      onInput={(e) =>
-                        setNewVar((prev) => ({
-                          ...prev,
-                          key: (e.target as HTMLInputElement)?.value || '',
-                        }))
-                      }
-                      disabled={!!editingVar}
-                      class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500 focus:border-blue-500 outline-none disabled:opacity-50"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      for="env-var-value"
-                      class="block text-sm font-medium text-slate-300 mb-2"
-                    >
-                      Value *
-                    </label>
-                    <input
-                      id="env-var-value"
-                      type={newVar.isSecret ? 'password' : 'text'}
-                      placeholder="Variable value"
-                      value={newVar.value}
-                      onInput={(e) =>
-                        setNewVar((prev) => ({
-                          ...prev,
-                          value: (e.target as HTMLInputElement)?.value || '',
-                        }))
-                      }
-                      class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500 focus:border-blue-500 outline-none"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label
-                    for="env-var-desc"
-                    class="block text-sm font-medium text-slate-300 mb-2"
-                  >
-                    Description
-                  </label>
-                  <input
-                    id="env-var-desc"
-                    type="text"
-                    placeholder="Optional description"
-                    value={newVar.description}
-                    onInput={(e) =>
-                      setNewVar((prev) => ({
-                        ...prev,
-                        description:
-                          (e.target as HTMLInputElement)?.value || '',
-                      }))
-                    }
-                    class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500 focus:border-blue-500 outline-none"
-                  />
-                </div>
-                <div class="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="isSecret"
-                    checked={newVar.isSecret}
-                    onChange={(e) =>
-                      setNewVar((prev) => ({
-                        ...prev,
-                        isSecret:
-                          (e.target as HTMLInputElement)?.checked || false,
-                      }))
-                    }
-                    class="mr-2"
-                  />
-                  <label for="isSecret" class="text-sm text-slate-300">
-                    🔒 Secret (value will be masked in the UI)
-                  </label>
-                </div>
-                <div class="flex space-x-3">
-                  <button
-                    type="button"
-                    onClick={handleSave}
-                    disabled={!newVar.key.trim() || !newVar.value.trim()}
-                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed rounded text-white font-medium"
-                  >
-                    {editingVar ? 'Update' : 'Add'} Variable
-                  </button>
-                  {editingVar && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingVar(null)
-                        setNewVar({
-                          key: '',
-                          value: '',
-                          description: '',
-                          isSecret: false,
-                        })
-                      }}
-                      class="px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded text-slate-300"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Variables List */}
-            <div>
-              <h3 class="text-lg font-medium text-white mb-4">
-                Current Variables ({variables.length})
-              </h3>
-              {loading ? (
-                <div class="flex items-center justify-center py-8">
-                  <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-                  <span class="ml-3 text-slate-400">Loading...</span>
-                </div>
-              ) : variables.length === 0 ? (
-                <div class="text-center py-8 text-slate-400">
-                  No environment variables configured
-                </div>
-              ) : (
-                <div class="space-y-3">
-                  {variables.map((variable) => (
-                    <div
-                      key={variable.key}
-                      class="p-4 bg-slate-900/30 border border-slate-700 rounded-lg"
-                    >
-                      <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                          <div class="flex items-center space-x-2">
-                            <span class="font-mono text-blue-400 font-medium">
-                              {variable.key}
-                            </span>
-                            {variable.isSecret && (
-                              <span class="text-yellow-500 text-sm">🔒</span>
-                            )}
-                          </div>
-                          <div class="mt-1 font-mono text-sm text-slate-300 break-all">
-                            {variable.value}
-                          </div>
-                          {variable.description && (
-                            <div class="mt-2 text-sm text-slate-400">
-                              {variable.description}
-                            </div>
-                          )}
-                          <div class="mt-2 text-xs text-slate-500">
-                            Updated: {formatDate(variable.updatedAt)}
-                          </div>
-                        </div>
-                        <div class="flex space-x-2 ml-4">
-                          <button
-                            type="button"
-                            onClick={() => handleEdit(variable)}
-                            class="px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
-                          >
-                            ✏️ Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(variable.key)}
-                            class="px-3 py-1 text-sm bg-red-700 hover:bg-red-600 rounded text-white"
-                          >
-                            🗑️ Delete
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div class="p-6 border-t border-slate-700 flex items-center justify-between text-sm text-slate-400 flex-shrink-0">
-            <div>
-              Press{' '}
-              <kbd class="px-2 py-1 bg-slate-700 rounded text-xs">ESC</kbd> to
-              close
-            </div>
-            <div>Variables are stored in ~/.runbook-admin/environment.json</div>
+            {editingVar && (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingVar(null)
+                  setNewVar({
+                    key: '',
+                    value: '',
+                    description: '',
+                    isSecret: false,
+                  })
+                }}
+                class="px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded text-slate-300"
+              >
+                Cancel
+              </button>
+            )}
           </div>
         </div>
+      </div>
+
+      {/* Variables List */}
+      <div>
+        <h3 class="text-lg font-medium text-white mb-4">
+          Current Variables ({variables.length})
+        </h3>
+        {loading ? (
+          <div class="flex items-center justify-center py-8">
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+            <span class="ml-3 text-slate-400">Loading...</span>
+          </div>
+        ) : variables.length === 0 ? (
+          <div class="text-center py-8 text-slate-400">
+            No environment variables configured
+          </div>
+        ) : (
+          <div class="space-y-3">
+            {variables.map((variable) => (
+              <div
+                key={variable.key}
+                class="p-4 bg-slate-900/30 border border-slate-700 rounded-lg"
+              >
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <div class="flex items-center space-x-2">
+                      <span class="font-mono text-blue-400 font-medium">
+                        {variable.key}
+                      </span>
+                      {variable.isSecret && (
+                        <span class="text-yellow-500 text-sm">🔒</span>
+                      )}
+                    </div>
+                    <div class="mt-1 font-mono text-sm text-slate-300 break-all">
+                      {variable.value}
+                    </div>
+                    {variable.description && (
+                      <div class="mt-2 text-sm text-slate-400">
+                        {variable.description}
+                      </div>
+                    )}
+                    <div class="mt-2 text-xs text-slate-500">
+                      Updated: {formatDate(variable.updatedAt)}
+                    </div>
+                  </div>
+                  <div class="flex space-x-2 ml-4">
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(variable)}
+                      class="px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
+                    >
+                      ✏️ Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(variable.key)}
+                      class="px-3 py-1 text-sm bg-red-700 hover:bg-red-600 rounded text-white"
+                    >
+                      🗑️ Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div class="pt-4 border-t border-slate-700 flex items-center justify-between text-sm text-slate-400">
+        <div>Variables are stored in ~/.runbook-admin/environment.json</div>
       </div>
 
       {/* Toast Notifications */}

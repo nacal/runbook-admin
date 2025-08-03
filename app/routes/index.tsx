@@ -1,12 +1,18 @@
 import { Suspense } from 'hono/jsx'
 import { createRoute } from 'honox/factory'
 import { DashboardContent } from '../components/DashboardContent'
+import { EnvironmentSettingsModal } from '../components/EnvironmentSettingsModal'
 import { ExecutionModal } from '../components/ExecutionModal'
 import { LoadingState } from '../components/LoadingState'
+import { RunbookViewerModal } from '../components/RunbookViewerModal'
+import { VariableInputModal } from '../components/VariableInputModal'
 import { getProjectPath } from '../utils/project-context'
 
 export default createRoute((c) => {
   const executionId = c.req.query('execution')
+  const variableInputId = c.req.query('variable-input')
+  const runbookViewerId = c.req.query('runbook-viewer')
+  const environmentSettings = c.req.query('environment-settings')
   return c.render(
     <>
       <title>Dashboard - Runbook Admin</title>
@@ -49,6 +55,54 @@ export default createRoute((c) => {
           }
         >
           <ExecutionModal executionId={executionId} backUrl="/" />
+        </Suspense>
+      )}
+
+      {/* Variable Input Modal */}
+      {variableInputId && (
+        <Suspense
+          fallback={
+            <div class="fixed inset-0 z-50 flex items-center justify-center">
+              <div class="absolute inset-0 bg-black/70" />
+              <div class="relative bg-slate-900 border border-slate-700 rounded-lg p-8">
+                <LoadingState />
+              </div>
+            </div>
+          }
+        >
+          <VariableInputModal runbookId={variableInputId} backUrl="/" />
+        </Suspense>
+      )}
+
+      {/* Runbook Viewer Modal */}
+      {runbookViewerId && (
+        <Suspense
+          fallback={
+            <div class="fixed inset-0 z-50 flex items-center justify-center">
+              <div class="absolute inset-0 bg-black/70" />
+              <div class="relative bg-slate-900 border border-slate-700 rounded-lg p-8">
+                <LoadingState />
+              </div>
+            </div>
+          }
+        >
+          <RunbookViewerModal runbookId={runbookViewerId} backUrl="/" />
+        </Suspense>
+      )}
+
+      {/* Environment Settings Modal */}
+      {environmentSettings && (
+        <Suspense
+          fallback={
+            <div class="fixed inset-0 z-50 flex items-center justify-center">
+              <div class="absolute inset-0 bg-black/70" />
+              <div class="relative bg-slate-900 border border-slate-700 rounded-lg p-8">
+                <LoadingState />
+              </div>
+            </div>
+          }
+        >
+          <EnvironmentSettingsModal backUrl="/" />
         </Suspense>
       )}
     </>,
