@@ -45,9 +45,6 @@ importers:
       '@types/node':
         specifier: ^22.5.0
         version: 22.16.5
-      '@types/prismjs':
-        specifier: ^1.26.5
-        version: 1.26.5
       '@vitest/ui':
         specifier: ^3.2.4
         version: 3.2.4(vitest@3.2.4)
@@ -802,9 +799,6 @@ packages:
 
   '@types/node@22.16.5':
     resolution: {integrity: sha512-bJFoMATwIGaxxx8VJPeM8TonI8t579oRvgAuT8zFugJsJZgzqv0Fu8Mhp68iecjzG7cnN3mO2dJQ5uUM2EFrgQ==}
-
-  '@types/prismjs@1.26.5':
-    resolution: {integrity: sha512-AUZTa7hQ2KY5L7AmtSiqxlhWxb4ina0yd8hNbl4TWuqnv/pFP0nDMb3YrfSBf4hJVGLh2YEIBfKaBW/9UEl6IQ==}
 
   '@types/statuses@2.0.6':
     resolution: {integrity: sha512-xMAgYwceFhRA2zY+XbEA7mxYbA093wdiW8Vu6gZPGWy9cmOyU9XesH1tNcEWsKFd5Vzrqx5T3D38PWx1FIIXkA==}
@@ -2577,8 +2571,6 @@ snapshots:
   '@types/node@22.16.5':
     dependencies:
       undici-types: 6.21.0
-
-  '@types/prismjs@1.26.5': {}
 
   '@types/statuses@2.0.6':
     optional: true
