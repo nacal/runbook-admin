@@ -100,7 +100,7 @@ export async function RunbookViewerModal({
           overflow: hidden;
           padding-right: 0px;
         }
-        
+
         /* Shiki styling adjustments */
         .shiki-container pre {
           margin: 0;
@@ -110,7 +110,7 @@ export async function RunbookViewerModal({
           overflow-x: auto;
           background: transparent !important;
         }
-        
+
         .shiki-container code {
           white-space: pre;
         }
@@ -194,16 +194,6 @@ export async function RunbookViewerModal({
                       {content}
                     </pre>
                   )}
-                </div>
-
-                {/* Footer */}
-                <div class="pt-4 border-t border-slate-700 flex items-center justify-between text-sm text-slate-400">
-                  <div>
-                    YAML syntax • UTF-8 •{' '}
-                    {highlightedContent && highlightedContent !== content
-                      ? 'Shiki highlighted'
-                      : 'Plain text'}
-                  </div>
                 </div>
               </div>
             ) : (

@@ -116,14 +116,6 @@ function FilePreviewModal({
               />
             </div>
           </div>
-
-          {/* Footer */}
-          <div class="p-4 border-t border-slate-700 text-center">
-            <div class="text-xs text-slate-500">
-              {content.length.toLocaleString()} characters •{' '}
-              {getShikiInstance() ? 'Shiki highlighted' : 'Plain text'}
-            </div>
-          </div>
         </div>
       </div>
     </>

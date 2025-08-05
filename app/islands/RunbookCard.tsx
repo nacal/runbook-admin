@@ -16,6 +16,16 @@ interface RunbookCardProps {
   setSelectedLabels: (labels: string[] | ((prev: string[]) => string[])) => void
 }
 
+// line-clampスタイルをインラインで定義（Tailwindのutilitiesが使えない場合）
+const lineClampStyles = `
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+`
+
 export function RunbookCard({
   runbook,
   isFavorite,
@@ -134,163 +144,168 @@ export function RunbookCard({
   }
 
   return (
-    <div
-      class={`bg-slate-800/50 border ${
-        isFavorite
-          ? 'border-yellow-600/50 hover:border-yellow-600'
-          : 'border-slate-700 hover:border-slate-600'
-      } rounded-lg p-4 transition-colors relative flex flex-col h-full min-h-[280px]`}
-    >
-      {/* Content area - grows to fill space */}
-      <div class="flex flex-col flex-grow">
-        <div class="flex items-start justify-between mb-3 gap-2">
-          <div class="min-w-0 flex-1">
-            <h3 class="font-semibold text-white truncate">{runbook.name}</h3>
+    <>
+      <style>{lineClampStyles}</style>
+      <div
+        class={`bg-slate-800/50 border ${
+          isFavorite
+            ? 'border-yellow-600/50 hover:border-yellow-600'
+            : 'border-slate-700 hover:border-slate-600'
+        } rounded-lg p-4 transition-colors relative flex flex-col h-full min-h-[290px]`}
+      >
+        {/* Content area - grows to fill space */}
+        <div class="flex flex-col flex-grow">
+          <div class="flex items-start justify-between mb-3 gap-2">
+            <div class="min-w-0 flex-1">
+              <h3 class="font-semibold text-white truncate">{runbook.name}</h3>
+            </div>
+            <span class="text-xs bg-slate-700 px-2 py-1 rounded text-slate-300 flex-shrink-0">
+              {runbook.steps} steps
+            </span>
           </div>
-          <span class="text-xs bg-slate-700 px-2 py-1 rounded text-slate-300 flex-shrink-0">
-            {runbook.steps} steps
-          </span>
+
+          {runbook.description && (
+            <p
+              class="text-sm text-slate-400 mb-3 overflow-hidden line-clamp-2"
+              title={runbook.description}
+            >
+              {runbook.description}
+            </p>
+          )}
+
+          <div class="text-xs text-slate-500 space-y-1">
+            <div class="flex items-center">
+              <span class="flex-shrink-0">📁</span>
+              <span class="ml-1 truncate" title={runbook.path}>
+                {runbook.path}
+              </span>
+            </div>
+            <div class="flex items-center">
+              <span class="flex-shrink-0">🕒</span>
+              <span class="ml-1">
+                {new Date(runbook.lastModified).toLocaleDateString()}
+              </span>
+            </div>
+          </div>
+
+          {/* Labels section - flexible height with max */}
+          <div class="mt-4 mb-4 min-h-[2rem]">
+            {runbook.labels && runbook.labels.length > 0 && (
+              <div class="flex flex-wrap gap-1 max-h-16 overflow-y-auto">
+                {runbook.labels.map((label) => (
+                  <button
+                    type="button"
+                    key={label}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (!selectedLabels.includes(label)) {
+                        setSelectedLabels((prev) => [...prev, label])
+                      }
+                    }}
+                    class={`text-xs px-2 py-1 rounded transition-colors ${
+                      selectedLabels.includes(label)
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-blue-900/30 text-blue-300 hover:bg-blue-900/50'
+                    }`}
+                    title={`Filter by ${label}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        {runbook.description && (
-          <p
-            class="text-sm text-slate-400 mb-3 overflow-hidden"
-            style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;"
-          >
-            {runbook.description}
-          </p>
-        )}
+        {/* Button area - stays at bottom */}
+        <div class="flex space-x-2 mt-auto">
+          <div class="flex-1 relative dropdown-container">
+            {/* Main execute button */}
+            <button
+              type="button"
+              onClick={handleExecute}
+              disabled={
+                isExecuting || executionId !== null || isExecutingGlobally
+              }
+              class="w-full pr-8 pl-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed rounded text-white text-sm font-medium transition-colors"
+            >
+              {isExecuting || isExecutingGlobally || executionId ? (
+                <>
+                  <span class="inline-block animate-pulse mr-2">🔄</span>
+                  Executing...
+                </>
+              ) : executionMode === 'configure' ? (
+                '⚙️ Configure & Run'
+              ) : (
+                '▶️ Quick Run'
+              )}
+            </button>
 
-        <div class="text-xs text-slate-500">
-          <div>📁 {runbook.path}</div>
-          <div class="mt-1">
-            🕒 {new Date(runbook.lastModified).toLocaleDateString()}
-          </div>
-          <div class="mt-1 font-mono text-slate-600">
-            ID: {runbook.id.substring(0, 7)}
-          </div>
-        </div>
+            {/* Dropdown button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                setOpenDropdown(showDropdown ? null : runbook.id)
+              }}
+              disabled={
+                isExecuting || executionId !== null || isExecutingGlobally
+              }
+              class="absolute right-0 top-0 h-full w-8 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed rounded-r text-white text-xs transition-colors border-l border-blue-500 flex items-center justify-center"
+            >
+              ▼
+            </button>
 
-        {/* Spacer to push labels to bottom of content area */}
-        <div class="flex-grow"></div>
-
-        {/* Labels section - always takes same space */}
-        <div class="h-8 mt-4 mb-4">
-          {runbook.labels && runbook.labels.length > 0 && (
-            <div class="flex flex-wrap gap-1">
-              {runbook.labels.map((label) => (
+            {/* Dropdown menu */}
+            {showDropdown && (
+              <div class="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-600 rounded shadow-lg z-10">
                 <button
                   type="button"
-                  key={label}
                   onClick={(e) => {
                     e.stopPropagation()
-                    if (!selectedLabels.includes(label)) {
-                      setSelectedLabels((prev) => [...prev, label])
-                    }
+                    handleModeSelect('configure')
                   }}
-                  class={`text-xs px-2 py-1 rounded transition-colors ${
-                    selectedLabels.includes(label)
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-blue-900/30 text-blue-300 hover:bg-blue-900/50'
-                  }`}
-                  title={`Filter by ${label}`}
+                  class={`w-full px-3 py-2 text-left text-white text-sm rounded-t hover:bg-blue-700 text-white'
+                }`}
                 >
-                  {label}
+                  ⚙️ Configure & Run
                 </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Button area - stays at bottom */}
-      <div class="flex space-x-2 mt-auto">
-        <div class="flex-1 relative dropdown-container">
-          {/* Main execute button */}
-          <button
-            type="button"
-            onClick={handleExecute}
-            disabled={
-              isExecuting || executionId !== null || isExecutingGlobally
-            }
-            class="w-full pr-8 pl-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed rounded text-white text-sm font-medium transition-colors"
-          >
-            {isExecuting || isExecutingGlobally || executionId ? (
-              <>
-                <span class="inline-block animate-pulse mr-2">🔄</span>
-                Executing...
-              </>
-            ) : executionMode === 'configure' ? (
-              '⚙️ Configure & Run'
-            ) : (
-              '▶️ Quick Run'
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleModeSelect('quick')
+                  }}
+                  class={`w-full px-3 py-2 text-left text-white text-sm rounded-b hover:bg-blue-700 text-white'
+                }`}
+                >
+                  ▶️ Quick Run
+                </button>
+              </div>
             )}
-          </button>
-
-          {/* Dropdown button */}
+          </div>
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              setOpenDropdown(showDropdown ? null : runbook.id)
-            }}
-            disabled={
-              isExecuting || executionId !== null || isExecutingGlobally
-            }
-            class="absolute right-0 top-0 h-full w-8 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed rounded-r text-white text-xs transition-colors border-l border-blue-500 flex items-center justify-center"
+            onClick={() => onShowRunbookViewer(runbook)}
+            class="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-slate-300 text-sm"
+            title="View runbook source"
           >
-            ▼
+            📝
           </button>
-
-          {/* Dropdown menu */}
-          {showDropdown && (
-            <div class="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-600 rounded shadow-lg z-10">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleModeSelect('configure')
-                }}
-                class={`w-full px-3 py-2 text-left text-white text-sm rounded-t hover:bg-blue-700 text-white'
-                }`}
-              >
-                ⚙️ Configure & Run
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleModeSelect('quick')
-                }}
-                class={`w-full px-3 py-2 text-left text-white text-sm rounded-b hover:bg-blue-700 text-white'
-                }`}
-              >
-                ▶️ Quick Run
-              </button>
-            </div>
-          )}
+          <button
+            type="button"
+            onClick={onToggleFavorite}
+            class={`px-3 py-2 ${
+              isFavorite
+                ? 'bg-yellow-600 hover:bg-yellow-700'
+                : 'bg-slate-700 hover:bg-slate-600'
+            } rounded text-white text-sm transition-colors`}
+            title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+          >
+            {isFavorite ? '⭐' : '☆'}
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => onShowRunbookViewer(runbook)}
-          class="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-slate-300 text-sm"
-          title="View runbook source"
-        >
-          📝
-        </button>
-        <button
-          type="button"
-          onClick={onToggleFavorite}
-          class={`px-3 py-2 ${
-            isFavorite
-              ? 'bg-yellow-600 hover:bg-yellow-700'
-              : 'bg-slate-700 hover:bg-slate-600'
-          } rounded text-white text-sm transition-colors`}
-          title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-        >
-          {isFavorite ? '⭐' : '☆'}
-        </button>
       </div>
-    </div>
+    </>
   )
 }
