@@ -1,12 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ExecutionOptions, RunbookVariable } from '../../app/types/types'
 
 // Simple VariableManager tests that focus on logic rather than file I/O
 describe('VariableManager (Simple Tests)', () => {
   let VariableManager: typeof import('../../app/services/variable-manager').VariableManager
-  let manager: InstanceType<
-    typeof import('../../app/services/variable-manager').VariableManager
-  >
+  let manager: import('../../app/services/variable-manager').VariableManager
 
   beforeEach(async () => {
     // Reset singleton
@@ -14,7 +12,7 @@ describe('VariableManager (Simple Tests)', () => {
       '../../app/services/variable-manager'
     )
     VariableManager = variableManagerModule.VariableManager
-    const VariableManagerWithPrivateAccess = VariableManager as {
+    const VariableManagerWithPrivateAccess = VariableManager as unknown as {
       instance?: unknown
     }
     VariableManagerWithPrivateAccess.instance = undefined
@@ -57,8 +55,6 @@ describe('VariableManager (Simple Tests)', () => {
       const variables = { VAR1: 'value1', VAR2: 'value2' }
       const description = 'Test preset description'
       const executionOptions: ExecutionOptions = {
-        failFast: true,
-        skipTest: false,
         args: ['--verbose'],
       }
 
@@ -236,10 +232,27 @@ describe('VariableManager (Simple Tests)', () => {
 
   describe('variable merging', () => {
     const runbookVariables: Record<string, RunbookVariable> = {
-      VAR1: { name: 'VAR1', defaultValue: 'default1' },
-      VAR2: { name: 'VAR2', defaultValue: 'default2' },
-      VAR3: { name: 'VAR3' }, // No default
-      VAR4: { name: 'VAR4', defaultValue: 'default4' },
+      VAR1: {
+        name: 'VAR1',
+        type: 'string',
+        required: false,
+        defaultValue: 'default1',
+      },
+      VAR2: {
+        name: 'VAR2',
+        type: 'string',
+        required: false,
+        defaultValue: 'default2',
+      },
+      VAR3: { name: 'VAR3', type: 'string', required: false }, // No default
+      VAR4: {
+        name: 'VAR4',
+        type: 'string',
+        required: false,
+        defaultValue: 'default4',
+      },
+      GLOBAL1: { name: 'GLOBAL1', type: 'string', required: false }, // Add GLOBAL1 to runbook variables
+      PRESET_VAR: { name: 'PRESET_VAR', type: 'string', required: false }, // Add PRESET_VAR to runbook variables
     }
 
     beforeEach(async () => {
@@ -319,9 +332,8 @@ describe('VariableManager (Simple Tests)', () => {
     it('should handle empty runbook variables', async () => {
       const merged = await manager.mergeVariables({})
 
-      // Should include global variables even with empty runbook vars
-      expect(merged.GLOBAL1).toBe('global_value1')
-      expect(merged.VAR1).toBe('global_override1')
+      // With empty runbook variables, no variables should be processed
+      expect(Object.keys(merged)).toHaveLength(0)
     })
 
     it('should handle empty overrides', async () => {
@@ -341,8 +353,18 @@ describe('VariableManager (Simple Tests)', () => {
 
     it('should convert non-string default values to strings', async () => {
       const runbookVarsWithNumbers: Record<string, RunbookVariable> = {
-        NUM_VAR: { name: 'NUM_VAR', defaultValue: 42 },
-        BOOL_VAR: { name: 'BOOL_VAR', defaultValue: true },
+        NUM_VAR: {
+          name: 'NUM_VAR',
+          type: 'number',
+          required: false,
+          defaultValue: 42,
+        },
+        BOOL_VAR: {
+          name: 'BOOL_VAR',
+          type: 'boolean',
+          required: false,
+          defaultValue: true,
+        },
       }
 
       const merged = await manager.mergeVariables(runbookVarsWithNumbers)

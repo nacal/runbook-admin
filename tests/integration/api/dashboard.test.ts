@@ -219,8 +219,8 @@ describe('API Dashboard Tests', () => {
 
     it('should handle partial service failures gracefully', async () => {
       // Simulate one service failing while others succeed
-      const mockRunbooks = []
-      const mockFavorites = []
+      const mockRunbooks: Array<unknown> = []
+      const mockFavorites: Array<string> = []
 
       mockFileScanner.scanRunbooks.mockResolvedValue(mockRunbooks)
       mockFavoritesManager.getFavorites.mockResolvedValue(mockFavorites)

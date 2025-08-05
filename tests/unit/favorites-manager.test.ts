@@ -3,9 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 // Simple FavoritesManager tests that focus on logic rather than file I/O
 describe('FavoritesManager (Simple Tests)', () => {
   let FavoritesManager: typeof import('../../app/services/favorites-manager').FavoritesManager
-  let manager: InstanceType<
-    typeof import('../../app/services/favorites-manager').FavoritesManager
-  >
+  let manager: import('../../app/services/favorites-manager').FavoritesManager
 
   beforeEach(async () => {
     // Reset singleton
@@ -101,7 +99,7 @@ describe('FavoritesManager (Simple Tests)', () => {
       const runbookId = 'test-runbook-add'
 
       // Toggle to add (assuming it's not already a favorite)
-      const _result = await manager.toggleFavorite(runbookId)
+      await manager.toggleFavorite(runbookId)
 
       // Check if it's now a favorite
       const isFav = await manager.isFavorite(runbookId)

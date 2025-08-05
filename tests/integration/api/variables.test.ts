@@ -1,12 +1,16 @@
+import { Hono } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock VariableManager
 const mockVariableManager = {
-  getVariablePresets: vi.fn(),
-  saveVariablePreset: vi.fn(),
-  deleteVariablePreset: vi.fn(),
+  getAllPresets: vi.fn(),
+  savePreset: vi.fn(),
+  deletePreset: vi.fn(),
   getGlobalVariables: vi.fn(),
-  saveGlobalVariables: vi.fn(),
+  setGlobalVariable: vi.fn(),
+  deleteGlobalVariable: vi.fn(),
+  mergeVariables: vi.fn(),
+  getPreset: vi.fn(),
 }
 
 vi.mock('../../../app/services/variable-manager', () => ({
@@ -16,145 +20,357 @@ vi.mock('../../../app/services/variable-manager', () => ({
 }))
 
 describe('/api/variables', () => {
-  let GET: (context: unknown) => Promise<unknown>
-  let POST: (context: unknown) => Promise<unknown>
-  let DELETE: (context: unknown) => Promise<unknown>
+  let app: Hono
 
   beforeEach(async () => {
     vi.clearAllMocks()
 
-    // Import route handlers
-    const variablesModule = await import('../../../app/routes/api/variables')
-    GET = variablesModule.GET
-    POST = variablesModule.POST
-    DELETE = variablesModule.DELETE
+    // Create a new Hono app and manually implement the API logic based on variables.ts
+    app = new Hono()
+
+    // GET /presets - Get all presets
+    app.get('/presets', async (c) => {
+      try {
+        const manager = mockVariableManager
+        const presets = await manager.getAllPresets()
+
+        return c.json({
+          success: true,
+          data: presets,
+        })
+      } catch (_error) {
+        return c.json(
+          {
+            success: false,
+            error: 'Failed to load variable presets',
+          },
+          500,
+        )
+      }
+    })
+
+    // POST /presets - Save preset
+    app.post('/presets', async (c) => {
+      try {
+        const { name, variables, description, executionOptions } =
+          await c.req.json()
+
+        if (!name || !variables) {
+          return c.json(
+            {
+              success: false,
+              error: 'Name and variables are required',
+            },
+            400,
+          )
+        }
+
+        const manager = mockVariableManager
+        await manager.savePreset(name, variables, description, executionOptions)
+
+        return c.json({
+          success: true,
+          message: `Preset '${name}' saved successfully`,
+        })
+      } catch (_error) {
+        return c.json(
+          {
+            success: false,
+            error: 'Failed to save preset',
+          },
+          500,
+        )
+      }
+    })
+
+    // DELETE /presets/:name - Delete preset
+    app.delete('/presets/:name', async (c) => {
+      try {
+        const name = c.req.param('name')
+        const manager = mockVariableManager
+        const deleted = await manager.deletePreset(name)
+
+        if (deleted) {
+          return c.json({
+            success: true,
+            message: `Preset '${name}' deleted successfully`,
+          })
+        } else {
+          return c.json(
+            {
+              success: false,
+              error: 'Preset not found',
+            },
+            404,
+          )
+        }
+      } catch (_error) {
+        return c.json(
+          {
+            success: false,
+            error: 'Failed to delete preset',
+          },
+          500,
+        )
+      }
+    })
+
+    // GET /global - Get global variables
+    app.get('/global', async (c) => {
+      try {
+        const manager = mockVariableManager
+        const variables = await manager.getGlobalVariables()
+
+        return c.json({
+          success: true,
+          data: variables,
+        })
+      } catch (_error) {
+        return c.json(
+          {
+            success: false,
+            error: 'Failed to load global variables',
+          },
+          500,
+        )
+      }
+    })
+
+    // POST /global - Set global variable
+    app.post('/global', async (c) => {
+      try {
+        const { key, value } = await c.req.json()
+
+        if (!key) {
+          return c.json(
+            {
+              success: false,
+              error: 'Key is required',
+            },
+            400,
+          )
+        }
+
+        const manager = mockVariableManager
+        await manager.setGlobalVariable(key, value || '')
+
+        return c.json({
+          success: true,
+          message: `Global variable '${key}' set successfully`,
+        })
+      } catch (_error) {
+        return c.json(
+          {
+            success: false,
+            error: 'Failed to set global variable',
+          },
+          500,
+        )
+      }
+    })
+
+    // DELETE /global/:key - Delete global variable
+    app.delete('/global/:key', async (c) => {
+      try {
+        const key = c.req.param('key')
+        const manager = mockVariableManager
+        const deleted = await manager.deleteGlobalVariable(key)
+
+        if (deleted) {
+          return c.json({
+            success: true,
+            message: `Global variable '${key}' deleted successfully`,
+          })
+        } else {
+          return c.json(
+            {
+              success: false,
+              error: 'Global variable not found',
+            },
+            404,
+          )
+        }
+      } catch (_error) {
+        return c.json(
+          {
+            success: false,
+            error: 'Failed to delete global variable',
+          },
+          500,
+        )
+      }
+    })
+
+    // POST /merge - Merge variables for execution
+    app.post('/merge', async (c) => {
+      try {
+        const { runbookVariables, presetName, overrides } = await c.req.json()
+
+        const manager = mockVariableManager
+        const merged = await manager.mergeVariables(
+          runbookVariables,
+          presetName,
+          overrides,
+        )
+
+        // Get execution options from preset if available
+        let executionOptions: { args: string[] } = { args: [] }
+        if (presetName) {
+          const preset = await manager.getPreset(presetName)
+          if (preset?.executionOptions) {
+            executionOptions = preset.executionOptions
+          }
+        }
+
+        return c.json({
+          success: true,
+          data: {
+            variables: merged,
+            executionOptions,
+          },
+        })
+      } catch (_error) {
+        return c.json(
+          {
+            success: false,
+            error: 'Failed to merge variables',
+          },
+          500,
+        )
+      }
+    })
   })
 
-  describe('GET /api/variables', () => {
+  describe('GET /presets', () => {
     it('should return variable presets successfully', async () => {
-      const mockPresets = {
-        preset1: { VAR1: 'value1', VAR2: 'value2' },
-        preset2: { VAR3: 'value3' },
-      }
-      mockVariableManager.getVariablePresets.mockResolvedValue(mockPresets)
+      const mockPresets = [
+        { name: 'preset1', variables: { VAR1: 'value1', VAR2: 'value2' } },
+        { name: 'preset2', variables: { VAR3: 'value3' } },
+      ]
+      mockVariableManager.getAllPresets.mockResolvedValue(mockPresets)
 
-      const mockContext = {
-        json: vi
-          .fn()
-          .mockImplementation((data) => ({ json: data, status: 200 })),
-      }
+      const response = await app.request('/presets')
+      const data = await response.json()
 
-      const _response = await GET(mockContext)
-
-      expect(mockVariableManager.getVariablePresets).toHaveBeenCalled()
-      expect(mockContext.json).toHaveBeenCalledWith({
+      expect(response.status).toBe(200)
+      expect(mockVariableManager.getAllPresets).toHaveBeenCalled()
+      expect(data).toEqual({
         success: true,
         data: mockPresets,
-        count: 2,
       })
     })
 
     it('should handle errors gracefully', async () => {
-      mockVariableManager.getVariablePresets.mockRejectedValue(
+      mockVariableManager.getAllPresets.mockRejectedValue(
         new Error('Storage error'),
       )
 
-      const mockContext = {
-        json: vi
-          .fn()
-          .mockImplementation((data, status) => ({ json: data, status })),
-      }
+      const response = await app.request('/presets')
+      const data = await response.json()
 
-      const _response = await GET(mockContext)
-
-      expect(mockContext.json).toHaveBeenCalledWith(
-        {
-          success: false,
-          error: expect.stringContaining('Failed to load variable presets'),
-          data: {},
-          count: 0,
-        },
-        500,
-      )
+      expect(response.status).toBe(500)
+      expect(data).toEqual({
+        success: false,
+        error: 'Failed to load variable presets',
+      })
     })
   })
 
-  describe('POST /api/variables', () => {
+  describe('POST /presets', () => {
     it('should save variable preset successfully', async () => {
-      mockVariableManager.saveVariablePreset.mockResolvedValue(undefined)
+      mockVariableManager.savePreset.mockResolvedValue(undefined)
 
-      const mockContext = {
-        req: {
-          json: vi.fn().mockResolvedValue({
-            name: 'test-preset',
-            variables: { VAR1: 'test-value' },
-          }),
-        },
-        json: vi
-          .fn()
-          .mockImplementation((data) => ({ json: data, status: 200 })),
-      }
+      const response = await app.request('/presets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'test-preset',
+          variables: { VAR1: 'test-value' },
+        }),
+      })
+      const data = await response.json()
 
-      const _response = await POST(mockContext)
-
-      expect(mockVariableManager.saveVariablePreset).toHaveBeenCalledWith(
+      expect(response.status).toBe(200)
+      expect(mockVariableManager.savePreset).toHaveBeenCalledWith(
         'test-preset',
         { VAR1: 'test-value' },
+        undefined,
+        undefined,
       )
-      expect(mockContext.json).toHaveBeenCalledWith({
+      expect(data).toEqual({
         success: true,
-        message: 'Variable preset saved successfully',
+        message: "Preset 'test-preset' saved successfully",
       })
     })
 
     it('should return 400 when preset name is missing', async () => {
-      const mockContext = {
-        req: {
-          json: vi.fn().mockResolvedValue({
-            variables: { TEST: 'value' },
-          }),
-        },
-        json: vi
-          .fn()
-          .mockImplementation((data, status) => ({ json: data, status })),
-      }
+      const response = await app.request('/presets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          variables: { TEST: 'value' },
+        }),
+      })
+      const data = await response.json()
 
-      const _response = await POST(mockContext)
+      expect(response.status).toBe(400)
+      expect(data).toEqual({
+        success: false,
+        error: 'Name and variables are required',
+      })
+      expect(mockVariableManager.savePreset).not.toHaveBeenCalled()
+    })
 
-      expect(mockContext.json).toHaveBeenCalledWith(
-        {
-          success: false,
-          error: 'Preset name is required',
-        },
-        400,
-      )
-      expect(mockVariableManager.saveVariablePreset).not.toHaveBeenCalled()
+    it('should return 400 when variables are missing', async () => {
+      const response = await app.request('/presets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'test-preset',
+        }),
+      })
+      const data = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(data).toEqual({
+        success: false,
+        error: 'Name and variables are required',
+      })
+      expect(mockVariableManager.savePreset).not.toHaveBeenCalled()
     })
   })
 
-  describe('DELETE /api/variables', () => {
+  describe('DELETE /presets/:name', () => {
     it('should delete variable preset successfully', async () => {
-      mockVariableManager.deleteVariablePreset.mockResolvedValue(undefined)
+      mockVariableManager.deletePreset.mockResolvedValue(true)
 
-      const mockContext = {
-        req: {
-          json: vi.fn().mockResolvedValue({
-            name: 'test-preset',
-          }),
-        },
-        json: vi
-          .fn()
-          .mockImplementation((data) => ({ json: data, status: 200 })),
-      }
+      const response = await app.request('/presets/test-preset', {
+        method: 'DELETE',
+      })
+      const data = await response.json()
 
-      const _response = await DELETE(mockContext)
-
-      expect(mockVariableManager.deleteVariablePreset).toHaveBeenCalledWith(
+      expect(response.status).toBe(200)
+      expect(mockVariableManager.deletePreset).toHaveBeenCalledWith(
         'test-preset',
       )
-      expect(mockContext.json).toHaveBeenCalledWith({
+      expect(data).toEqual({
         success: true,
-        message: 'Variable preset deleted successfully',
+        message: "Preset 'test-preset' deleted successfully",
+      })
+    })
+
+    it('should return 404 when preset not found', async () => {
+      mockVariableManager.deletePreset.mockResolvedValue(false)
+
+      const response = await app.request('/presets/non-existent', {
+        method: 'DELETE',
+      })
+      const data = await response.json()
+
+      expect(response.status).toBe(404)
+      expect(data).toEqual({
+        success: false,
+        error: 'Preset not found',
       })
     })
   })

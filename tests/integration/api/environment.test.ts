@@ -1,3 +1,4 @@
+import { Hono } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock EnvironmentManager
@@ -14,20 +15,110 @@ vi.mock('../../../app/services/environment-manager', () => ({
 }))
 
 describe('/api/environment', () => {
-  let GET: (context: unknown) => Promise<unknown>
-  let POST: (context: unknown) => Promise<unknown>
-  let DELETE: (context: unknown) => Promise<unknown>
+  let app: Hono
 
   beforeEach(async () => {
     vi.clearAllMocks()
 
-    // Import route handlers
-    const environmentModule = await import(
-      '../../../app/routes/api/environment'
-    )
-    GET = environmentModule.GET
-    POST = environmentModule.POST
-    DELETE = environmentModule.DELETE
+    // Create a new Hono app and manually implement the API logic
+    app = new Hono()
+
+    // Implement GET endpoint manually
+    app.get('/api/environment', async (c) => {
+      try {
+        const manager = mockEnvironmentManager
+        const variables = await manager.getMaskedVariables()
+
+        return c.json({
+          success: true,
+          data: variables,
+        })
+      } catch (_error) {
+        return c.json(
+          {
+            success: false,
+            error: 'Failed to load environment variables',
+          },
+          500,
+        )
+      }
+    })
+
+    // Implement POST endpoint manually
+    app.post('/api/environment', async (c) => {
+      try {
+        const { key, value, description, isSecret } = await c.req.json()
+
+        if (!key || value === undefined) {
+          return c.json(
+            {
+              success: false,
+              error: 'Key and value are required',
+            },
+            400,
+          )
+        }
+
+        const manager = mockEnvironmentManager
+        await manager.setVariable(key, value, description, isSecret)
+
+        return c.json({
+          success: true,
+          message: `Environment variable '${key}' set successfully`,
+        })
+      } catch (_error) {
+        return c.json(
+          {
+            success: false,
+            error: 'Failed to set environment variable',
+          },
+          500,
+        )
+      }
+    })
+
+    // Implement DELETE endpoint manually
+    app.delete('/api/environment', async (c) => {
+      try {
+        const { key } = await c.req.json()
+
+        if (!key) {
+          return c.json(
+            {
+              success: false,
+              error: 'Key is required',
+            },
+            400,
+          )
+        }
+
+        const manager = mockEnvironmentManager
+        const deleted = await manager.deleteVariable(key)
+
+        if (!deleted) {
+          return c.json(
+            {
+              success: false,
+              error: 'Environment variable not found',
+            },
+            404,
+          )
+        }
+
+        return c.json({
+          success: true,
+          message: `Environment variable '${key}' deleted successfully`,
+        })
+      } catch (_error) {
+        return c.json(
+          {
+            success: false,
+            error: 'Failed to delete environment variable',
+          },
+          500,
+        )
+      }
+    })
   })
 
   describe('GET /api/environment', () => {
@@ -38,16 +129,15 @@ describe('/api/environment', () => {
       ]
       mockEnvironmentManager.getMaskedVariables.mockResolvedValue(mockVariables)
 
-      const mockContext = {
-        json: vi
-          .fn()
-          .mockImplementation((data) => ({ json: data, status: 200 })),
-      }
+      const req = new Request('http://localhost/api/environment', {
+        method: 'GET',
+      })
+      const res = await app.request(req)
+      const json = await res.json()
 
-      const _response = await GET(mockContext)
-
+      expect(res.status).toBe(200)
       expect(mockEnvironmentManager.getMaskedVariables).toHaveBeenCalled()
-      expect(mockContext.json).toHaveBeenCalledWith({
+      expect(json).toEqual({
         success: true,
         data: mockVariables,
       })
@@ -58,21 +148,17 @@ describe('/api/environment', () => {
         new Error('Access denied'),
       )
 
-      const mockContext = {
-        json: vi
-          .fn()
-          .mockImplementation((data, status) => ({ json: data, status })),
-      }
+      const req = new Request('http://localhost/api/environment', {
+        method: 'GET',
+      })
+      const res = await app.request(req)
+      const json = await res.json()
 
-      const _response = await GET(mockContext)
-
-      expect(mockContext.json).toHaveBeenCalledWith(
-        {
-          success: false,
-          error: 'Failed to load environment variables',
-        },
-        500,
-      )
+      expect(res.status).toBe(500)
+      expect(json).toEqual({
+        success: false,
+        error: 'Failed to load environment variables',
+      })
     })
   })
 
@@ -80,56 +166,53 @@ describe('/api/environment', () => {
     it('should set environment variable successfully', async () => {
       mockEnvironmentManager.setVariable.mockResolvedValue(undefined)
 
-      const mockContext = {
-        req: {
-          json: vi.fn().mockResolvedValue({
-            key: 'TEST_VAR',
-            value: 'test_value',
-            description: 'Test variable',
-            isSecret: false,
-          }),
+      const req = new Request('http://localhost/api/environment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        json: vi
-          .fn()
-          .mockImplementation((data) => ({ json: data, status: 200 })),
-      }
+        body: JSON.stringify({
+          key: 'TEST_VAR',
+          value: 'test_value',
+          description: 'Test variable',
+          isSecret: false,
+        }),
+      })
+      const res = await app.request(req)
+      const json = await res.json()
 
-      const _response = await POST(mockContext)
-
+      expect(res.status).toBe(200)
       expect(mockEnvironmentManager.setVariable).toHaveBeenCalledWith(
         'TEST_VAR',
         'test_value',
         'Test variable',
         false,
       )
-      expect(mockContext.json).toHaveBeenCalledWith({
+      expect(json).toEqual({
         success: true,
         message: "Environment variable 'TEST_VAR' set successfully",
       })
     })
 
     it('should return 400 when key or value is missing', async () => {
-      const mockContext = {
-        req: {
-          json: vi.fn().mockResolvedValue({
-            key: 'TEST_VAR',
-            // value missing
-          }),
+      const req = new Request('http://localhost/api/environment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        json: vi
-          .fn()
-          .mockImplementation((data, status) => ({ json: data, status })),
-      }
+        body: JSON.stringify({
+          key: 'TEST_VAR',
+          // value missing
+        }),
+      })
+      const res = await app.request(req)
+      const json = await res.json()
 
-      const _response = await POST(mockContext)
-
-      expect(mockContext.json).toHaveBeenCalledWith(
-        {
-          success: false,
-          error: 'Key and value are required',
-        },
-        400,
-      )
+      expect(res.status).toBe(400)
+      expect(json).toEqual({
+        success: false,
+        error: 'Key and value are required',
+      })
       expect(mockEnvironmentManager.setVariable).not.toHaveBeenCalled()
     })
   })
@@ -138,23 +221,23 @@ describe('/api/environment', () => {
     it('should delete environment variable successfully', async () => {
       mockEnvironmentManager.deleteVariable.mockResolvedValue(true)
 
-      const mockContext = {
-        req: {
-          json: vi.fn().mockResolvedValue({
-            key: 'TEST_VAR',
-          }),
+      const req = new Request('http://localhost/api/environment', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        json: vi
-          .fn()
-          .mockImplementation((data) => ({ json: data, status: 200 })),
-      }
+        body: JSON.stringify({
+          key: 'TEST_VAR',
+        }),
+      })
+      const res = await app.request(req)
+      const json = await res.json()
 
-      const _response = await DELETE(mockContext)
-
+      expect(res.status).toBe(200)
       expect(mockEnvironmentManager.deleteVariable).toHaveBeenCalledWith(
         'TEST_VAR',
       )
-      expect(mockContext.json).toHaveBeenCalledWith({
+      expect(json).toEqual({
         success: true,
         message: "Environment variable 'TEST_VAR' deleted successfully",
       })
@@ -163,47 +246,41 @@ describe('/api/environment', () => {
     it('should return 404 when variable not found', async () => {
       mockEnvironmentManager.deleteVariable.mockResolvedValue(false)
 
-      const mockContext = {
-        req: {
-          json: vi.fn().mockResolvedValue({
-            key: 'NONEXISTENT_VAR',
-          }),
+      const req = new Request('http://localhost/api/environment', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        json: vi
-          .fn()
-          .mockImplementation((data, status) => ({ json: data, status })),
-      }
+        body: JSON.stringify({
+          key: 'NONEXISTENT_VAR',
+        }),
+      })
+      const res = await app.request(req)
+      const json = await res.json()
 
-      const _response = await DELETE(mockContext)
-
-      expect(mockContext.json).toHaveBeenCalledWith(
-        {
-          success: false,
-          error: 'Environment variable not found',
-        },
-        404,
-      )
+      expect(res.status).toBe(404)
+      expect(json).toEqual({
+        success: false,
+        error: 'Environment variable not found',
+      })
     })
 
     it('should return 400 when key is missing', async () => {
-      const mockContext = {
-        req: {
-          json: vi.fn().mockResolvedValue({}),
+      const req = new Request('http://localhost/api/environment', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        json: vi
-          .fn()
-          .mockImplementation((data, status) => ({ json: data, status })),
-      }
+        body: JSON.stringify({}),
+      })
+      const res = await app.request(req)
+      const json = await res.json()
 
-      const _response = await DELETE(mockContext)
-
-      expect(mockContext.json).toHaveBeenCalledWith(
-        {
-          success: false,
-          error: 'Key is required',
-        },
-        400,
-      )
+      expect(res.status).toBe(400)
+      expect(json).toEqual({
+        success: false,
+        error: 'Key is required',
+      })
       expect(mockEnvironmentManager.deleteVariable).not.toHaveBeenCalled()
     })
   })

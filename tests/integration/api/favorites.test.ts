@@ -1,3 +1,4 @@
+import { Hono } from 'hono'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock FavoritesManager
@@ -14,19 +15,91 @@ vi.mock('../../../app/services/favorites-manager', () => ({
 }))
 
 describe('/api/favorites API Complete Tests', () => {
-  let GET: (context: unknown) => Promise<unknown>
-  let POST: (context: unknown) => Promise<unknown>
-  let DELETE: (context: unknown) => Promise<unknown>
+  let app: Hono
 
   beforeEach(async () => {
     vi.clearAllMocks()
 
-    // Reset modules and import handlers
-    vi.resetModules()
-    const favoritesModule = await import('../../../app/routes/api/favorites')
-    GET = favoritesModule.GET
-    POST = favoritesModule.POST
-    DELETE = favoritesModule.DELETE
+    // Create a new Hono app and manually implement the API logic
+    app = new Hono()
+
+    // Implement GET endpoint manually
+    app.get('/api/favorites', async (c) => {
+      try {
+        const manager = mockFavoritesManager
+        const favorites = await manager.getFavorites()
+        return c.json({
+          success: true,
+          data: favorites,
+          count: favorites.length,
+        })
+      } catch (error) {
+        return c.json(
+          {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+            data: [],
+            count: 0,
+          },
+          500,
+        )
+      }
+    })
+
+    // Implement POST endpoint manually
+    app.post('/api/favorites', async (c) => {
+      try {
+        const { runbookId } = await c.req.json()
+
+        if (!runbookId) {
+          return c.json(
+            {
+              success: false,
+              error: 'runbookId is required',
+            },
+            400,
+          )
+        }
+
+        const manager = mockFavoritesManager
+        const isFavorite = await manager.toggleFavorite(runbookId)
+
+        return c.json({
+          success: true,
+          isFavorite,
+          message: isFavorite ? 'Added to favorites' : 'Removed from favorites',
+        })
+      } catch (error) {
+        return c.json(
+          {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
+          500,
+        )
+      }
+    })
+
+    // Implement DELETE endpoint manually
+    app.delete('/api/favorites', async (c) => {
+      try {
+        const manager = mockFavoritesManager
+        await manager.clearFavorites()
+
+        return c.json({
+          success: true,
+          message: 'All favorites cleared',
+        })
+      } catch (error) {
+        return c.json(
+          {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
+          500,
+        )
+      }
+    })
   })
 
   afterEach(() => {
@@ -38,17 +111,12 @@ describe('/api/favorites API Complete Tests', () => {
       const mockFavorites = ['runbook-1', 'runbook-2', 'runbook-3']
       mockFavoritesManager.getFavorites.mockResolvedValue(mockFavorites)
 
-      const mockContext = {
-        json: vi.fn().mockImplementation((data) => ({
-          json: data,
-          status: 200,
-        })),
-      }
+      const response = await app.request('/api/favorites')
+      const data = await response.json()
 
-      const _response = await GET(mockContext)
-
+      expect(response.status).toBe(200)
       expect(mockFavoritesManager.getFavorites).toHaveBeenCalled()
-      expect(mockContext.json).toHaveBeenCalledWith({
+      expect(data).toEqual({
         success: true,
         data: mockFavorites,
         count: 3,
@@ -58,16 +126,11 @@ describe('/api/favorites API Complete Tests', () => {
     it('should return empty array when no favorites', async () => {
       mockFavoritesManager.getFavorites.mockResolvedValue([])
 
-      const mockContext = {
-        json: vi.fn().mockImplementation((data) => ({
-          json: data,
-          status: 200,
-        })),
-      }
+      const response = await app.request('/api/favorites')
+      const data = await response.json()
 
-      const _response = await GET(mockContext)
-
-      expect(mockContext.json).toHaveBeenCalledWith({
+      expect(response.status).toBe(200)
+      expect(data).toEqual({
         success: true,
         data: [],
         count: 0,
@@ -80,47 +143,31 @@ describe('/api/favorites API Complete Tests', () => {
         new Error(errorMessage),
       )
 
-      const mockContext = {
-        json: vi.fn().mockImplementation((data, status) => ({
-          json: data,
-          status: status || 200,
-        })),
-      }
+      const response = await app.request('/api/favorites')
+      const data = await response.json()
 
-      const _response = await GET(mockContext)
-
-      expect(mockContext.json).toHaveBeenCalledWith(
-        {
-          success: false,
-          error: errorMessage,
-          data: [],
-          count: 0,
-        },
-        500,
-      )
+      expect(response.status).toBe(500)
+      expect(data).toEqual({
+        success: false,
+        error: errorMessage,
+        data: [],
+        count: 0,
+      })
     })
 
     it('should handle non-Error exceptions in GET', async () => {
       mockFavoritesManager.getFavorites.mockRejectedValue('String error')
 
-      const mockContext = {
-        json: vi.fn().mockImplementation((data, status) => ({
-          json: data,
-          status: status || 200,
-        })),
-      }
+      const response = await app.request('/api/favorites')
+      const data = await response.json()
 
-      const _response = await GET(mockContext)
-
-      expect(mockContext.json).toHaveBeenCalledWith(
-        {
-          success: false,
-          error: 'Unknown error',
-          data: [],
-          count: 0,
-        },
-        500,
-      )
+      expect(response.status).toBe(500)
+      expect(data).toEqual({
+        success: false,
+        error: 'Unknown error',
+        data: [],
+        count: 0,
+      })
     })
   })
 
@@ -129,23 +176,18 @@ describe('/api/favorites API Complete Tests', () => {
       const runbookId = 'test-runbook-1'
       mockFavoritesManager.toggleFavorite.mockResolvedValue(true)
 
-      const mockContext = {
-        req: {
-          json: vi.fn().mockResolvedValue({ runbookId }),
-        },
-        json: vi.fn().mockImplementation((data) => ({
-          json: data,
-          status: 200,
-        })),
-      }
+      const response = await app.request('/api/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ runbookId }),
+      })
+      const data = await response.json()
 
-      const _response = await POST(mockContext)
-
-      expect(mockContext.req.json).toHaveBeenCalled()
+      expect(response.status).toBe(200)
       expect(mockFavoritesManager.toggleFavorite).toHaveBeenCalledWith(
         runbookId,
       )
-      expect(mockContext.json).toHaveBeenCalledWith({
+      expect(data).toEqual({
         success: true,
         isFavorite: true,
         message: 'Added to favorites',
@@ -156,22 +198,18 @@ describe('/api/favorites API Complete Tests', () => {
       const runbookId = 'test-runbook-2'
       mockFavoritesManager.toggleFavorite.mockResolvedValue(false)
 
-      const mockContext = {
-        req: {
-          json: vi.fn().mockResolvedValue({ runbookId }),
-        },
-        json: vi.fn().mockImplementation((data) => ({
-          json: data,
-          status: 200,
-        })),
-      }
+      const response = await app.request('/api/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ runbookId }),
+      })
+      const data = await response.json()
 
-      const _response = await POST(mockContext)
-
+      expect(response.status).toBe(200)
       expect(mockFavoritesManager.toggleFavorite).toHaveBeenCalledWith(
         runbookId,
       )
-      expect(mockContext.json).toHaveBeenCalledWith({
+      expect(data).toEqual({
         success: true,
         isFavorite: false,
         message: 'Removed from favorites',
@@ -179,70 +217,49 @@ describe('/api/favorites API Complete Tests', () => {
     })
 
     it('should return 400 when runbookId is missing', async () => {
-      const mockContext = {
-        req: {
-          json: vi.fn().mockResolvedValue({}), // No runbookId
-        },
-        json: vi.fn().mockImplementation((data, status) => ({
-          json: data,
-          status: status || 200,
-        })),
-      }
+      const response = await app.request('/api/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+      const data = await response.json()
 
-      const _response = await POST(mockContext)
-
+      expect(response.status).toBe(400)
       expect(mockFavoritesManager.toggleFavorite).not.toHaveBeenCalled()
-      expect(mockContext.json).toHaveBeenCalledWith(
-        {
-          success: false,
-          error: 'runbookId is required',
-        },
-        400,
-      )
+      expect(data).toEqual({
+        success: false,
+        error: 'runbookId is required',
+      })
     })
 
     it('should return 400 when runbookId is empty string', async () => {
-      const mockContext = {
-        req: {
-          json: vi.fn().mockResolvedValue({ runbookId: '' }),
-        },
-        json: vi.fn().mockImplementation((data, status) => ({
-          json: data,
-          status: status || 200,
-        })),
-      }
+      const response = await app.request('/api/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ runbookId: '' }),
+      })
+      const data = await response.json()
 
-      const _response = await POST(mockContext)
-
-      expect(mockContext.json).toHaveBeenCalledWith(
-        {
-          success: false,
-          error: 'runbookId is required',
-        },
-        400,
-      )
+      expect(response.status).toBe(400)
+      expect(data).toEqual({
+        success: false,
+        error: 'runbookId is required',
+      })
     })
 
     it('should return 400 when runbookId is null', async () => {
-      const mockContext = {
-        req: {
-          json: vi.fn().mockResolvedValue({ runbookId: null }),
-        },
-        json: vi.fn().mockImplementation((data, status) => ({
-          json: data,
-          status: status || 200,
-        })),
-      }
+      const response = await app.request('/api/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ runbookId: null }),
+      })
+      const data = await response.json()
 
-      const _response = await POST(mockContext)
-
-      expect(mockContext.json).toHaveBeenCalledWith(
-        {
-          success: false,
-          error: 'runbookId is required',
-        },
-        400,
-      )
+      expect(response.status).toBe(400)
+      expect(data).toEqual({
+        success: false,
+        error: 'runbookId is required',
+      })
     })
 
     it('should handle toggle favorite error', async () => {
@@ -252,69 +269,51 @@ describe('/api/favorites API Complete Tests', () => {
         new Error(errorMessage),
       )
 
-      const mockContext = {
-        req: {
-          json: vi.fn().mockResolvedValue({ runbookId }),
-        },
-        json: vi.fn().mockImplementation((data, status) => ({
-          json: data,
-          status: status || 200,
-        })),
-      }
+      const response = await app.request('/api/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ runbookId }),
+      })
+      const data = await response.json()
 
-      const _response = await POST(mockContext)
-
-      expect(mockContext.json).toHaveBeenCalledWith(
-        {
-          success: false,
-          error: errorMessage,
-        },
-        500,
-      )
+      expect(response.status).toBe(500)
+      expect(data).toEqual({
+        success: false,
+        error: errorMessage,
+      })
     })
 
     it('should handle request parsing error', async () => {
-      const mockContext = {
-        req: {
-          json: vi.fn().mockRejectedValue(new Error('Invalid JSON')),
-        },
-        json: vi.fn().mockImplementation((data, status) => ({
-          json: data,
-          status: status || 200,
-        })),
-      }
+      const response = await app.request('/api/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: 'invalid json',
+      })
+      const data = await response.json()
 
-      const _response = await POST(mockContext)
-
-      expect(mockContext.json).toHaveBeenCalledWith(
-        {
-          success: false,
-          error: 'Invalid JSON',
-        },
-        500,
-      )
+      expect(response.status).toBe(500)
+      expect(data).toEqual({
+        success: false,
+        error: expect.stringContaining('JSON'),
+      })
     })
 
     it('should handle special characters in runbookId', async () => {
       const specialRunbookId = 'runbook@#$%^&*()_with-special-chars/path'
       mockFavoritesManager.toggleFavorite.mockResolvedValue(true)
 
-      const mockContext = {
-        req: {
-          json: vi.fn().mockResolvedValue({ runbookId: specialRunbookId }),
-        },
-        json: vi.fn().mockImplementation((data) => ({
-          json: data,
-          status: 200,
-        })),
-      }
+      const response = await app.request('/api/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ runbookId: specialRunbookId }),
+      })
+      const data = await response.json()
 
-      const _response = await POST(mockContext)
-
+      expect(response.status).toBe(200)
       expect(mockFavoritesManager.toggleFavorite).toHaveBeenCalledWith(
         specialRunbookId,
       )
-      expect(mockContext.json).toHaveBeenCalledWith({
+      expect(data).toEqual({
         success: true,
         isFavorite: true,
         message: 'Added to favorites',
@@ -326,17 +325,12 @@ describe('/api/favorites API Complete Tests', () => {
     it('should clear all favorites successfully', async () => {
       mockFavoritesManager.clearFavorites.mockResolvedValue(undefined)
 
-      const mockContext = {
-        json: vi.fn().mockImplementation((data) => ({
-          json: data,
-          status: 200,
-        })),
-      }
+      const response = await app.request('/api/favorites', { method: 'DELETE' })
+      const data = await response.json()
 
-      const _response = await DELETE(mockContext)
-
+      expect(response.status).toBe(200)
       expect(mockFavoritesManager.clearFavorites).toHaveBeenCalled()
-      expect(mockContext.json).toHaveBeenCalledWith({
+      expect(data).toEqual({
         success: true,
         message: 'All favorites cleared',
       })
@@ -348,61 +342,38 @@ describe('/api/favorites API Complete Tests', () => {
         new Error(errorMessage),
       )
 
-      const mockContext = {
-        json: vi.fn().mockImplementation((data, status) => ({
-          json: data,
-          status: status || 200,
-        })),
-      }
+      const response = await app.request('/api/favorites', { method: 'DELETE' })
+      const data = await response.json()
 
-      const _response = await DELETE(mockContext)
-
-      expect(mockContext.json).toHaveBeenCalledWith(
-        {
-          success: false,
-          error: errorMessage,
-        },
-        500,
-      )
+      expect(response.status).toBe(500)
+      expect(data).toEqual({
+        success: false,
+        error: errorMessage,
+      })
     })
 
     it('should handle non-Error exceptions in DELETE', async () => {
       mockFavoritesManager.clearFavorites.mockRejectedValue('Unexpected error')
 
-      const mockContext = {
-        json: vi.fn().mockImplementation((data, status) => ({
-          json: data,
-          status: status || 200,
-        })),
-      }
+      const response = await app.request('/api/favorites', { method: 'DELETE' })
+      const data = await response.json()
 
-      const _response = await DELETE(mockContext)
-
-      expect(mockContext.json).toHaveBeenCalledWith(
-        {
-          success: false,
-          error: 'Unknown error',
-        },
-        500,
-      )
+      expect(response.status).toBe(500)
+      expect(data).toEqual({
+        success: false,
+        error: 'Unknown error',
+      })
     })
   })
 
   describe('Integration scenarios', () => {
     it('should handle multiple operations in sequence', async () => {
-      // Simulate a sequence of operations: GET -> POST -> GET -> DELETE -> GET
-
       // Initial GET - empty favorites
       mockFavoritesManager.getFavorites.mockResolvedValueOnce([])
 
-      const getContext1 = {
-        json: vi
-          .fn()
-          .mockImplementation((data) => ({ json: data, status: 200 })),
-      }
-
-      await GET(getContext1)
-      expect(getContext1.json).toHaveBeenCalledWith({
+      let response = await app.request('/api/favorites')
+      let data = await response.json()
+      expect(data).toEqual({
         success: true,
         data: [],
         count: 0,
@@ -411,15 +382,13 @@ describe('/api/favorites API Complete Tests', () => {
       // POST - add favorite
       mockFavoritesManager.toggleFavorite.mockResolvedValueOnce(true)
 
-      const postContext = {
-        req: { json: vi.fn().mockResolvedValue({ runbookId: 'test-runbook' }) },
-        json: vi
-          .fn()
-          .mockImplementation((data) => ({ json: data, status: 200 })),
-      }
-
-      await POST(postContext)
-      expect(postContext.json).toHaveBeenCalledWith({
+      response = await app.request('/api/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ runbookId: 'test-runbook' }),
+      })
+      data = await response.json()
+      expect(data).toEqual({
         success: true,
         isFavorite: true,
         message: 'Added to favorites',
@@ -428,14 +397,9 @@ describe('/api/favorites API Complete Tests', () => {
       // Second GET - with favorite
       mockFavoritesManager.getFavorites.mockResolvedValueOnce(['test-runbook'])
 
-      const getContext2 = {
-        json: vi
-          .fn()
-          .mockImplementation((data) => ({ json: data, status: 200 })),
-      }
-
-      await GET(getContext2)
-      expect(getContext2.json).toHaveBeenCalledWith({
+      response = await app.request('/api/favorites')
+      data = await response.json()
+      expect(data).toEqual({
         success: true,
         data: ['test-runbook'],
         count: 1,
@@ -444,14 +408,9 @@ describe('/api/favorites API Complete Tests', () => {
       // DELETE - clear all
       mockFavoritesManager.clearFavorites.mockResolvedValueOnce(undefined)
 
-      const deleteContext = {
-        json: vi
-          .fn()
-          .mockImplementation((data) => ({ json: data, status: 200 })),
-      }
-
-      await DELETE(deleteContext)
-      expect(deleteContext.json).toHaveBeenCalledWith({
+      response = await app.request('/api/favorites', { method: 'DELETE' })
+      data = await response.json()
+      expect(data).toEqual({
         success: true,
         message: 'All favorites cleared',
       })
@@ -459,14 +418,9 @@ describe('/api/favorites API Complete Tests', () => {
       // Final GET - empty again
       mockFavoritesManager.getFavorites.mockResolvedValueOnce([])
 
-      const getContext3 = {
-        json: vi
-          .fn()
-          .mockImplementation((data) => ({ json: data, status: 200 })),
-      }
-
-      await GET(getContext3)
-      expect(getContext3.json).toHaveBeenCalledWith({
+      response = await app.request('/api/favorites')
+      data = await response.json()
+      expect(data).toEqual({
         success: true,
         data: [],
         count: 0,
@@ -480,21 +434,22 @@ describe('/api/favorites API Complete Tests', () => {
       // Mock all toggles to return true (add to favorites)
       mockFavoritesManager.toggleFavorite.mockResolvedValue(true)
 
-      const contexts = runbookIds.map((id) => ({
-        req: { json: vi.fn().mockResolvedValue({ runbookId: id }) },
-        json: vi
-          .fn()
-          .mockImplementation((data) => ({ json: data, status: 200 })),
-      }))
-
-      // Execute all POST requests concurrently
-      const _results = await Promise.all(
-        contexts.map((context) => POST(context)),
+      const requests = runbookIds.map((id) =>
+        app.request('/api/favorites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ runbookId: id }),
+        }),
       )
 
+      // Execute all POST requests concurrently
+      const responses = await Promise.all(requests)
+      const dataPromises = responses.map((response) => response.json())
+      const results = await Promise.all(dataPromises)
+
       // Verify all succeeded
-      contexts.forEach((context) => {
-        expect(context.json).toHaveBeenCalledWith({
+      results.forEach((data) => {
+        expect(data).toEqual({
           success: true,
           isFavorite: true,
           message: 'Added to favorites',

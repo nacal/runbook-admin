@@ -4,9 +4,7 @@ import type { EnvironmentVariable } from '../../app/types/types'
 // Simple EnvironmentManager tests that focus on logic rather than file I/O
 describe('EnvironmentManager (Simple Tests)', () => {
   let EnvironmentManager: typeof import('../../app/services/environment-manager').EnvironmentManager
-  let manager: InstanceType<
-    typeof import('../../app/services/environment-manager').EnvironmentManager
-  >
+  let manager: import('../../app/services/environment-manager').EnvironmentManager
 
   beforeEach(async () => {
     // Reset singleton

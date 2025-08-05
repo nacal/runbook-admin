@@ -19,5 +19,5 @@
       "@/*": ["./app/*"]
     }
   },
-  "include": ["app", "src"]
+  "include": ["app", "src", "tests"]
 }

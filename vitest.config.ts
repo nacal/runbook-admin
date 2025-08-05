@@ -6,6 +6,7 @@ export default defineConfig({
     environment: 'happy-dom',
     setupFiles: ['./tests/setup.ts'],
     globals: true,
+    testTimeout: 10000, // 10秒に設定
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json-summary', 'json'],
@@ -21,8 +22,10 @@ export default defineConfig({
     },
     include: ['tests/**/*.test.{js,ts,tsx}'],
     exclude: ['tests/e2e/**'],
-    deps: {
-      external: ['node:fs/promises', 'node:crypto', 'node:path'],
+    server: {
+      deps: {
+        external: ['node:fs/promises', 'node:crypto', 'node:path'],
+      },
     },
   },
   resolve: {

@@ -21,12 +21,13 @@ export class RunnExecutor extends EventEmitter {
     timeout: number = 60000,
     executionOptions?: ExecutionOptions,
   ): Promise<ExecutionResult> {
+    // Check for concurrent execution before any async setup
+    if (this.process) {
+      throw new Error('Execution already in progress')
+    }
+
     // Extract async setup outside Promise constructor
     const setupExecution = async () => {
-      if (this.process) {
-        throw new Error('Execution already in progress')
-      }
-
       const startTime = new Date()
       const args = ['run', runbookPath]
 
