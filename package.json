@@ -29,7 +29,6 @@
     "agentcheck": "pnpm check && pnpm knip:fix && pnpm build && pnpm test:run && pnpm test:e2e:list",
     "knip": "knip",
     "knip:fix": "knip --fix --format",
-    "prepublishOnly": "pnpm run agentcheck",
     "release": "release-it",
     "release:dry": "release-it --dry-run"
   },
