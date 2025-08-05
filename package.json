@@ -28,7 +28,8 @@
     "typecheck": "tsc --noEmit",
     "agentcheck": "pnpm check && pnpm knip:fix && pnpm build && pnpm test:run && pnpm test:e2e:list",
     "knip": "knip",
-    "knip:fix": "knip --fix --format"
+    "knip:fix": "knip --fix --format",
+    "prepublishOnly": "pnpm run agentcheck"
   },
   "dependencies": {
     "hono": "^4.6.0",

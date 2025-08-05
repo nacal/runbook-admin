@@ -1,0 +1,125 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test (Node.js ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    strategy:
+      matrix:
+        node-version: [18, 20]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm typecheck
+
+      - name: Lint and format check
+        run: pnpm check
+
+      - name: Check for unused dependencies
+        run: pnpm knip
+
+      - name: Build
+        run: pnpm build
+
+      - name: Run unit and integration tests
+        run: pnpm test:run
+
+      - name: Install Playwright browsers
+        run: pnpm playwright install --with-deps
+
+      - name: Run E2E tests
+        run: pnpm test:e2e:list
+
+      - name: Upload test coverage
+        if: matrix.node-version == 20
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/coverage-final.json
+          fail_ci_if_error: false
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-node-${{ matrix.node-version }}
+          path: playwright-report/
+          retention-days: 7
+
+  build-and-verify:
+    name: Build and verify package
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build package
+        run: pnpm build
+
+      - name: Pack package
+        run: pnpm pack
+
+      - name: Verify package contents
+        run: |
+          tar -tzf runbook-admin-*.tgz | head -20
+          echo "Package size:"
+          ls -lh runbook-admin-*.tgz
+
+      - name: Test package installation
+        run: |
+          mkdir test-install
+          cd test-install
+          npm init -y
+          npm install ../runbook-admin-*.tgz
+          npx runbook-admin --help
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: package
+          path: runbook-admin-*.tgz
+          retention-days: 7

@@ -1,0 +1,18 @@
+# tagpr configuration
+versionFile: package.json
+vPrefix: true
+releaseBranch: main
+template: |
+  # Changelog
+
+  {{ range .Versions }}
+  ## {{ .Tag.Name }} ({{ .Tag.Date.Format "2006-01-02" }})
+  {{ range .CommitGroups -}}
+  ### {{ .Title }}
+  {{ range .Commits }}
+  - {{ if .Scope }}**{{ .Scope }}**: {{ end }}{{ .Subject }}{{ if .Issues }} ({{ range .Issues }}#{{ . }}{{ end }}){{ end }}
+  {{- end }}
+  {{ end }}
+  {{- end }}
+
+labelPrefix: "tagpr:"
