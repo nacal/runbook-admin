@@ -24,6 +24,9 @@
     "@vitest/coverage-v8",
     "tailwindcss"
   ],
+  "ignoreBinaries": [
+    "runbook-admin"
+  ],
   "ignoreExportsUsedInFile": true,
   "includeEntryExports": false,
   "typescript": {
