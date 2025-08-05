@@ -138,7 +138,3 @@ runbook-admin/
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) file for details.
-
----
-
-**Built with ❤️ using [HonoX](https://github.com/honojs/honox) + [Runn](https://github.com/k1LoW/runn)**
