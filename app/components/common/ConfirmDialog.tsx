@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'hono/jsx'
-import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 
 export interface ConfirmDialogProps {
   isOpen: boolean

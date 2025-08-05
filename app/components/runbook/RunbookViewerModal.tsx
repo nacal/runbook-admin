@@ -1,9 +1,9 @@
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { createHighlighter } from 'shiki'
-import { FileScanner } from '../services/file-scanner'
-import type { Runbook } from '../types/types'
-import { getProjectPath } from '../utils/project-context'
+import { FileScanner } from '@/services/file-scanner'
+import type { Runbook } from '@/types/types'
+import { getProjectPath } from '@/utils/project-context'
 
 interface RunbookViewerModalProps {
   runbookId: string

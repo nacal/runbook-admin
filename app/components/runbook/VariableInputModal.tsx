@@ -1,7 +1,7 @@
-import { VariableInput } from '../islands/VariableInput'
-import { FileScanner } from '../services/file-scanner'
-import type { Runbook } from '../types/types'
-import { getProjectPath } from '../utils/project-context'
+import { VariableInput } from '@/islands/VariableInput'
+import { FileScanner } from '@/services/file-scanner'
+import type { Runbook } from '@/types/types'
+import { getProjectPath } from '@/utils/project-context'
 
 interface VariableInputModalProps {
   runbookId: string

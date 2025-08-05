@@ -1,6 +1,6 @@
-import { EnvironmentManager } from '../services/environment-manager'
-import { ExecutionManager } from '../services/execution-manager'
-import type { ExecutionResult } from '../types/types'
+import { EnvironmentManager } from '@/services/environment-manager'
+import { ExecutionManager } from '@/services/execution-manager'
+import type { ExecutionResult } from '@/types/types'
 
 interface ExecutionModalProps {
   executionId: string

@@ -1,11 +1,11 @@
 import { useState } from 'hono/jsx'
-import { EmptyState } from '../components/EmptyState'
-import { ErrorState } from '../components/ErrorState'
-import { LabelFilter } from '../components/LabelFilter'
-import { RunbookGrid } from '../components/RunbookGrid'
-import { SearchBar } from '../components/SearchBar'
-import { StatsBar } from '../components/StatsBar'
-import type { Runbook } from '../types/types'
+import { EmptyState } from '@/components/common/EmptyState'
+import { ErrorState } from '@/components/common/ErrorState'
+import { LabelFilter } from '@/components/runbook/LabelFilter'
+import { RunbookGrid } from '@/components/runbook/RunbookGrid'
+import { SearchBar } from '@/components/runbook/SearchBar'
+import { StatsBar } from '@/components/runbook/StatsBar'
+import type { Runbook } from '@/types/types'
 import { Toast, useToast } from './Toast'
 
 interface RunbookListProps {

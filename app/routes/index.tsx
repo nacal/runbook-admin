@@ -1,12 +1,12 @@
 import { Suspense } from 'hono/jsx'
 import { createRoute } from 'honox/factory'
-import { DashboardContent } from '../components/DashboardContent'
-import { EnvironmentSettingsModal } from '../components/EnvironmentSettingsModal'
-import { ExecutionModal } from '../components/ExecutionModal'
-import { LoadingState } from '../components/LoadingState'
-import { RunbookViewerModal } from '../components/RunbookViewerModal'
-import { VariableInputModal } from '../components/VariableInputModal'
-import { getProjectPath } from '../utils/project-context'
+import { LoadingState } from '@/components/common/LoadingState'
+import { DashboardContent } from '@/components/dashboard/DashboardContent'
+import { EnvironmentSettingsModal } from '@/components/environment/EnvironmentSettingsModal'
+import { ExecutionModal } from '@/components/execution/ExecutionModal'
+import { RunbookViewerModal } from '@/components/runbook/RunbookViewerModal'
+import { VariableInputModal } from '@/components/runbook/VariableInputModal'
+import { getProjectPath } from '@/utils/project-context'
 
 export default createRoute((c) => {
   const executionId = c.req.query('execution')

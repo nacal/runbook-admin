@@ -1,4 +1,4 @@
-import { EnvironmentSettings } from '../islands/EnvironmentSettings'
+import { EnvironmentSettings } from '@/islands/EnvironmentSettings'
 
 interface EnvironmentSettingsModalProps {
   backUrl: string

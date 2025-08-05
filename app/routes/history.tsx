@@ -1,8 +1,8 @@
 import { Suspense } from 'hono/jsx'
 import { createRoute } from 'honox/factory'
-import { ExecutionModal } from '../components/ExecutionModal'
-import { HistoryContent } from '../components/HistoryContent'
-import { LoadingState } from '../components/LoadingState'
+import { LoadingState } from '@/components/common/LoadingState'
+import { ExecutionModal } from '@/components/execution/ExecutionModal'
+import { HistoryContent } from '@/components/execution/HistoryContent'
 
 export default createRoute((c) => {
   const executionId = c.req.query('execution')

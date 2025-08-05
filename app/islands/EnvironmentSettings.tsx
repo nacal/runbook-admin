@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'hono/jsx'
-import { useConfirmDialog } from '../components/ConfirmDialog'
-import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
+import { useConfirmDialog } from '@/components/common/ConfirmDialog'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { Toast, useToast } from './Toast'
 
 interface EnvironmentVariable {

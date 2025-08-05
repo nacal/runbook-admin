@@ -1,8 +1,8 @@
-import { RunbookList } from '../islands/RunbookList'
-import { FavoritesManager } from '../services/favorites-manager'
-import { FileScanner } from '../services/file-scanner'
-import type { Runbook } from '../types/types'
-import { getProjectPath } from '../utils/project-context'
+import { RunbookList } from '@/islands/RunbookList'
+import { FavoritesManager } from '@/services/favorites-manager'
+import { FileScanner } from '@/services/file-scanner'
+import type { Runbook } from '@/types/types'
+import { getProjectPath } from '@/utils/project-context'
 
 interface DashboardData {
   runbooks: Runbook[]

@@ -1,6 +1,6 @@
 import { useState } from 'hono/jsx'
-import { useConfirmDialog } from '../components/ConfirmDialog'
-import type { ExecutionResult } from '../types/types'
+import { useConfirmDialog } from '@/components/common/ConfirmDialog'
+import type { ExecutionResult } from '@/types/types'
 import { Toast, useToast } from './Toast'
 
 interface ExecutionHistoryProps {

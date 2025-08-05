@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'hono/jsx'
-import type { Runbook } from '../types/types'
+import type { Runbook } from '@/types/types'
 
 interface RunbookCardProps {
   runbook: Runbook
