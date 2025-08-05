@@ -73,8 +73,8 @@ vi.mock('../../app/services/execution-options-manager', () => ({
 }))
 
 // Helper functions to access private methods without using any
-const getPrivateMethod = <T extends Record<string, unknown>>(
-  obj: T,
+const getPrivateMethod = (
+  obj: unknown,
   methodName: string,
   // biome-ignore lint/suspicious/noExplicitAny: needed to access private methods in tests
 ): any => (obj as any)[methodName]
