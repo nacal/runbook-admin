@@ -54,13 +54,6 @@ export function getShikiInstance(): Highlighter | null {
 }
 
 /**
- * Shikiが初期化されているかチェック
- */
-export function isShikiInitialized(): boolean {
-  return shikiInstance !== null
-}
-
-/**
  * HTMLエスケープユーティリティ
  */
 export function escapeHtml(unsafe: string): string {
