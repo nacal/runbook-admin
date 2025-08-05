@@ -24,7 +24,9 @@
   },
   "hooks": {
     "before:init": [
-      "pnpm run agentcheck"
+      "pnpm typecheck",
+      "pnpm check",
+      "pnpm test:run"
     ],
     "after:bump": [
       "pnpm run build"
