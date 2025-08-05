@@ -1,8 +1,0 @@
-# config file for the tagpr in git config format
-# Configuration for runbook-admin project
-[tagpr]
-    vPrefix = true
-    releaseBranch = main
-    versionFile = package.json
-    changelog = true
-    release = true
