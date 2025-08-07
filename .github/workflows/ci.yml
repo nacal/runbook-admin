@@ -18,7 +18,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18, 20]
+        node-version: [21, 22]
 
     steps:
       - name: Checkout code
@@ -60,7 +60,7 @@ jobs:
         run: pnpm test:e2e:list
 
       - name: Upload test coverage
-        if: matrix.node-version == 20
+        if: matrix.node-version == 22
         uses: codecov/codecov-action@v4
         with:
           files: ./coverage/coverage-final.json
@@ -91,7 +91,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'pnpm'
 
       - name: Install dependencies

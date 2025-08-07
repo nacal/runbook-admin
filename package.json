@@ -10,6 +10,9 @@
     "dist",
     "README.md"
   ],
+  "engines": {
+    "node": ">=21.7.0"
+  },
   "scripts": {
     "dev": "vite dev",
     "build": "vite build && pnpm run build:cli",
