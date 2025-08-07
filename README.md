@@ -36,7 +36,7 @@ npx runbook-admin
 
 ## 📋 Requirements
 
-- **Node.js** 18+ 
+- **Node.js** 21.7.0+
 - **Runn CLI** installed and in PATH:
   ```bash
   go install github.com/k1LoW/runn/cmd/runn@latest

@@ -124,10 +124,29 @@ async function checkRunn() {
   }
 }
 
+// Check Node.js version
+function checkNodeVersion() {
+  const nodeVersion = process.version
+  const majorVersion = Number.parseInt(nodeVersion.split('.')[0].substring(1))
+  const minorVersion = Number.parseInt(nodeVersion.split('.')[1])
+  
+  // Require Node.js 21.7.0 or later
+  if (majorVersion < 21 || (majorVersion === 21 && minorVersion < 7)) {
+    console.error('❌ Node.js version 21.7.0 or later is required')
+    console.error(`   Current version: ${nodeVersion}`)
+    console.error('   Please update Node.js to version 21.7.0 or later')
+    console.error('   Visit: https://nodejs.org/')
+    process.exit(1)
+  }
+}
+
 // Main execution
 async function init() {
   console.log('🔥 Runbook Admin')
   console.log('================')
+  
+  // Check Node.js version first
+  checkNodeVersion()
 
   // Check if runn is installed
   const hasRunn = await checkRunn()
