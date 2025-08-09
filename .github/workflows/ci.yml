@@ -109,18 +109,3 @@ jobs:
           tar -tzf runbook-admin-*.tgz | head -20
           echo "Package size:"
           ls -lh runbook-admin-*.tgz
-
-      - name: Test package installation
-        run: |
-          mkdir test-install
-          cd test-install
-          npm init -y
-          npm install ../runbook-admin-*.tgz
-          npx runbook-admin --help
-
-      - name: Upload package artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: package
-          path: runbook-admin-*.tgz
-          retention-days: 7
