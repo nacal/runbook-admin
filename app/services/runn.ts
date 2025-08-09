@@ -93,9 +93,14 @@ export class RunnExecutor extends EventEmitter {
 
         this.process = spawn('runn', args, {
           cwd: getProjectPath(),
-          stdio: ['ignore', 'pipe', 'pipe'], // ignore stdin to prevent hanging
+          stdio: ['pipe', 'pipe', 'pipe'],
           env: finalEnv,
         })
+
+        // Close stdin immediately to prevent hanging on input
+        if (this.process.stdin) {
+          this.process.stdin.end()
+        }
 
         let output = ''
         let errorOutput = ''

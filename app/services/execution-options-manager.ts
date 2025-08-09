@@ -59,9 +59,6 @@ export class ExecutionOptionsManager {
       }
 
       this.initialized = true
-      console.log(
-        `[ExecutionOptionsManager] Loaded ${Object.keys(this.presets).length} presets`,
-      )
     } catch (error) {
       console.error('[ExecutionOptionsManager] Failed to initialize:', error)
       this.initialized = true
@@ -85,7 +82,6 @@ export class ExecutionOptionsManager {
 
     this.presets[name] = preset
     await this.persistPresets()
-    console.log(`[ExecutionOptionsManager] Saved preset: ${name}`)
   }
 
   async getPreset(name: string): Promise<ExecutionPreset | undefined> {
@@ -110,7 +106,6 @@ export class ExecutionOptionsManager {
     if (this.presets[name]) {
       delete this.presets[name]
       await this.persistPresets()
-      console.log(`[ExecutionOptionsManager] Deleted preset: ${name}`)
       return true
     }
     return false
@@ -120,7 +115,6 @@ export class ExecutionOptionsManager {
     await this.initialize()
     this.defaultOptions = options
     await this.storage.saveDefaultExecutionOptions(options)
-    console.log('[ExecutionOptionsManager] Updated default options')
   }
 
   async getDefaultOptions(): Promise<ExecutionOptions> {

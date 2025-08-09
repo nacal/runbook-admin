@@ -30,9 +30,6 @@ export class ExecutionManager {
         this.executions.set(execution.id, execution)
       })
       this.initialized = true
-      console.log(
-        `[ExecutionManager] Loaded ${savedExecutions.length} executions from storage`,
-      )
     } catch (error) {
       console.error(
         '[ExecutionManager] Failed to initialize from storage:',
@@ -77,42 +74,33 @@ export class ExecutionManager {
     this.executors.set(executionId, executor)
 
     // Set up event listeners
-    executor.on('started', (data) => {
-      console.log(`[ExecutionManager] Execution ${executionId} started:`, data)
+    executor.on('started', (_data) => {
+      // Execution started
     })
 
     executor.on('output', (data) => {
-      console.log(
-        `[ExecutionManager] Output from ${executionId}:`,
-        data.chunk.trim(),
-      )
       const execution = this.executions.get(executionId)
       if (execution) {
-        execution.output.push(`[${data.timestamp.toISOString()}] ${data.chunk}`)
+        execution.output.push(data.chunk.trim())
         this.executions.set(executionId, execution)
       }
     })
 
     executor.on('error', (data) => {
-      console.log(
-        `[ExecutionManager] Error from ${executionId}:`,
-        data.chunk.trim(),
-      )
       const execution = this.executions.get(executionId)
       if (execution) {
-        execution.output.push(
-          `[ERROR ${data.timestamp.toISOString()}] ${data.chunk}`,
-        )
+        execution.output.push(`[ERROR] ${data.chunk.trim()}`)
         this.executions.set(executionId, execution)
       }
     })
 
     executor.on('complete', (result: ExecutionResult) => {
-      console.log(
-        `[ExecutionManager] Execution ${executionId} completed:`,
-        result.status,
-        `(${result.duration}ms)`,
-      )
+      // Merge the accumulated output with the final result
+      const existingExecution = this.executions.get(executionId)
+      if (existingExecution && existingExecution.output.length > 0) {
+        result.output = existingExecution.output
+      }
+
       this.executions.set(executionId, result)
       this.executors.delete(executionId)
 
@@ -173,6 +161,5 @@ export class ExecutionManager {
   async clearHistory(): Promise<void> {
     this.executions.clear()
     await this.storage.clearHistory()
-    console.log('[ExecutionManager] Cleared all execution history')
   }
 }
