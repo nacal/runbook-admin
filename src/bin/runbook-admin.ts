@@ -129,7 +129,7 @@ function checkNodeVersion() {
   const nodeVersion = process.version
   const majorVersion = Number.parseInt(nodeVersion.split('.')[0].substring(1))
   const minorVersion = Number.parseInt(nodeVersion.split('.')[1])
-  
+
   // Require Node.js 21.7.0 or later
   if (majorVersion < 21 || (majorVersion === 21 && minorVersion < 7)) {
     console.error('❌ Node.js version 21.7.0 or later is required')
@@ -144,7 +144,7 @@ function checkNodeVersion() {
 async function init() {
   console.log('🔥 Runbook Admin')
   console.log('================')
-  
+
   // Check Node.js version first
   checkNodeVersion()
 

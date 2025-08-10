@@ -170,6 +170,7 @@ export function RunbookCard({
     <>
       <style>{lineClampStyles}</style>
       <div
+        data-testid="runbook-card"
         class={`bg-slate-800/50 border ${
           isFavorite
             ? 'border-yellow-600/50 hover:border-yellow-600'

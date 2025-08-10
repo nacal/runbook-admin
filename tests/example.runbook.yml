@@ -1,0 +1,15 @@
+desc: Example test runbook with variables
+vars:
+  endpoint: https://httpbin.org
+  user_agent: runbook-admin-test
+runners:
+  req: "{{ vars.endpoint }}"
+steps:
+- desc: Get user agent
+  req:
+    /user-agent:
+      get:
+        headers:
+          User-Agent: "{{ vars.user_agent }}"
+  test: |
+    current.res.status == 200
