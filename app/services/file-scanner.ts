@@ -10,6 +10,7 @@ export class FileScanner {
   private ignore = [
     'node_modules',
     '.git',
+    '.github',
     'dist',
     'build',
     '.next',
@@ -68,45 +69,39 @@ export class FileScanner {
     const content = await readFile(filePath, 'utf-8')
     const stats = await stat(filePath)
 
-    try {
-      const { load } = await import('js-yaml')
-      const yaml = load(content) as Record<
-        string,
-        string | number | boolean | object | null
-      >
+    const { load } = await import('js-yaml')
+    const yaml = load(content) as Record<
+      string,
+      string | number | boolean | object | null
+    >
 
-      // Check if this is a valid runbook (has steps or is empty)
-      if (
-        yaml &&
-        typeof yaml === 'object' &&
-        ('steps' in yaml || 'desc' in yaml || 'description' in yaml)
-      ) {
-        const name = basename(filePath)
-          .replace(/\.ya?ml$/, '')
-          .replace(/\.(runbook|runn)$/, '')
+    // Check if this is a valid runbook (has steps or is empty)
+    if (
+      yaml &&
+      typeof yaml === 'object' &&
+      ('steps' in yaml || 'desc' in yaml || 'description' in yaml)
+    ) {
+      const name = basename(filePath)
+        .replace(/\.ya?ml$/, '')
+        .replace(/\.(runbook|runn)$/, '')
 
-        const relativePath = relative(this.rootPath, filePath)
+      const relativePath = relative(this.rootPath, filePath)
 
-        const runbook: Runbook = {
-          id: this.generateId(relativePath),
-          path: relativePath,
-          name,
-          description:
-            (yaml.desc as string) || (yaml.description as string) || '',
-          steps: this.countSteps(yaml),
-          lastModified: stats.mtime,
-          variables: this.extractVariables(yaml),
-          labels: (yaml.labels as string[]) || [],
-        }
-
-        return runbook
-      } else {
-        throw new Error('Not a valid runbook format')
+      const runbook: Runbook = {
+        id: this.generateId(relativePath),
+        path: relativePath,
+        name,
+        description:
+          (yaml.desc as string) || (yaml.description as string) || '',
+        steps: this.countSteps(yaml),
+        lastModified: stats.mtime,
+        variables: this.extractVariables(yaml),
+        labels: (yaml.labels as string[]) || [],
       }
-    } catch (error) {
-      // Log the error for debugging but don't stop the scan
-      console.debug(`Skipping ${relative(this.rootPath, filePath)}: ${error}`)
-      throw error
+
+      return runbook
+    } else {
+      throw new Error('Not a valid runbook format')
     }
   }
 

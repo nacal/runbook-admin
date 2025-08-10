@@ -5,7 +5,7 @@ import { DashboardContent } from '@/components/dashboard/DashboardContent'
 import { EnvironmentSettingsModal } from '@/components/environment/EnvironmentSettingsModal'
 import { ExecutionModal } from '@/components/execution/ExecutionModal'
 import { RunbookViewerModal } from '@/components/runbook/RunbookViewerModal'
-import { VariableInputModal } from '@/components/runbook/VariableInputModal'
+import { VariableInputWrapper } from '@/components/runbook/VariableInputWrapper'
 import { getProjectPath } from '@/utils/project-context'
 
 export default createRoute((c) => {
@@ -49,7 +49,12 @@ export default createRoute((c) => {
             <div class="fixed inset-0 z-50 flex items-center justify-center">
               <div class="absolute inset-0 bg-black/70" />
               <div class="relative bg-slate-900 border border-slate-700 rounded-lg p-8">
-                <LoadingState />
+                <div class="flex items-center space-x-3">
+                  <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-400 border-t-transparent"></div>
+                  <div class="text-blue-400 font-medium">
+                    Executing runbook...
+                  </div>
+                </div>
               </div>
             </div>
           }
@@ -70,7 +75,7 @@ export default createRoute((c) => {
             </div>
           }
         >
-          <VariableInputModal runbookId={variableInputId} backUrl="/" />
+          <VariableInputWrapper runbookId={variableInputId} backUrl="/" />
         </Suspense>
       )}
 

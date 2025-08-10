@@ -55,9 +55,6 @@ export class VariableManager {
       this.globalVariables = await this.storage.loadGlobalVariables()
 
       this.initialized = true
-      console.log(
-        `[VariableManager] Loaded ${Object.keys(this.presets).length} presets and ${Object.keys(this.globalVariables).length} global variables`,
-      )
     } catch (error) {
       console.error('[VariableManager] Failed to initialize:', error)
       this.initialized = true
@@ -83,7 +80,6 @@ export class VariableManager {
 
     this.presets[name] = preset
     await this.persistPresets()
-    console.log(`[VariableManager] Saved preset: ${name}`)
   }
 
   async getPreset(name: string): Promise<VariablePreset | undefined> {
@@ -109,7 +105,6 @@ export class VariableManager {
     if (this.presets[name]) {
       delete this.presets[name]
       await this.persistPresets()
-      console.log(`[VariableManager] Deleted preset: ${name}`)
       return true
     }
     return false
@@ -119,7 +114,6 @@ export class VariableManager {
     await this.initialize()
     this.globalVariables[key] = value
     await this.storage.saveGlobalVariables(this.globalVariables)
-    console.log(`[VariableManager] Set global variable: ${key}`)
   }
 
   async getGlobalVariables(): Promise<Record<string, string>> {
@@ -132,7 +126,6 @@ export class VariableManager {
     if (this.globalVariables[key]) {
       delete this.globalVariables[key]
       await this.storage.saveGlobalVariables(this.globalVariables)
-      console.log(`[VariableManager] Deleted global variable: ${key}`)
       return true
     }
     return false

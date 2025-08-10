@@ -45,9 +45,6 @@ export class EnvironmentManager {
         }
       })
       this.initialized = true
-      console.log(
-        `[EnvironmentManager] Loaded ${this.variables.size} environment variables`,
-      )
     } catch (error) {
       console.error('[EnvironmentManager] Failed to initialize:', error)
       this.initialized = true
@@ -76,7 +73,6 @@ export class EnvironmentManager {
 
     this.variables.set(key, variable)
     await this.persist()
-    console.log(`[EnvironmentManager] Set environment variable: ${key}`)
   }
 
   async getVariable(key: string): Promise<string | undefined> {
@@ -96,7 +92,6 @@ export class EnvironmentManager {
     if (this.variables.has(key)) {
       this.variables.delete(key)
       await this.persist()
-      console.log(`[EnvironmentManager] Deleted environment variable: ${key}`)
       return true
     }
     return false

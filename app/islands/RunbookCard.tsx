@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'hono/jsx'
+import { useCallback, useEffect, useState } from 'hono/jsx'
 import type { Runbook } from '@/types/types'
 
 interface RunbookCardProps {
@@ -121,13 +121,14 @@ export function RunbookCard({
     setOpenDropdown(null)
   }
 
-  const pollExecutionStatus = async (execId: string) => {
+  const pollExecutionStatus = useCallback(async (execId: string) => {
     try {
       const response = await fetch(`/api/executions/${execId}`)
-      const result = await response.json()
 
-      if (result.success) {
-        if (result.data.status === 'running' && result.isRunning) {
+      if (response.ok) {
+        const execution = await response.json()
+
+        if (execution.status === 'running') {
           setTimeout(() => pollExecutionStatus(execId), 1000)
         } else {
           setExecutionId(null)
@@ -136,17 +137,40 @@ export function RunbookCard({
           url.searchParams.set('execution', execId)
           window.location.href = url.toString()
         }
+      } else {
+        console.error('Failed to fetch execution status')
+        setExecutionId(null)
       }
     } catch (error) {
       console.error('Failed to poll execution status:', error)
       setExecutionId(null)
     }
-  }
+  }, [])
+
+  // Check if this runbook is currently executing from Configure & Run
+  useEffect(() => {
+    const executingRunbookId = sessionStorage.getItem('executingRunbookId')
+    const executingExecutionId = sessionStorage.getItem('executingExecutionId')
+
+    if (executingRunbookId === runbook.id && executingExecutionId) {
+      // Execution started from Configure & Run
+      setExecutionId(executingExecutionId)
+      setIsExecuting(true)
+
+      // Start polling for this execution
+      pollExecutionStatus(executingExecutionId)
+
+      // Clear session storage
+      sessionStorage.removeItem('executingRunbookId')
+      sessionStorage.removeItem('executingExecutionId')
+    }
+  }, [runbook.id, pollExecutionStatus])
 
   return (
     <>
       <style>{lineClampStyles}</style>
       <div
+        data-testid="runbook-card"
         class={`bg-slate-800/50 border ${
           isFavorite
             ? 'border-yellow-600/50 hover:border-yellow-600'

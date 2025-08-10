@@ -12,19 +12,39 @@ async function getExecutionData(executionId: string) {
     const executionManager = ExecutionManager.getInstance()
     const environmentManager = EnvironmentManager.getInstance()
 
-    const [execution, envVars] = await Promise.all([
-      executionManager.getExecution(executionId),
-      environmentManager.getAllVariables(),
-    ])
+    // Get current execution state immediately
+    const execution = executionManager.getExecution(executionId)
 
     if (!execution) {
       throw new Error('Execution not found')
     }
 
+    const envVars = await environmentManager.getAllVariables()
     const environmentVariables: Record<string, { isSecret?: boolean }> = {}
     envVars.forEach((v) => {
       environmentVariables[v.key] = { isSecret: v.isSecret }
     })
+
+    // If still running, wait for completion (max 60 seconds)
+    if (execution.status === 'running') {
+      let waitTime = 0
+      const maxWaitTime = 60000 // 60 seconds
+      const pollInterval = 100 // 100ms
+
+      while (waitTime < maxWaitTime) {
+        await new Promise((resolve) => setTimeout(resolve, pollInterval))
+        const updatedExecution = executionManager.getExecution(executionId)
+
+        if (updatedExecution && updatedExecution.status !== 'running') {
+          return {
+            execution: updatedExecution,
+            environmentVariables,
+            error: null,
+          }
+        }
+        waitTime += pollInterval
+      }
+    }
 
     return {
       execution,
@@ -94,9 +114,31 @@ function ExecutionResultContent({
           <span class="text-slate-400 text-sm">ID: {execution.id}</span>
         </div>
         <div class="text-slate-400 text-sm">
-          {formatDuration(execution.duration)}
+          {execution.status === 'running' ? (
+            <span class="animate-pulse">Running...</span>
+          ) : (
+            formatDuration(execution.duration)
+          )}
         </div>
       </div>
+
+      {/* Running indicator */}
+      {execution.status === 'running' && (
+        <div class="bg-blue-900/20 border border-blue-500/50 rounded-lg p-4">
+          <div class="flex items-center space-x-3">
+            <div class="animate-spin rounded-full h-5 w-5 border-2 border-blue-400 border-t-transparent"></div>
+            <div>
+              <div class="text-blue-400 font-medium">
+                Execution in progress...
+              </div>
+              <div class="text-blue-300 text-sm mt-1">
+                This page will automatically update when the execution
+                completes.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Basic Info */}
       <div class="grid grid-cols-2 gap-4">
