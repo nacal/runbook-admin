@@ -13,27 +13,28 @@ concurrency:
 
 jobs:
   test:
-    name: Test (Node.js ${{ matrix.node-version }})
+    name: Test (Node.js 22)
     runs-on: ubuntu-latest
     timeout-minutes: 15
-
-    strategy:
-      matrix:
-        node-version: [21, 22]
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.head_ref }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 9
 
-      - name: Setup Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 22
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -44,6 +45,15 @@ jobs:
 
       - name: Lint and format check
         run: pnpm check
+
+      - name: Commit formatting changes
+        uses: EndBug/add-and-commit@v9
+        with:
+          message: |
+            style: auto-format code with Biome
+            
+            🤖 Generated with GitHub Actions
+          default_author: github_actions
 
       - name: Check for unused dependencies
         run: pnpm knip
@@ -61,7 +71,6 @@ jobs:
         run: pnpm test:e2e:list
 
       - name: Upload test coverage
-        if: matrix.node-version == 22
         uses: codecov/codecov-action@v4
         with:
           files: ./coverage/coverage-final.json
@@ -71,7 +80,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report-node-${{ matrix.node-version }}
+          name: playwright-report
           path: playwright-report/
           retention-days: 7
 

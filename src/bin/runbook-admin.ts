@@ -116,9 +116,9 @@ async function checkRunn() {
   try {
     const { spawn } = await import('node:child_process')
     return new Promise<boolean>((resolve) => {
-      const child = spawn('runn', ['--version'], { 
+      const child = spawn('runn', ['--version'], {
         stdio: 'pipe',
-        shell: process.platform === 'win32'
+        shell: process.platform === 'win32',
       })
       child.on('close', (code) => resolve(code === 0))
       child.on('error', () => resolve(false))
