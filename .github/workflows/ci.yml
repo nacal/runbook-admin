@@ -44,17 +44,13 @@ jobs:
         run: pnpm check
 
       - name: Commit formatting changes
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add .
-          git diff --staged --quiet || git commit -m "style: auto-format code with Biome
-
-          🤖 Generated with GitHub Actions"
-
-      - name: Push formatting changes
-        run: |
-          git diff --quiet || git push
+        uses: EndBug/add-and-commit@v9
+        with:
+          message: |
+            style: auto-format code with Biome
+            
+            🤖 Generated with GitHub Actions
+          default_author: github_actions
 
       - name: Check for unused dependencies
         run: pnpm knip
