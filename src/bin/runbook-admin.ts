@@ -39,6 +39,7 @@ async function main() {
             process.env.PATH +
             ':/opt/homebrew/bin:/usr/local/bin:/usr/local/go/bin',
         },
+        shell: process.platform === 'win32',
       },
     )
 
@@ -115,7 +116,10 @@ async function checkRunn() {
   try {
     const { spawn } = await import('node:child_process')
     return new Promise<boolean>((resolve) => {
-      const child = spawn('runn', ['--version'], { stdio: 'pipe' })
+      const child = spawn('runn', ['--version'], { 
+        stdio: 'pipe',
+        shell: process.platform === 'win32'
+      })
       child.on('close', (code) => resolve(code === 0))
       child.on('error', () => resolve(false))
     })
