@@ -16,6 +16,8 @@ jobs:
     name: Test (Node.js 22)
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout code
@@ -51,8 +53,8 @@ jobs:
           🤖 Generated with GitHub Actions"
 
       - name: Push formatting changes
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: git push
+        run: |
+          git diff --quiet || git push
 
       - name: Check for unused dependencies
         run: pnpm knip
