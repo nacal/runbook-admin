@@ -15,7 +15,8 @@
   },
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build && pnpm run build:cli",
+    "build": "vite build && vite build --mode server && pnpm run build:server && pnpm run build:cli",
+    "build:server": "tsc src/server-entry.ts --outDir dist --target es2022 --module node16 --moduleResolution node16",
     "build:cli": "tsc src/bin/runbook-admin.ts --outDir dist/bin --target es2022 --module node16 --moduleResolution node16",
     "start": "node dist/bin/runbook-admin.js",
     "test": "vitest",
@@ -36,6 +37,7 @@
     "release:dry": "release-it --dry-run"
   },
   "dependencies": {
+    "@hono/node-server": "^1.14.2",
     "hono": "^4.6.0",
     "honox": "^0.1.24",
     "js-yaml": "^4.1.0",

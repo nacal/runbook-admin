@@ -4,6 +4,7 @@
     "app/server.ts",
     "app/client.ts",
     "src/bin/runbook-admin.ts",
+    "src/server-entry.ts",
     "app/routes/**/*.{ts,tsx}",
     "tests/**/*.test.{ts,tsx}",
     "tests/mocks/**",
@@ -24,9 +25,7 @@
     "@vitest/coverage-v8",
     "tailwindcss"
   ],
-  "ignoreBinaries": [
-    "runbook-admin"
-  ],
+  "ignoreBinaries": [],
   "ignoreExportsUsedInFile": true,
   "includeEntryExports": false,
   "typescript": {
