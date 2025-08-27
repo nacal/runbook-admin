@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       '@hono/node-server':
-        specifier: ^1.19.0
+        specifier: ^1.14.2
         version: 1.19.0(hono@4.8.5)
       hono:
         specifier: ^4.6.0
