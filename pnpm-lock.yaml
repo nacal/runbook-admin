@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@hono/node-server':
+        specifier: ^1.14.2
+        version: 1.19.0(hono@4.8.5)
       hono:
         specifier: ^4.6.0
         version: 4.8.5
@@ -353,8 +356,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@hono/node-server@1.17.0':
-    resolution: {integrity: sha512-u30lnh86PYua8X1NqsV4O7aeziJq7mN0pDXUvGxIeLWVI+n/xzuSxMb1YZlQ/73LTf6Wxgp5cyhw7r5JSrCgcg==}
+  '@hono/node-server@1.19.0':
+    resolution: {integrity: sha512-1k8/8OHf5VIymJEcJyVksFpT+AQ5euY0VA5hUkCnlKpD4mr8FSbvXaHblxeTTEr90OaqWzAkQaqD80qHZQKxBA==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
       hono: ^4
@@ -2994,13 +2997,13 @@ snapshots:
   '@esbuild/win32-x64@0.21.5':
     optional: true
 
-  '@hono/node-server@1.17.0(hono@4.8.5)':
+  '@hono/node-server@1.19.0(hono@4.8.5)':
     dependencies:
       hono: 4.8.5
 
   '@hono/vite-dev-server@0.19.1(hono@4.8.5)':
     dependencies:
-      '@hono/node-server': 1.17.0(hono@4.8.5)
+      '@hono/node-server': 1.19.0(hono@4.8.5)
       hono: 4.8.5
       minimatch: 9.0.5
 

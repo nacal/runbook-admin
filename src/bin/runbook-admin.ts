@@ -11,7 +11,7 @@ const HOST = '127.0.0.1'
 // Get the directory of this script
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
-const appRoot = join(__dirname, '..', '..')
+const appRoot = join(__dirname, '..') // dist/bin -> dist
 
 async function main() {
   // Get project path from command line argument or current working directory
@@ -22,59 +22,57 @@ async function main() {
   console.log(`📁 Project: ${projectPath}`)
 
   try {
-    // Use npx to run vite dev for development mode
-    const viteCommand = process.platform === 'win32' ? 'npx.cmd' : 'npx'
-    const viteProcess = spawn(
-      viteCommand,
-      ['vite', 'dev', '--host', HOST, '--port', String(PORT)],
-      {
-        cwd: appRoot,
-        stdio: ['inherit', 'pipe', 'pipe'],
-        env: {
-          ...process.env,
-          NODE_ENV: 'development',
-          PROJECT_PATH: projectPath,
-          // Ensure common paths are included for runn command
-          PATH:
-            process.env.PATH +
-            ':/opt/homebrew/bin:/usr/local/bin:/usr/local/go/bin',
-        },
-        shell: process.platform === 'win32',
+    // Run the built production server
+    const serverScript = join(appRoot, 'server-entry.js')
+    const serverProcess = spawn('node', [serverScript], {
+      cwd: appRoot,
+      stdio: ['inherit', 'pipe', 'pipe'],
+      env: {
+        ...process.env,
+        NODE_ENV: 'production',
+        PROJECT_PATH: projectPath,
+        PORT: String(PORT),
+        HOST: HOST,
+        // Ensure common paths are included for runn command
+        PATH:
+          process.env.PATH +
+          ':/opt/homebrew/bin:/usr/local/bin:/usr/local/go/bin',
       },
-    )
+    })
 
     let serverStarted = false
     const url = `http://${HOST}:${PORT}`
 
     // Listen for server startup
-    if (viteProcess.stdout) {
-      viteProcess.stdout.on('data', (data) => {
+    if (serverProcess.stdout) {
+      serverProcess.stdout.on('data', (data) => {
         const output = data.toString()
 
-        // Log all vite output to see runn execution logs
+        // Log all server output to see runn execution logs
         process.stdout.write(output)
 
         if (
           !serverStarted &&
-          (output.includes('ready in') || output.includes('Local:'))
+          (output.includes('Server running at') ||
+            output.includes('Starting Runbook Admin Server'))
         ) {
           serverStarted = true
         }
       })
     }
 
-    if (viteProcess.stderr) {
-      viteProcess.stderr.on('data', (data) => {
+    if (serverProcess.stderr) {
+      serverProcess.stderr.on('data', (data) => {
         console.error(data.toString())
       })
     }
 
-    viteProcess.on('error', (error) => {
+    serverProcess.on('error', (error) => {
       console.error('❌ Failed to start server:', error)
       process.exit(1)
     })
 
-    viteProcess.on('close', (code) => {
+    serverProcess.on('close', (code) => {
       if (code !== 0 && code !== null) {
         console.error(`Server process exited with code ${code}`)
         process.exit(code)
@@ -99,7 +97,7 @@ async function main() {
     // Handle graceful shutdown
     const shutdown = () => {
       console.log('\n👋 Shutting down gracefully...')
-      viteProcess.kill('SIGTERM')
+      serverProcess.kill('SIGTERM')
       setTimeout(() => process.exit(0), 1000)
     }
 
