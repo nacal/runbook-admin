@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { serve } from '@hono/node-server'
 import { serveStatic } from '@hono/node-server/serve-static'
 
@@ -10,7 +10,8 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 // Import the built server bundle
-const serverModule = await import(join(__dirname, 'server.js'))
+const serverPath = join(__dirname, 'server.js')
+const serverModule = await import(pathToFileURL(serverPath).href)
 const app = serverModule.default
 
 // Serve static assets from dist/assets
