@@ -1,6 +1,6 @@
 {
   "name": "runbook-admin",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "Local GUI for running and managing Runn runbooks",
   "type": "module",
   "bin": {
