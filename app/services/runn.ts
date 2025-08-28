@@ -1,4 +1,4 @@
-import { type ChildProcess, execSync, spawn } from 'node:child_process'
+import { type ChildProcess, spawn, spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { EventEmitter } from 'node:events'
 import { platform } from 'node:os'
@@ -27,13 +27,32 @@ export class RunnExecutor extends EventEmitter {
       const isWindows = platform() === 'win32'
       const whereCommand = isWindows ? 'where.exe' : 'which'
 
-      const result = execSync(`${whereCommand} runn`, {
+      const result = spawnSync(whereCommand, ['runn'], {
         encoding: 'utf8',
-        stdio: 'pipe',
-      }).trim()
+        shell: false,
+        windowsHide: true,
+      })
+
+      if (result.status !== 0 || !result.stdout) {
+        throw new Error('Command not found')
+      }
 
       // Windowsでは複数のパスが返される可能性があるので最初の1つを使用
-      RunnExecutor.runnCommand = result.split('\n')[0].trim()
+      const runnPath = result.stdout.trim().split('\n')[0].trim()
+
+      // Windowsの場合、.exeが含まれているか確認
+      if (isWindows && runnPath.endsWith('.exe')) {
+        // Windowsでは.exeファイルのパスをそのまま使用
+        RunnExecutor.runnCommand = runnPath
+      } else if (!isWindows && runnPath) {
+        // Unix系ではパスをそのまま使用
+        RunnExecutor.runnCommand = runnPath
+      } else {
+        // それ以外の場合はデフォルト
+        RunnExecutor.runnCommand = 'runn'
+      }
+
+      console.log(`Runn CLI found at: ${RunnExecutor.runnCommand}`)
       return RunnExecutor.runnCommand
     } catch (_error) {
       // コマンドが見つからない場合はデフォルトの'runn'を返す
