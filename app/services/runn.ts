@@ -1,4 +1,9 @@
-import { type ChildProcess, spawn, spawnSync } from 'node:child_process'
+import {
+  type ChildProcess,
+  type SpawnSyncReturns,
+  spawn,
+  spawnSync,
+} from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { EventEmitter } from 'node:events'
 import { platform } from 'node:os'
@@ -17,6 +22,36 @@ export class RunnExecutor extends EventEmitter {
     this.executionId = this.generateId()
   }
 
+  private static enhanceWindowsPath(
+    env: NodeJS.ProcessEnv = process.env,
+  ): NodeJS.ProcessEnv {
+    if (platform() !== 'win32') {
+      return env
+    }
+
+    const goBinPaths = [
+      `${env.USERPROFILE}\\go\\bin`,
+      `${env.GOPATH}\\bin`,
+      `${env.GOBIN}`,
+      'C:\\go\\bin',
+    ].filter(Boolean)
+
+    const currentPath = env.PATH || ''
+    const pathSeparator = ';'
+    const additionalPaths = goBinPaths
+      .filter((path) => path && !currentPath.includes(path))
+      .join(pathSeparator)
+
+    if (additionalPaths) {
+      return {
+        ...env,
+        PATH: `${currentPath}${pathSeparator}${additionalPaths}`,
+      }
+    }
+
+    return env
+  }
+
   private static getRunnCommand(): string {
     // キャッシュがあればそれを返す
     if (RunnExecutor.runnCommand) {
@@ -25,20 +60,44 @@ export class RunnExecutor extends EventEmitter {
 
     try {
       const isWindows = platform() === 'win32'
-      const whereCommand = isWindows ? 'where.exe' : 'which'
+      const whereCommand = isWindows ? 'where' : 'which'
 
       console.log(`Trying to find runn using: ${whereCommand}`)
+      console.log(`Current PATH: ${process.env.PATH?.substring(0, 200)}...`)
 
-      const result = spawnSync(whereCommand, ['runn'], {
-        encoding: 'utf8',
-        shell: false,
-        windowsHide: true,
-      })
+      const enhancedEnv = RunnExecutor.enhanceWindowsPath()
+
+      let result: SpawnSyncReturns<Buffer>
+      if (isWindows) {
+        // Windows環境: cmd経由でwhereコマンドを実行
+        result = spawnSync('cmd', ['/c', 'where', 'runn'], {
+          shell: false,
+          windowsHide: true,
+          env: enhancedEnv,
+        })
+      } else {
+        result = spawnSync(whereCommand, ['runn'], {
+          shell: false,
+          env: enhancedEnv,
+        })
+      }
+
+      // Windowsでの文字化け対応: bufferを適切にデコード
+      let stdout = ''
+      let stderr = ''
+
+      if (result.stdout) {
+        stdout = result.stdout.toString('utf8').replace(/\r\n/g, '\n')
+      }
+
+      if (result.stderr) {
+        stderr = result.stderr.toString('utf8').replace(/\r\n/g, '\n')
+      }
 
       console.log('spawnSync result:', {
         status: result.status,
-        stdout: result.stdout ? result.stdout.substring(0, 100) : 'null',
-        stderr: result.stderr,
+        stdout: stdout ? stdout.substring(0, 100) : 'null',
+        stderr: stderr ? stderr.substring(0, 100) : 'null',
         error: result.error,
       })
 
@@ -46,12 +105,15 @@ export class RunnExecutor extends EventEmitter {
         throw result.error
       }
 
-      if (result.status !== 0 || !result.stdout) {
-        throw new Error(`Command failed with status ${result.status}`)
+      if (result.status !== 0 || !stdout.trim()) {
+        const errorMessage =
+          stderr || `Command failed with status ${result.status}`
+        console.log(`Where command failed: ${errorMessage}`)
+        throw new Error(errorMessage)
       }
 
       // Windowsでは複数のパスが返される可能性があるので最初の1つを使用
-      const runnPath = result.stdout.trim().split('\n')[0].trim()
+      const runnPath = stdout.trim().split('\n')[0].trim()
 
       console.log(`Found runn at: ${runnPath}`)
 
@@ -74,8 +136,9 @@ export class RunnExecutor extends EventEmitter {
       // コマンドが見つからない場合はデフォルトの'runn'を返す
       console.warn(
         'Could not find runn via where/which, falling back to "runn"',
-        error,
       )
+      console.warn(`Error details: ${error}`)
+
       RunnExecutor.runnCommand = 'runn'
       return RunnExecutor.runnCommand
     }
@@ -154,10 +217,14 @@ export class RunnExecutor extends EventEmitter {
         }
 
         const runnCommand = RunnExecutor.getRunnCommand()
+
+        // Windows環境でGoのbinパスを追加
+        const enhancedFinalEnv = RunnExecutor.enhanceWindowsPath(finalEnv)
+
         this.process = spawn(runnCommand, args, {
           cwd: getProjectPath(),
           stdio: ['pipe', 'pipe', 'pipe'],
-          env: finalEnv,
+          env: enhancedFinalEnv,
           shell: false,
         })
 
@@ -361,9 +428,11 @@ export class RunnExecutor extends EventEmitter {
     return new Promise((resolve) => {
       try {
         const runnCommand = RunnExecutor.getRunnCommand()
+        const enhancedEnv = RunnExecutor.enhanceWindowsPath()
+
         const childProcess = spawn(runnCommand, ['--version'], {
           stdio: 'pipe',
-          env: process.env,
+          env: enhancedEnv,
           shell: false,
         })
 
