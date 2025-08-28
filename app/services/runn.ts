@@ -29,17 +29,50 @@ export class RunnExecutor extends EventEmitter {
       return env
     }
 
+    // Goのbinパスのリスト
     const goBinPaths = [
-      `${env.USERPROFILE}\\go\\bin`,
-      `${env.GOPATH}\\bin`,
-      `${env.GOBIN}`,
+      env.USERPROFILE ? `${env.USERPROFILE}\\go\\bin` : '',
+      env.GOPATH ? `${env.GOPATH}\\bin` : '',
+      env.GOBIN || '',
       'C:\\go\\bin',
+      'C:\\Program Files\\Go\\bin',
     ].filter(Boolean)
 
-    const currentPath = env.PATH || ''
+    // 現在のPATHを取得（npxが切り捨てた場合に備えて、元のprocess.envも参照）
+    let currentPath = env.PATH || ''
     const pathSeparator = ';'
+
+    // npxによってPATHが切り捨てられている場合、元のPATHを復元
+    // 200文字で切れていたり、"..."で終わっている場合は切り捨てられている
+    if (currentPath.endsWith('...') || currentPath.length < 500) {
+      // 元のprocess.env.PATHから必要な部分を復元
+      const originalPath = process.env.PATH || ''
+      // Goのパスが含まれているか確認
+      const hasGoPath = goBinPaths.some((goPath) =>
+        currentPath.toLowerCase().includes(goPath.toLowerCase()),
+      )
+
+      if (!hasGoPath) {
+        // 元のPATHからGoのパスを探して追加
+        const goPathsFromOriginal = originalPath
+          .split(pathSeparator)
+          .filter((path) => path.toLowerCase().includes('go'))
+
+        if (goPathsFromOriginal.length > 0) {
+          currentPath = `${currentPath}${pathSeparator}${goPathsFromOriginal.join(pathSeparator)}`
+        }
+      }
+    }
+
+    // パスを正規化（末尾のバックスラッシュを削除）して比較
+    const normalizedCurrentPath = currentPath.toLowerCase().replace(/\\+$/, '')
     const additionalPaths = goBinPaths
-      .filter((path) => path && !currentPath.includes(path))
+      .filter((path) => {
+        if (!path) return false
+        const normalizedPath = path.toLowerCase().replace(/\\+$/, '')
+        // 正規化したパスで比較
+        return !normalizedCurrentPath.includes(normalizedPath)
+      })
       .join(pathSeparator)
 
     if (additionalPaths) {
@@ -65,11 +98,22 @@ export class RunnExecutor extends EventEmitter {
       console.log(`Trying to find runn using: ${whereCommand}`)
       console.log(`Current PATH: ${process.env.PATH?.substring(0, 200)}...`)
 
-      const enhancedEnv = RunnExecutor.enhanceWindowsPath()
+      // Windows環境の場合、元のprocess.envを使用してPATHを復元
+      const baseEnv = isWindows ? { ...process.env } : process.env
+      const enhancedEnv = RunnExecutor.enhanceWindowsPath(baseEnv)
+
+      // Windows環境の場合、強化されたPATHをプロセス環境変数に適用
+      if (isWindows && enhancedEnv.PATH !== process.env.PATH) {
+        process.env.PATH = enhancedEnv.PATH
+        console.log(
+          `Enhanced PATH applied: ${enhancedEnv.PATH?.substring(0, 200)}...`,
+        )
+      }
 
       let result: SpawnSyncReturns<Buffer>
       if (isWindows) {
         // Windows環境: cmd経由でwhereコマンドを実行
+        // whereコマンドはPATHEXTの拡張子を自動的に補完する
         result = spawnSync('cmd', ['/c', 'where', 'runn'], {
           shell: false,
           windowsHide: true,
