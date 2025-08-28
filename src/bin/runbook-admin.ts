@@ -48,8 +48,25 @@ async function main() {
       serverProcess.stdout.on('data', (data) => {
         const output = data.toString()
 
-        // Log all server output to see runn execution logs
-        process.stdout.write(output)
+        // Filter out duplicate server startup messages but keep debug logs
+        const lines = output.split('\n')
+        const filteredLines = lines.filter((line: string) => {
+          const trimmed = line.trim()
+          // Skip duplicate startup messages
+          if (
+            trimmed.includes('🔥 Starting Runbook Admin Server') ||
+            trimmed.includes('📁 Project:') ||
+            trimmed.includes('✨ Server running at')
+          ) {
+            return false
+          }
+          return trimmed.length > 0
+        })
+
+        // Log filtered output
+        if (filteredLines.length > 0) {
+          process.stdout.write(`${filteredLines.join('\n')}\n`)
+        }
 
         if (
           !serverStarted &&
