@@ -1,6 +1,7 @@
-import { type ChildProcess, spawn } from 'node:child_process'
+import { type ChildProcess, execSync, spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { EventEmitter } from 'node:events'
+import { platform } from 'node:os'
 import type { ExecutionOptions, ExecutionResult } from '../types/types'
 import { getProjectPath } from '../utils/project-context'
 import { EnvironmentManager } from './environment-manager'
@@ -9,10 +10,39 @@ import { ExecutionOptionsManager } from './execution-options-manager'
 export class RunnExecutor extends EventEmitter {
   private process: ChildProcess | null = null
   public readonly executionId: string
+  private static runnCommand: string | null = null
 
   constructor() {
     super()
     this.executionId = this.generateId()
+  }
+
+  private static getRunnCommand(): string {
+    // キャッシュがあればそれを返す
+    if (RunnExecutor.runnCommand) {
+      return RunnExecutor.runnCommand
+    }
+
+    try {
+      const isWindows = platform() === 'win32'
+      const whereCommand = isWindows ? 'where.exe' : 'which'
+
+      const result = execSync(`${whereCommand} runn`, {
+        encoding: 'utf8',
+        stdio: 'pipe',
+      }).trim()
+
+      // Windowsでは複数のパスが返される可能性があるので最初の1つを使用
+      RunnExecutor.runnCommand = result.split('\n')[0].trim()
+      return RunnExecutor.runnCommand
+    } catch (_error) {
+      // コマンドが見つからない場合はデフォルトの'runn'を返す
+      console.warn(
+        'Could not find runn via where/which, falling back to "runn"',
+      )
+      RunnExecutor.runnCommand = 'runn'
+      return RunnExecutor.runnCommand
+    }
   }
 
   async execute(
@@ -85,16 +115,14 @@ export class RunnExecutor extends EventEmitter {
           ...process.env, // Preserve current environment (including PATH)
           ...execEnv, // Add managed environment variables
           ...envVars, // Add user-provided environment variables
-          // Ensure common paths are included for runn command
-          PATH:
-            (process.env.PATH || '') +
-            ':/opt/homebrew/bin:/usr/local/bin:/usr/local/go/bin',
         }
 
-        this.process = spawn('runn', args, {
+        const runnCommand = RunnExecutor.getRunnCommand()
+        this.process = spawn(runnCommand, args, {
           cwd: getProjectPath(),
           stdio: ['pipe', 'pipe', 'pipe'],
           env: finalEnv,
+          shell: false,
         })
 
         // Close stdin immediately to prevent hanging on input
@@ -197,14 +225,11 @@ export class RunnExecutor extends EventEmitter {
     pattern: string = '**/*.yml',
   ): Promise<Array<Record<string, string | number | boolean>>> {
     return new Promise((resolve, reject) => {
-      const childProcess = spawn('runn', ['list', pattern, '--long'], {
+      const runnCommand = RunnExecutor.getRunnCommand()
+      const childProcess = spawn(runnCommand, ['list', pattern, '--long'], {
         stdio: ['pipe', 'pipe', 'pipe'],
-        env: {
-          ...process.env,
-          PATH:
-            (process.env.PATH || '') +
-            ':/opt/homebrew/bin:/usr/local/bin:/usr/local/go/bin',
-        },
+        env: process.env,
+        shell: false,
       })
 
       let output = ''
@@ -298,23 +323,26 @@ export class RunnExecutor extends EventEmitter {
 
   static async checkRunnAvailable(): Promise<boolean> {
     return new Promise((resolve) => {
-      const childProcess = spawn('runn', ['--version'], {
-        stdio: 'pipe',
-        env: {
-          ...process.env,
-          PATH:
-            (process.env.PATH || '') +
-            ':/opt/homebrew/bin:/usr/local/bin:/usr/local/go/bin',
-        },
-      })
+      try {
+        const runnCommand = RunnExecutor.getRunnCommand()
+        const childProcess = spawn(runnCommand, ['--version'], {
+          stdio: 'pipe',
+          env: process.env,
+          shell: false,
+        })
 
-      childProcess.on('close', (code) => {
-        resolve(code === 0)
-      })
+        childProcess.on('close', (code) => {
+          resolve(code === 0)
+        })
 
-      childProcess.on('error', () => {
+        childProcess.on('error', () => {
+          // Reset cache on error
+          RunnExecutor.runnCommand = null
+          resolve(false)
+        })
+      } catch (_error) {
         resolve(false)
-      })
+      }
     })
   }
 }
