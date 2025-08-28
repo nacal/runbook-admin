@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.1.12](https://github.com/nacal/runbook-admin/compare/v0.1.11...v0.1.12) (2025-08-28)
+
+
+### Bug Fixes
+
+* resolve Windows PATH issues caused by npx ([8982f12](https://github.com/nacal/runbook-admin/commit/8982f12d951f6a89a4a5e02ccda22944a3e88151))
+
 ## [0.1.11](https://github.com/nacal/runbook-admin/compare/v0.1.10...v0.1.11) (2025-08-28)
 
 ## [0.1.10](https://github.com/nacal/runbook-admin/compare/v0.1.9...v0.1.10) (2025-08-28)
