@@ -27,18 +27,33 @@ export class RunnExecutor extends EventEmitter {
       const isWindows = platform() === 'win32'
       const whereCommand = isWindows ? 'where.exe' : 'which'
 
+      console.log(`Trying to find runn using: ${whereCommand}`)
+
       const result = spawnSync(whereCommand, ['runn'], {
         encoding: 'utf8',
         shell: false,
         windowsHide: true,
       })
 
+      console.log('spawnSync result:', {
+        status: result.status,
+        stdout: result.stdout ? result.stdout.substring(0, 100) : 'null',
+        stderr: result.stderr,
+        error: result.error,
+      })
+
+      if (result.error) {
+        throw result.error
+      }
+
       if (result.status !== 0 || !result.stdout) {
-        throw new Error('Command not found')
+        throw new Error(`Command failed with status ${result.status}`)
       }
 
       // Windowsでは複数のパスが返される可能性があるので最初の1つを使用
       const runnPath = result.stdout.trim().split('\n')[0].trim()
+
+      console.log(`Found runn at: ${runnPath}`)
 
       // Windowsの場合、.exeが含まれているか確認
       if (isWindows && runnPath.endsWith('.exe')) {
@@ -49,15 +64,17 @@ export class RunnExecutor extends EventEmitter {
         RunnExecutor.runnCommand = runnPath
       } else {
         // それ以外の場合はデフォルト
+        console.log(`Using default 'runn' (path validation failed)`)
         RunnExecutor.runnCommand = 'runn'
       }
 
-      console.log(`Runn CLI found at: ${RunnExecutor.runnCommand}`)
+      console.log(`Final runn command: ${RunnExecutor.runnCommand}`)
       return RunnExecutor.runnCommand
-    } catch (_error) {
+    } catch (error) {
       // コマンドが見つからない場合はデフォルトの'runn'を返す
       console.warn(
         'Could not find runn via where/which, falling back to "runn"',
+        error,
       )
       RunnExecutor.runnCommand = 'runn'
       return RunnExecutor.runnCommand
