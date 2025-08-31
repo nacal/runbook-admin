@@ -23,6 +23,47 @@ export class RunnExecutor extends EventEmitter {
     this.executionId = this.generateId()
   }
 
+  private static tryFindRunnDirectly(): string | null {
+    // Windows環境で直接runn.exeを検索
+    if (platform() !== 'win32') {
+      return null
+    }
+
+    const { existsSync } = require('node:fs')
+    const { join } = require('node:path')
+
+    const possiblePaths: string[] = []
+    const userProfile = process.env.USERPROFILE || process.env.HOME
+
+    if (userProfile) {
+      possiblePaths.push(join(userProfile, 'go', 'bin', 'runn.exe'))
+    }
+
+    if (process.env.GOPATH) {
+      possiblePaths.push(join(process.env.GOPATH, 'bin', 'runn.exe'))
+    }
+
+    if (process.env.GOBIN) {
+      possiblePaths.push(join(process.env.GOBIN, 'runn.exe'))
+    }
+
+    // Common Go installation paths on Windows
+    possiblePaths.push('C:\\Program Files\\Go\\bin\\runn.exe')
+    possiblePaths.push('C:\\go\\bin\\runn.exe')
+
+    console.log('Trying to find runn.exe directly in common locations...')
+
+    for (const path of possiblePaths) {
+      if (existsSync(path)) {
+        console.log(`Found runn.exe at: ${path}`)
+        return path
+      }
+    }
+
+    console.log('Could not find runn.exe in common locations')
+    return null
+  }
+
   private static getRunnCommand(): string {
     // キャッシュがあればそれを返す
     if (RunnExecutor.runnCommand) {
@@ -83,6 +124,17 @@ export class RunnExecutor extends EventEmitter {
         const errorMessage =
           stderr || `Command failed with status ${result.status}`
         console.log(`Where command failed: ${errorMessage}`)
+
+        // Windows環境で失敗した場合、直接検索を試みる
+        if (isWindows) {
+          const directPath = RunnExecutor.tryFindRunnDirectly()
+          if (directPath) {
+            RunnExecutor.runnCommand = directPath
+            console.log(`Using directly found runn: ${directPath}`)
+            return RunnExecutor.runnCommand
+          }
+        }
+
         throw new Error(errorMessage)
       }
 
@@ -107,6 +159,16 @@ export class RunnExecutor extends EventEmitter {
       console.log(`Final runn command: ${RunnExecutor.runnCommand}`)
       return RunnExecutor.runnCommand
     } catch (error) {
+      // Windows環境で失敗した場合、直接検索を試みる
+      if (platform() === 'win32') {
+        const directPath = RunnExecutor.tryFindRunnDirectly()
+        if (directPath) {
+          RunnExecutor.runnCommand = directPath
+          console.log(`Using directly found runn: ${directPath}`)
+          return RunnExecutor.runnCommand
+        }
+      }
+
       // コマンドが見つからない場合はデフォルトの'runn'を返す
       console.warn(
         'Could not find runn via where/which, falling back to "runn"',
