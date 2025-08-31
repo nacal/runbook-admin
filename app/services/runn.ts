@@ -51,16 +51,12 @@ export class RunnExecutor extends EventEmitter {
     possiblePaths.push('C:\\Program Files\\Go\\bin\\runn.exe')
     possiblePaths.push('C:\\go\\bin\\runn.exe')
 
-    console.log('Trying to find runn.exe directly in common locations...')
-
     for (const path of possiblePaths) {
       if (existsSync(path)) {
-        console.log(`Found runn.exe at: ${path}`)
         return path
       }
     }
 
-    console.log('Could not find runn.exe in common locations')
     return null
   }
 
@@ -74,13 +70,8 @@ export class RunnExecutor extends EventEmitter {
       const isWindows = platform() === 'win32'
       const whereCommand = isWindows ? 'where' : 'which'
 
-      console.log(`Trying to find runn using: ${whereCommand}`)
-
       // 元のPATHを使用して環境変数を構築
       const originalEnv = getOriginalEnvironment()
-      console.log(
-        `Using original PATH: ${originalEnv.PATH?.substring(0, 200)}...`,
-      )
 
       let result: SpawnSyncReturns<Buffer>
       if (isWindows) {
@@ -109,13 +100,6 @@ export class RunnExecutor extends EventEmitter {
         stderr = result.stderr.toString('utf8').replace(/\r\n/g, '\n')
       }
 
-      console.log('spawnSync result:', {
-        status: result.status,
-        stdout: stdout ? stdout.substring(0, 100) : 'null',
-        stderr: stderr ? stderr.substring(0, 100) : 'null',
-        error: result.error,
-      })
-
       if (result.error) {
         throw result.error
       }
@@ -123,14 +107,12 @@ export class RunnExecutor extends EventEmitter {
       if (result.status !== 0 || !stdout.trim()) {
         const errorMessage =
           stderr || `Command failed with status ${result.status}`
-        console.log(`Where command failed: ${errorMessage}`)
 
         // Windows環境で失敗した場合、直接検索を試みる
         if (isWindows) {
           const directPath = RunnExecutor.tryFindRunnDirectly()
           if (directPath) {
             RunnExecutor.runnCommand = directPath
-            console.log(`Using directly found runn: ${directPath}`)
             return RunnExecutor.runnCommand
           }
         }
@@ -141,8 +123,6 @@ export class RunnExecutor extends EventEmitter {
       // Windowsでは複数のパスが返される可能性があるので最初の1つを使用
       const runnPath = stdout.trim().split('\n')[0].trim()
 
-      console.log(`Found runn at: ${runnPath}`)
-
       // Windowsの場合、.exeが含まれているか確認
       if (isWindows && runnPath.endsWith('.exe')) {
         // Windowsでは.exeファイルのパスをそのまま使用
@@ -152,11 +132,9 @@ export class RunnExecutor extends EventEmitter {
         RunnExecutor.runnCommand = runnPath
       } else {
         // それ以外の場合はデフォルト
-        console.log(`Using default 'runn' (path validation failed)`)
         RunnExecutor.runnCommand = 'runn'
       }
 
-      console.log(`Final runn command: ${RunnExecutor.runnCommand}`)
       return RunnExecutor.runnCommand
     } catch (error) {
       // Windows環境で失敗した場合、直接検索を試みる
@@ -164,15 +142,10 @@ export class RunnExecutor extends EventEmitter {
         const directPath = RunnExecutor.tryFindRunnDirectly()
         if (directPath) {
           RunnExecutor.runnCommand = directPath
-          console.log(`Using directly found runn: ${directPath}`)
           return RunnExecutor.runnCommand
         }
       }
 
-      // コマンドが見つからない場合はデフォルトの'runn'を返す
-      console.warn(
-        'Could not find runn via where/which, falling back to "runn"',
-      )
       console.warn(`Error details: ${error}`)
 
       RunnExecutor.runnCommand = 'runn'
