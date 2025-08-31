@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { spawn } from 'node:child_process'
+import { platform } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import open from 'open'
@@ -12,6 +13,44 @@ const HOST = '127.0.0.1'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 const appRoot = join(__dirname, '..') // dist/bin -> dist
+
+// Enhance PATH for different platforms
+function enhancePath(currentPath: string | undefined): string {
+  const isWindows = platform() === 'win32'
+  const separator = isWindows ? ';' : ':'
+  const basePath = currentPath || ''
+
+  if (isWindows) {
+    // Windows-specific paths
+    const windowsPaths = [
+      process.env.USERPROFILE ? `${process.env.USERPROFILE}\\go\\bin` : '',
+      process.env.GOPATH ? `${process.env.GOPATH}\\bin` : '',
+      process.env.GOBIN || '',
+      'C:\\Program Files\\Go\\bin',
+      'C:\\go\\bin',
+    ].filter(Boolean)
+
+    // Check if Go paths are already in PATH
+    const needsGoPath = !windowsPaths.some((p) =>
+      basePath.toLowerCase().includes(p.toLowerCase()),
+    )
+
+    if (needsGoPath && windowsPaths.length > 0) {
+      return `${basePath}${separator}${windowsPaths.join(separator)}`
+    }
+    return basePath
+  } else {
+    // Unix-like paths
+    const unixPaths = [
+      '/opt/homebrew/bin',
+      '/usr/local/bin',
+      '/usr/local/go/bin',
+      process.env.HOME ? `${process.env.HOME}/go/bin` : '',
+    ].filter(Boolean)
+
+    return `${basePath}${separator}${unixPaths.join(separator)}`
+  }
+}
 
 async function main() {
   // Get project path from command line argument or current working directory
@@ -34,9 +73,7 @@ async function main() {
         PORT: String(PORT),
         HOST: HOST,
         // Ensure common paths are included for runn command
-        PATH:
-          process.env.PATH +
-          ':/opt/homebrew/bin:/usr/local/bin:/usr/local/go/bin',
+        PATH: enhancePath(process.env.PATH),
       },
     })
 
@@ -134,6 +171,10 @@ async function checkRunn() {
       const child = spawn('runn', ['--version'], {
         stdio: 'pipe',
         shell: process.platform === 'win32',
+        env: {
+          ...process.env,
+          PATH: enhancePath(process.env.PATH),
+        },
       })
       child.on('close', (code) => resolve(code === 0))
       child.on('error', () => resolve(false))
