@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+# [0.2.0](https://github.com/nacal/runbook-admin/compare/v0.1.13...v0.2.0) (2025-08-31)
+
 ## [0.1.13](https://github.com/nacal/runbook-admin/compare/v0.1.12...v0.1.13) (2025-08-31)
 
 ## [0.1.12](https://github.com/nacal/runbook-admin/compare/v0.1.11...v0.1.12) (2025-08-28)
