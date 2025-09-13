@@ -10,13 +10,13 @@ importers:
     dependencies:
       '@hono/node-server':
         specifier: ^1.14.2
-        version: 1.19.0(hono@4.8.5)
+        version: 1.19.0(hono@4.9.7)
       hono:
         specifier: ^4.6.0
-        version: 4.8.5
+        version: 4.9.7
       honox:
         specifier: ^0.1.24
-        version: 0.1.43(hono@4.8.5)
+        version: 0.1.43(hono@4.9.7)
       js-yaml:
         specifier: ^4.1.0
         version: 4.1.0
@@ -113,6 +113,10 @@ packages:
 
   '@babel/runtime@7.28.2':
     resolution: {integrity: sha512-KHp2IflsnGywDjBWDkR9iEqiWSpc8GIi0lgTT3mOElT0PP1tG26P4tmFI2YvAdzgq9RGyoHZQEIEdZy6Ec5xCA==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/runtime@7.28.4':
+    resolution: {integrity: sha512-Q/N6JNWvIvPnLDvjlE1OUBLPQHH6l3CltCEsHIujp45zQUSSh8K+gHnaEX45yAT1nyngnINhvWtzN+Nb9D8RAQ==}
     engines: {node: '>=6.9.0'}
 
   '@babel/template@7.27.2':
@@ -397,8 +401,26 @@ packages:
       '@types/node':
         optional: true
 
+  '@inquirer/confirm@5.1.16':
+    resolution: {integrity: sha512-j1a5VstaK5KQy8Mu8cHmuQvN1Zc62TbLhjJxwHvKPPKEoowSF6h/0UdOpA9DNdWZ+9Inq73+puRq1df6OJ8Sag==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@types/node': '>=18'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+
   '@inquirer/core@10.1.15':
     resolution: {integrity: sha512-8xrp836RZvKkpNbVvgWUlxjT4CraKk2q+I3Ksy+seI2zkcE+y6wNs1BVhgcv8VyImFecUhdQrYLdW32pAjwBdA==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@types/node': '>=18'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+
+  '@inquirer/core@10.2.0':
+    resolution: {integrity: sha512-NyDSjPqhSvpZEMZrLCYUquWNl+XC/moEcVFqS55IEYIYsY0a1cUCevSqk7ctOlnm/RaSBU5psFryNlxcmGrjaA==}
     engines: {node: '>=18'}
     peerDependencies:
       '@types/node': '>=18'
@@ -517,8 +539,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.29':
     resolution: {integrity: sha512-uw6guiW/gcAGPDhLmd77/6lW8QLeiV5RUTsAX46Db6oLhGaVj4lhnPwb184s1bkc8kdVg/+h988dro8GRDpmYQ==}
 
-  '@mswjs/interceptors@0.39.4':
-    resolution: {integrity: sha512-B82DbrGVCIBrNEfRJbqUFB0eNz0wVzqbenEpmbE71XLVU4yKZbDnRBuxz+7udc/uM7LDWDD4sRJ5tISzHf2QkQ==}
+  '@mswjs/interceptors@0.39.6':
+    resolution: {integrity: sha512-bndDP83naYYkfayr/qhBHMhk0YGwS1iv6vaEGcr0SQbO0IZtbOPqjKjds/WcG+bJA+1T5vCx6kprKOzn5Bg+Vw==}
     engines: {node: '>=18'}
 
   '@napi-rs/wasm-runtime@1.0.1':
@@ -1700,8 +1722,8 @@ packages:
   headers-polyfill@4.0.3:
     resolution: {integrity: sha512-IScLbePpkvO846sIwOtOTDjutRMWdXdJmXdMvk6gCBHxFO8d+QKOQedyZSxFTTFYRSmlgSTDtXqqq4pcenBXLQ==}
 
-  hono@4.8.5:
-    resolution: {integrity: sha512-Up2cQbtNz1s111qpnnECdTGqSIUIhZJMLikdKkshebQSEBcoUKq6XJayLGqSZWidiH0zfHRCJqFu062Mz5UuRA==}
+  hono@4.9.7:
+    resolution: {integrity: sha512-t4Te6ERzIaC48W3x4hJmBwgNlLhmiEdEE5ViYb02ffw4ignHNHa5IBtPjmbKstmtKa8X6C35iWwK4HaqvrzG9w==}
     engines: {node: '>=16.9.0'}
 
   honox@0.1.43:
@@ -2771,6 +2793,10 @@ packages:
     resolution: {integrity: sha512-cYVsTjKl8b+FrnidjibDWskAv7UKOfcwaVZdp/it9n1s9fU3IkgDbhdIRKCW4JDsAlECJY0ytoVPT3sK6kideA==}
     engines: {node: '>=18'}
 
+  yoctocolors-cjs@2.1.3:
+    resolution: {integrity: sha512-U/PBtDf35ff0D8X8D0jfdzHYEPFxAI7jJlxZXwCSez5M3190m+QobIfh+sWDWSHMCWWJN2AWamkegn6vr6YBTw==}
+    engines: {node: '>=18'}
+
   zod-validation-error@3.5.3:
     resolution: {integrity: sha512-OT5Y8lbUadqVZCsnyFaTQ4/O2mys4tj7PqhdbBCp7McPwvIEKfPtdA6QfPeFQK2/Rz5LgwmAXRJTugBNBi0btw==}
     engines: {node: '>=18.0.0'}
@@ -2818,6 +2844,8 @@ snapshots:
       '@babel/types': 7.28.1
 
   '@babel/runtime@7.28.2': {}
+
+  '@babel/runtime@7.28.4': {}
 
   '@babel/template@7.27.2':
     dependencies:
@@ -2997,14 +3025,14 @@ snapshots:
   '@esbuild/win32-x64@0.21.5':
     optional: true
 
-  '@hono/node-server@1.19.0(hono@4.8.5)':
+  '@hono/node-server@1.19.0(hono@4.9.7)':
     dependencies:
-      hono: 4.8.5
+      hono: 4.9.7
 
-  '@hono/vite-dev-server@0.19.1(hono@4.8.5)':
+  '@hono/vite-dev-server@0.19.1(hono@4.9.7)':
     dependencies:
-      '@hono/node-server': 1.19.0(hono@4.8.5)
-      hono: 4.8.5
+      '@hono/node-server': 1.19.0(hono@4.9.7)
+      hono: 4.9.7
       minimatch: 9.0.5
 
   '@hutson/parse-repository-url@5.0.0': {}
@@ -3026,6 +3054,14 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.16.5
 
+  '@inquirer/confirm@5.1.16(@types/node@22.16.5)':
+    dependencies:
+      '@inquirer/core': 10.2.0(@types/node@22.16.5)
+      '@inquirer/type': 3.0.8(@types/node@22.16.5)
+    optionalDependencies:
+      '@types/node': 22.16.5
+    optional: true
+
   '@inquirer/core@10.1.15(@types/node@22.16.5)':
     dependencies:
       '@inquirer/figures': 1.0.13
@@ -3038,6 +3074,20 @@ snapshots:
       yoctocolors-cjs: 2.1.2
     optionalDependencies:
       '@types/node': 22.16.5
+
+  '@inquirer/core@10.2.0(@types/node@22.16.5)':
+    dependencies:
+      '@inquirer/figures': 1.0.13
+      '@inquirer/type': 3.0.8(@types/node@22.16.5)
+      ansi-escapes: 4.3.2
+      cli-width: 4.1.0
+      mute-stream: 2.0.0
+      signal-exit: 4.1.0
+      wrap-ansi: 6.2.0
+      yoctocolors-cjs: 2.1.3
+    optionalDependencies:
+      '@types/node': 22.16.5
+    optional: true
 
   '@inquirer/editor@4.2.15(@types/node@22.16.5)':
     dependencies:
@@ -3143,7 +3193,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.4
 
-  '@mswjs/interceptors@0.39.4':
+  '@mswjs/interceptors@0.39.6':
     dependencies:
       '@open-draft/deferred-promise': 2.2.0
       '@open-draft/logger': 0.3.0
@@ -3502,7 +3552,7 @@ snapshots:
   '@testing-library/dom@10.4.0':
     dependencies:
       '@babel/code-frame': 7.27.1
-      '@babel/runtime': 7.28.2
+      '@babel/runtime': 7.28.4
       '@types/aria-query': 5.0.4
       aria-query: 5.3.0
       chalk: 4.1.2
@@ -4342,16 +4392,16 @@ snapshots:
   headers-polyfill@4.0.3:
     optional: true
 
-  hono@4.8.5: {}
+  hono@4.9.7: {}
 
-  honox@0.1.43(hono@4.8.5):
+  honox@0.1.43(hono@4.9.7):
     dependencies:
       '@babel/generator': 7.25.6
       '@babel/parser': 7.25.6
       '@babel/traverse': 7.25.6
       '@babel/types': 7.25.6
-      '@hono/vite-dev-server': 0.19.1(hono@4.8.5)
-      hono: 4.8.5
+      '@hono/vite-dev-server': 0.19.1(hono@4.9.7)
+      hono: 4.9.7
       jsonc-parser: 3.3.1
       precinct: 12.1.2
     optionalDependencies:
@@ -4655,8 +4705,8 @@ snapshots:
       '@bundled-es-modules/cookie': 2.0.1
       '@bundled-es-modules/statuses': 1.0.1
       '@bundled-es-modules/tough-cookie': 0.1.6
-      '@inquirer/confirm': 5.1.14(@types/node@22.16.5)
-      '@mswjs/interceptors': 0.39.4
+      '@inquirer/confirm': 5.1.16(@types/node@22.16.5)
+      '@mswjs/interceptors': 0.39.6
       '@open-draft/deferred-promise': 2.2.0
       '@open-draft/until': 2.1.0
       '@types/cookie': 0.6.0
@@ -5452,6 +5502,9 @@ snapshots:
     optional: true
 
   yoctocolors-cjs@2.1.2: {}
+
+  yoctocolors-cjs@2.1.3:
+    optional: true
 
   zod-validation-error@3.5.3(zod@3.25.76):
     dependencies:
