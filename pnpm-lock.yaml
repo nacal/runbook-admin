@@ -10,13 +10,13 @@ importers:
     dependencies:
       '@hono/node-server':
         specifier: ^1.14.2
-        version: 1.19.0(hono@4.8.5)
+        version: 1.19.0(hono@4.9.7)
       hono:
         specifier: ^4.6.0
-        version: 4.8.5
+        version: 4.9.7
       honox:
         specifier: ^0.1.24
-        version: 0.1.43(hono@4.8.5)
+        version: 0.1.43(hono@4.9.7)
       js-yaml:
         specifier: ^4.1.0
         version: 4.1.0
@@ -1732,8 +1732,8 @@ packages:
   headers-polyfill@4.0.3:
     resolution: {integrity: sha512-IScLbePpkvO846sIwOtOTDjutRMWdXdJmXdMvk6gCBHxFO8d+QKOQedyZSxFTTFYRSmlgSTDtXqqq4pcenBXLQ==}
 
-  hono@4.8.5:
-    resolution: {integrity: sha512-Up2cQbtNz1s111qpnnECdTGqSIUIhZJMLikdKkshebQSEBcoUKq6XJayLGqSZWidiH0zfHRCJqFu062Mz5UuRA==}
+  hono@4.9.7:
+    resolution: {integrity: sha512-t4Te6ERzIaC48W3x4hJmBwgNlLhmiEdEE5ViYb02ffw4ignHNHa5IBtPjmbKstmtKa8X6C35iWwK4HaqvrzG9w==}
     engines: {node: '>=16.9.0'}
 
   honox@0.1.43:
@@ -3035,14 +3035,14 @@ snapshots:
   '@esbuild/win32-x64@0.21.5':
     optional: true
 
-  '@hono/node-server@1.19.0(hono@4.8.5)':
+  '@hono/node-server@1.19.0(hono@4.9.7)':
     dependencies:
-      hono: 4.8.5
+      hono: 4.9.7
 
-  '@hono/vite-dev-server@0.19.1(hono@4.8.5)':
+  '@hono/vite-dev-server@0.19.1(hono@4.9.7)':
     dependencies:
-      '@hono/node-server': 1.19.0(hono@4.8.5)
-      hono: 4.8.5
+      '@hono/node-server': 1.19.0(hono@4.9.7)
+      hono: 4.9.7
       minimatch: 9.0.5
 
   '@hutson/parse-repository-url@5.0.0': {}
@@ -4408,16 +4408,16 @@ snapshots:
   headers-polyfill@4.0.3:
     optional: true
 
-  hono@4.8.5: {}
+  hono@4.9.7: {}
 
-  honox@0.1.43(hono@4.8.5):
+  honox@0.1.43(hono@4.9.7):
     dependencies:
       '@babel/generator': 7.25.6
       '@babel/parser': 7.25.6
       '@babel/traverse': 7.25.6
       '@babel/types': 7.25.6
-      '@hono/vite-dev-server': 0.19.1(hono@4.8.5)
-      hono: 4.8.5
+      '@hono/vite-dev-server': 0.19.1(hono@4.9.7)
+      hono: 4.9.7
       jsonc-parser: 3.3.1
       precinct: 12.1.2
     optionalDependencies:
