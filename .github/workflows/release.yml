@@ -1,0 +1,85 @@
+# This workflow publishes the npm package using OIDC (no npm token required)
+# It is triggered when tagpr creates a new tag
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # Required for OIDC
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'  # Match engines.node requirement
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      
+      - name: Update npm to latest
+        run: |
+          echo "Current npm version: $(npm -v)"
+          npm install -g npm@latest
+          echo "Updated npm version: $(npm -v)"
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Run tests
+        run: pnpm test:run
+      
+      - name: Build
+        run: pnpm build
+      
+      - name: Publish to npm with provenance
+        run: npm publish --provenance --access public
+      
+      - name: Comment on release status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const tag = '${{ github.ref_name }}';
+            const success = '${{ job.status }}' === 'success';
+            const packageName = 'runbook-admin';
+            const version = tag.replace('v', '');
+            
+            // Find the release
+            const releases = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            
+            const release = releases.data.find(r => r.tag_name === tag);
+            
+            if (release) {
+              const body = success 
+                ? `✅ **Successfully published to npm!**\n\n📦 Package: https://www.npmjs.com/package/${packageName}/v/${version}\n🔗 Workflow: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+                : `❌ **Failed to publish to npm**\n\nPlease check the workflow logs for details.\n🔗 Workflow: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: release.id,
+                body: body
+              }).catch(() => {
+                // If commenting on release fails, just log it
+                console.log('Could not comment on release');
+              });
+            }
