@@ -70,7 +70,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nacal/runbook-admin.git"
+    "url": "git+https://github.com/nacal/runbook-admin.git"
   },
   "homepage": "https://github.com/nacal/runbook-admin",
   "bugs": {
