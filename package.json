@@ -67,5 +67,13 @@
     "gui"
   ],
   "author": "nacal",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nacal/runbook-admin.git"
+  },
+  "homepage": "https://github.com/nacal/runbook-admin",
+  "bugs": {
+    "url": "https://github.com/nacal/runbook-admin/issues"
+  }
 }
