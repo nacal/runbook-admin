@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # [0.2.0](https://github.com/nacal/runbook-admin/compare/v0.1.13...v0.2.0) (2025-08-31)
 
+## [v0.2.4](https://github.com/nacal/runbook-admin/compare/v0.2.3...v0.2.4) - 2025-09-14
+- Revert "create deployment" by @nacal in https://github.com/nacal/runbook-admin/pull/34
+- create deployment by @nacal in https://github.com/nacal/runbook-admin/pull/36
+
 ## [v0.2.3](https://github.com/nacal/runbook-admin/compare/v0.2.2...v0.2.3) - 2025-09-14
 - create deployment by @nacal in https://github.com/nacal/runbook-admin/pull/32
 
