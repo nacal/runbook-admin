@@ -1,0 +1,27 @@
+# tagpr configuration
+# https://github.com/Songmu/tagpr
+
+# Track releases on the main branch
+releaseBranch = "main"
+
+# Update the version in package.json
+versionFile = "package.json"
+
+# Add "v" prefix to git tags (e.g., v1.0.0)
+vPrefix = true
+
+# Enable changelog generation
+changelog = true
+
+# Create GitHub Releases when tags are created
+release = true
+
+# Optional: Run build/test before tagging (commented out by default)
+# command = "pnpm test:run && pnpm build"
+
+# Include release body in PR/tag (default: true)
+releaseNote = true
+
+# Major version update behavior (commented out means manual control via labels)
+# majorLabels = ["major", "breaking-change"]
+# minorLabels = ["minor", "feature"]
