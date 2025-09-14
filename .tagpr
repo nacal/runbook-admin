@@ -25,3 +25,7 @@ releaseNote = true
 # Major version update behavior (commented out means manual control via labels)
 # majorLabels = ["major", "breaking-change"]
 # minorLabels = ["minor", "feature"]
+[tagpr]
+	vPrefix = true
+	releaseBranch = main
+	versionFile = package.json
