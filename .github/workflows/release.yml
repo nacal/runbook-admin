@@ -1,78 +1,149 @@
-# This workflow publishes the npm package using OIDC (no npm token required)
-# It is triggered when tagpr creates a new tag
-
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_run:
+    workflows: ["tagpr"]
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     permissions:
       contents: read
       id-token: write  # Required for OIDC
     steps:
+      # Determine which tag to release
+      - name: Determine release tag
+        id: check_tag
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // If manual dispatch, always use the latest tag
+            if (context.eventName === 'workflow_dispatch') {
+              const { data: tags } = await github.rest.repos.listTags({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 1
+              });
+
+              if (tags.length === 0) {
+                console.log('No tags found');
+                core.setOutput('has_new_tag', 'false');
+                return { hasNewTag: false };
+              }
+
+              const latestTag = tags[0];
+              console.log(`Manual release for latest tag: ${latestTag.name}`);
+              core.setOutput('tag_name', latestTag.name);
+              core.setOutput('has_new_tag', 'true');
+              return { hasNewTag: true, tagName: latestTag.name };
+            }
+
+            // If triggered by workflow_run (tagpr)
+            const workflowRun = context.payload.workflow_run;
+
+            // Get the latest tags
+            const { data: tags } = await github.rest.repos.listTags({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 1
+            });
+
+            if (tags.length === 0) {
+              console.log('No tags found');
+              core.setOutput('has_new_tag', 'false');
+              return { hasNewTag: false };
+            }
+
+            const latestTag = tags[0];
+            const tagCommit = latestTag.commit.sha;
+            const workflowCommit = workflowRun.head_sha;
+
+            // Check if the tag was created from the same commit as the workflow
+            if (tagCommit === workflowCommit) {
+              console.log(`Found new tag from tagpr: ${latestTag.name}`);
+              core.setOutput('tag_name', latestTag.name);
+              core.setOutput('has_new_tag', 'true');
+              return { hasNewTag: true, tagName: latestTag.name };
+            }
+
+            console.log('No new tag from this workflow run');
+            core.setOutput('has_new_tag', 'false');
+            return { hasNewTag: false };
+
+      # Only continue if a new tag was created
       - name: Checkout
+        if: steps.check_tag.outputs.has_new_tag == 'true'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+          ref: ${{ steps.check_tag.outputs.tag_name }}
+
       - name: Setup Node.js
+        if: steps.check_tag.outputs.has_new_tag == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'  # Match engines.node requirement
           registry-url: 'https://registry.npmjs.org'
-      
+
       - name: Setup pnpm
+        if: steps.check_tag.outputs.has_new_tag == 'true'
         uses: pnpm/action-setup@v4
         with:
           version: 9
-      
+
       - name: Update npm to latest
+        if: steps.check_tag.outputs.has_new_tag == 'true'
         run: |
           echo "Current npm version: $(npm -v)"
           npm install -g npm@latest
           echo "Updated npm version: $(npm -v)"
-      
+
       - name: Install dependencies
+        if: steps.check_tag.outputs.has_new_tag == 'true'
         run: pnpm install --frozen-lockfile
-      
+
       - name: Run tests
+        if: steps.check_tag.outputs.has_new_tag == 'true'
         run: pnpm test:run
-      
+
       - name: Build
+        if: steps.check_tag.outputs.has_new_tag == 'true'
         run: pnpm build
-      
+
       - name: Publish to npm with provenance
+        if: steps.check_tag.outputs.has_new_tag == 'true'
         run: npm publish --provenance --access public
-      
+
       - name: Comment on release status
-        if: always()
+        if: always() && steps.check_tag.outputs.has_new_tag == 'true'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const tag = '${{ github.ref_name }}';
+            const tag = '${{ steps.check_tag.outputs.tag_name }}';
             const success = '${{ job.status }}' === 'success';
             const packageName = 'runbook-admin';
             const version = tag.replace('v', '');
-            
+
             // Find the release
             const releases = await github.rest.repos.listReleases({
               owner: context.repo.owner,
               repo: context.repo.repo
             });
-            
+
             const release = releases.data.find(r => r.tag_name === tag);
-            
+
             if (release) {
-              const body = success 
+              const body = success
                 ? `✅ **Successfully published to npm!**\n\n📦 Package: https://www.npmjs.com/package/${packageName}/v/${version}\n🔗 Workflow: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
                 : `❌ **Failed to publish to npm**\n\nPlease check the workflow logs for details.\n🔗 Workflow: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-              
+
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
