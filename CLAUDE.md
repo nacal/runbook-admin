@@ -10,21 +10,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Development
-pnpm run dev          # Start development server with HMR
-
-# Building
-pnpm run build        # Build production version
+pnpm run dev          # Start development server with HMR (port 3000)
 pnpm run preview      # Preview production build
 
+# Building
+pnpm run build        # Build production version (client + server + CLI)
+
 # Testing
-pnpm test             # Run all tests (184 tests)
-pnpm test:run         # Run tests in CI mode
+pnpm test             # Run all tests with watch mode (184 tests)
+pnpm test:run         # Run tests once in CI mode
+pnpm test:ui          # Run tests with Vitest UI
+pnpm test:coverage    # Run tests with coverage report
+pnpm test:e2e         # Run E2E tests (all browsers)
 pnpm test:e2e:list    # Run E2E tests with list reporter
+pnpm test:e2e:ui      # Run E2E tests with Playwright UI
+
+# Run single test file
+pnpm test tests/unit/runn.test.ts
 
 # Quality Checks
 pnpm typecheck        # TypeScript type checking
-pnpm check            # Biome linter check
-pnpm agentcheck       # Complete CI pipeline (check + build + test + e2e)
+pnpm check            # Biome check (lint + format with auto-fix)
+pnpm lint             # Biome linting only
+pnpm format           # Biome formatting only
+pnpm knip             # Dead code detection
+pnpm knip:fix         # Remove unused exports/dependencies
+pnpm agentcheck       # Complete CI pipeline (check + knip:fix + build + test + e2e)
 
 # Production
 pnpm run start        # Run production server
@@ -50,21 +61,27 @@ app/
 ├── islands/         # Interactive client components
 ├── components/      # Reusable UI components
 ├── services/        # Business logic layer
-│   ├── runn.ts     # Runn CLI integration
-│   ├── file-scanner.ts  # Runbook discovery
-│   ├── execution-manager.ts # Execution state management
-│   ├── favorites-manager.ts # Favorites handling
-│   └── variable-manager.ts  # Variable presets
+│   ├── runn.ts     # Runn CLI integration with event lifecycle
+│   ├── file-scanner.ts  # Runbook discovery with pattern matching
+│   ├── execution-manager.ts # Execution state and history management
+│   ├── execution-options-manager.ts # Preset configs and command building
+│   ├── environment-manager.ts # Environment variables with secret masking
+│   ├── favorites-manager.ts # Favorites with local storage persistence
+│   ├── variable-manager.ts  # Variable presets management
+│   └── storage.ts  # Storage utilities
 ├── utils/           # Utility functions
-│   └── storage.ts  # Local storage management
+│   ├── storage.ts  # Local storage management
+│   └── environment.ts # Environment helpers
 ├── types/           # Type definitions
 │   └── types.ts    # Shared type definitions
-└── server.ts       # Server entry point
+├── server.ts       # Server entry point
+└── client.ts       # Client entry point
 
 tests/
 ├── unit/            # Unit tests (services, utils)
 ├── integration/     # Integration tests (API endpoints)
-└── e2e/             # End-to-end tests (Playwright)
+├── e2e/             # End-to-end tests (Playwright)
+└── setup.ts         # Test setup configuration
 ```
 
 ### Key Patterns
@@ -73,19 +90,25 @@ tests/
 2. **Islands Architecture**: Interactive components in `app/islands/`
 3. **API endpoints**: Defined in `app/routes/api/`
 4. **Runn execution**: Spawns Runn CLI process and streams output
+5. **Import aliases**: Use `@` for app root (e.g., `import { RunnExecutor } from '@/services/runn'`)
 
 ## Development Guidelines
 
 ### Runbook Detection
 
-- Patterns: `**/*.runbook.yml`, `**/runbooks/**/*.yml`, `**/tests/**/*.yml`, `**/*.runn.yml`
-- Excludes: `node_modules/`, `.git/`, `dist/`, `build/`
+- **File discovery**: Searches for all `.yml` and `.yaml` files
+- **Content validation**: Files must contain `steps`, `desc`, or `description` fields
+- **Common patterns**: `**/*.runbook.yml`, `**/runbooks/**/*.yml`, `**/tests/**/*.yml`, `**/*.runn.yml`
+- **Excludes**: `node_modules/`, `.git/`, `dist/`, `build/`
+- **Smart filtering**: Automatically excludes non-runbook YAML files (config files, etc.)
 
 ### Server Configuration
 
-- Port: 3000 (configurable via PORT env)
-- Host: 127.0.0.1 (local only)
-- Auto-opens browser after 1 second
+- **Development port**: 3000 (default for `pnpm dev`)
+- **E2E test port**: 3444 (configured in playwright.config.ts)
+- **Production port**: Configurable via PORT environment variable
+- **Host**: 127.0.0.1 (local only for security)
+- Auto-opens browser after 1 second in production
 
 ### Dependencies
 
@@ -97,6 +120,13 @@ tests/
 - All new code must have proper TypeScript types
 - Shared types go in `app/types/types.ts`
 - Use type imports: `import type { Runbook } from '../types/types'`
+
+### Code Style (Biome Configuration)
+
+- **Indentation**: 2 spaces
+- **Quotes**: Single quotes in JavaScript/TypeScript
+- **Semicolons**: As needed (not required at end of statements)
+- **Imports**: Automatically organized by Biome
 
 ### Directory Organization (HonoX Best Practices)
 
@@ -151,8 +181,11 @@ tests/
 - Current project status: 184/184 tests passing, all type/lint checks passing
 
 ### Core Service Architecture
+
 - **RunnExecutor**: Main service for executing Runn runbooks with full event lifecycle
-- **ExecutionOptionsManager**: Manages preset configurations and command argument building  
+- **ExecutionOptionsManager**: Manages preset configurations and command argument building
 - **EnvironmentManager**: Handles environment variables with secret masking support
+- **ExecutionManager**: Tracks execution history and state management
 - **FavoritesManager**: Simple runbook favoriting with local storage persistence
 - **FileScanner**: Discovers runbooks using configurable patterns and exclusions
+- **VariableManager**: Manages variable presets for test execution
